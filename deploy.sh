@@ -85,6 +85,15 @@ sleep 2
 
 echo "→ 启用扩展..."
 pluginkit -e use -i "$BUNDLE_ID"
+sleep 1
+
+echo "→ 等待 extension 进程启动..."
+for i in 1 2 3 4 5; do
+    if pgrep -x RightHereExtension > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
 
 echo "→ 重启 Finder..."
 killall Finder

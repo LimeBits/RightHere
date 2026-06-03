@@ -216,17 +216,8 @@ struct ContentView: View {
     }
     
     private func checkExtensionStatus() {
-        // A simple way to check if Finder extension is active:
-        // We run a terminal command `pluginkit -m -i com.b-vibe.RightHere.Extension`
-        // or check if the process is running. However, inside App Sandbox, we can check via distributed notifications.
-        // For simplicity and sandboxed compliance, we can execute a shell check or check pluginkit.
-        // Let's implement a shell status check via Process or check if the extension has sent a heartbeat.
-        // Inside sandbox, `pluginkit` might be restricted. Instead, the extension writes its active state to SharedDefaults on menu generation.
-        // If the extension was active within the last 15 seconds, we consider it "Enabled".
-        if let defaults = SharedDefaults.sharedSuite,
-           let lastActive = defaults.object(forKey: "extensionLastActive") as? Date {
-            let elapsed = Date().timeIntervalSince(lastActive)
-            isExtensionActive = elapsed < 30.0 // Active in the last 30 seconds
+        if let lastActive = UserDefaults.standard.object(forKey: "extensionLastActive") as? Date {
+            isExtensionActive = Date().timeIntervalSince(lastActive) < 30.0
         } else {
             isExtensionActive = false
         }
