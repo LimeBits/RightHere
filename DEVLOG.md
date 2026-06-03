@@ -218,7 +218,43 @@ fi
 
 ---
 
-| 方式 | 证书类型 | 费用 | 其他用户可用 |
+## 坑 13：App Group UserDefaults 写操作触发循环权限弹窗
+
+**现象**：在 Finder 里右键，还没点任何菜单项，就反复弹出系统权限请求窗口，无法操作。
+
+**原因**：`menu(for:)` 里调用了 `updateHeartbeat()`，该函数通过 `SharedDefaults.sharedSuite`（即 `UserDefaults(suiteName: "group.com.b-vibe.RightHere")`）写入数据。在沙盒环境下，每次访问 App Group 容器都会触发 `tccd`（透明度、同意和控制守护进程）的权限检查，导致每次右键都弹出权限窗口。
+
+**解法**：心跳数据改用 `UserDefaults.standard` 写入，不走 App Group 容器，彻底避免权限检查：
+```swift
+// extension 写
+UserDefaults.standard.set(Date(), forKey: "extensionLastActive")
+
+// 主 App 读
+UserDefaults.standard.object(forKey: "extensionLastActive") as? Date
+```
+
+注意：`UserDefaults.standard` 在 extension 和主 App 之间不共享，但心跳只需要在 extension 本地记录、主 App 读取即可——两者运行在同一用户会话下，`standard` 的数据文件路径不同，实际上读不到对方的值。更准确的做法是主 App 通过 `pluginkit -m` 判断扩展状态，心跳仅作为辅助。
+
+---
+
+## 坑 14：deploy 后 extension 进程未启动导致右键菜单消失
+
+**现象**：`deploy.sh` 跑完显示「✓ 部署成功」，pluginkit 状态是 `+`，但 Finder 右键没有菜单。
+
+**原因**：`pluginkit -e use` 只是把 extension 标记为"允许使用"，并不会立即启动 extension 进程。系统需要一点时间懒加载启动进程。如果 deploy 后立刻重启 Finder，extension 进程还没起来，Finder 就找不到它。
+
+**解法**：在 deploy.sh 里 `pluginkit -e use` 之后轮询等待 `RightHereExtension` 进程出现，再重启 Finder：
+```bash
+for i in 1 2 3 4 5; do
+    pgrep -x RightHereExtension > /dev/null && break
+    sleep 1
+done
+killall Finder
+```
+
+---
+
+
 |------|---------|------|------------|
 | 当前（本机开发） | Apple Development | 免费 | ✗ 仅限自己设备 |
 | 本地/网络分发 | Developer ID Application | $99/年 | ✓ 需公证（notarize） |
