@@ -42,10 +42,8 @@ class FinderSync: FIFinderSync {
     }
 
     private func updateHeartbeat() {
-        if let defaults = SharedDefaults.sharedSuite {
-            defaults.set(Date(), forKey: "extensionLastActive")
-            defaults.synchronize()
-        }
+        // 用 standard UserDefaults 写心跳，避免触发 App Group 容器访问权限弹窗
+        UserDefaults.standard.set(Date(), forKey: "extensionLastActive")
     }
 
     // MARK: - Finder Sync Menu
