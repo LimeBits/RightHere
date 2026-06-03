@@ -1,23 +1,41 @@
 #!/bin/bash
 # 一键部署 RightHere：编译检查 + 强制覆盖安装 + 扩展激活
 # 用法：./deploy.sh
-# 可选：./deploy.sh --build  自动触发 xcodebuild 再部署
+# 可选：./deploy.sh --build          自动触发 xcodebuild 再部署
+# 可选：./deploy.sh --build --universal  编译 Universal Binary（arm64 + x86_64）
 
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Products/Debug/RightHere.app 2>/dev/null | head -1)
 INSTALLED_APP="/Applications/RightHere.app"
 BUNDLE_ID="com.b-vibe.RightHere.Extension"
+UNIVERSAL=false
+
+for arg in "$@"; do
+    [ "$arg" = "--universal" ] && UNIVERSAL=true
+done
+
+DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Products/Debug/RightHere.app 2>/dev/null | head -1)
 
 # ── 可选：自动 build ──────────────────────────────────────────
 if [ "$1" = "--build" ]; then
     echo "→ 编译中..."
-    xcodebuild -project "$PROJECT_DIR/RightHere.xcodeproj" \
-               -scheme RightHere \
-               -configuration Debug \
-               -arch arm64 \
-               build 2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20
+    if [ "$UNIVERSAL" = true ]; then
+        echo "  模式: Universal Binary (arm64 + x86_64)"
+        xcodebuild -project "$PROJECT_DIR/RightHere.xcodeproj" \
+                   -scheme RightHere \
+                   -configuration Debug \
+                   ARCHS="arm64 x86_64" \
+                   ONLY_ACTIVE_ARCH=NO \
+                   build 2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20
+    else
+        echo "  模式: arm64 (本机)"
+        xcodebuild -project "$PROJECT_DIR/RightHere.xcodeproj" \
+                   -scheme RightHere \
+                   -configuration Debug \
+                   -arch arm64 \
+                   build 2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20
+    fi
     DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Products/Debug/RightHere.app 2>/dev/null | head -1)
 fi
 
