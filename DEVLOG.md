@@ -268,6 +268,22 @@ killall Finder
 
 ---
 
+## 坑 15：修改已安装 bundle 后 extension 菜单消失
+
+**现象**：向 `/Applications/RightHere.app` 注入图标、重启 Dock 等操作后，Finder 右键菜单里「新建文件」消失。`pluginkit -m` 显示 extension 仍是 `+`，进程也在运行，但 `menu(for:)` 从不被调用。
+
+**原因**：直接修改已安装 bundle 的内容会让 Finder 对 extension directoryURLs 的内部缓存失效，Finder 认为当前目录不在监听范围，菜单不出现。
+
+**解法**：任何时候修改了 bundle 内容后，必须跑完整 deploy 流程：
+```bash
+./deploy.sh --build
+```
+不能只 `killall Finder`，必须走完 `pluginkit -e use` + 等待进程 + `killall Finder` 的完整流程。
+
+**根本教训**：永远不要直接修改 `/Applications/RightHere.app` 里的文件，所有变更通过 `deploy.sh` 重新部署。
+
+---
+
 ## 快速调试流程
 
 ```bash
