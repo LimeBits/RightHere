@@ -1,0 +1,454 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		16CEFBB121EF02F55312E90F /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9468A8F6B7C27ED6975F2708 /* App.swift */; };
+		56EFE290D1E5DBE7FBD4C334 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */; };
+		57E3A9A3855880C111039BC8 /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
+		59E25F4FDB2492EBFB187CEA /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
+		81A63B57B2FD0BD174D15BF7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057037DF9ABFEED4C9C2DB9E /* ContentView.swift */; };
+		85C18ABB3F52DC6F7D9234A4 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
+		B48AFB7C2815E1D9BE6145B4 /* RightHereExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AD648F2A507467F3290D7CB /* RightHereExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D2266168DBE524B703D51BD5 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DFF5C1FBB72BE1B3AC3BEE47 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85CC2D5EEDEDD3EAED61A59E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 70A90DB811898559D634FA8C;
+			remoteInfo = RightHereExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		80EE3095188B7C78075BCB66 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B48AFB7C2815E1D9BE6145B4 /* RightHereExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		057037DF9ABFEED4C9C2DB9E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		32B11A522FD0716E008B849E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		67B0B9D6440E658DD8206334 /* RightHere.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RightHere.entitlements; sourceTree = "<group>"; };
+		6AD648F2A507467F3290D7CB /* RightHereExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RightHereExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9468A8F6B7C27ED6975F2708 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		9AEC9CF385B8341BF6E41060 /* RightHere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightHere.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateAssets.swift; sourceTree = "<group>"; };
+		D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDefaults.swift; sourceTree = "<group>"; };
+		DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
+		E0EF3FD383CAB640DEF54AFA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F69AC84A0B766272C55C66D4 /* RightHereExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RightHereExtension.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		3AFDE577D6A40CC3FEC1CF06 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9AEC9CF385B8341BF6E41060 /* RightHere.app */,
+				6AD648F2A507467F3290D7CB /* RightHereExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		496DEDDC218B0D20A480EBDD = {
+			isa = PBXGroup;
+			children = (
+				F69C199A0BA2934B87047751 /* RightHere */,
+				687AC1AF3A90F2662D3755CD /* RightHereExtension */,
+				3AFDE577D6A40CC3FEC1CF06 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		687AC1AF3A90F2662D3755CD /* RightHereExtension */ = {
+			isa = PBXGroup;
+			children = (
+				DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */,
+				E0EF3FD383CAB640DEF54AFA /* Info.plist */,
+				F69AC84A0B766272C55C66D4 /* RightHereExtension.entitlements */,
+			);
+			path = RightHereExtension;
+			sourceTree = "<group>";
+		};
+		F69C199A0BA2934B87047751 /* RightHere */ = {
+			isa = PBXGroup;
+			children = (
+				32B11A522FD0716E008B849E /* Assets.xcassets */,
+				9468A8F6B7C27ED6975F2708 /* App.swift */,
+				057037DF9ABFEED4C9C2DB9E /* ContentView.swift */,
+				67B0B9D6440E658DD8206334 /* RightHere.entitlements */,
+				D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */,
+				9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */,
+			);
+			path = RightHere;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		70A90DB811898559D634FA8C /* RightHereExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 403F0A3A954F2B7BA068FEF8 /* Build configuration list for PBXNativeTarget "RightHereExtension" */;
+			buildPhases = (
+				54A32F1EFBC3133E6990E3EF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RightHereExtension;
+			packageProductDependencies = (
+			);
+			productName = RightHereExtension;
+			productReference = 6AD648F2A507467F3290D7CB /* RightHereExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		EE96DBB36A663DBA7540058E /* RightHere */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 505AF3745E27F3FE91EDA758 /* Build configuration list for PBXNativeTarget "RightHere" */;
+			buildPhases = (
+				7B92ED146F9983DBF4DFF327 /* Sources */,
+				80EE3095188B7C78075BCB66 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A44C05342677EAC9BD52A454 /* PBXTargetDependency */,
+			);
+			name = RightHere;
+			packageProductDependencies = (
+			);
+			productName = RightHere;
+			productReference = 9AEC9CF385B8341BF6E41060 /* RightHere.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		85CC2D5EEDEDD3EAED61A59E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					70A90DB811898559D634FA8C = {
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.Sandbox\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+					};
+					EE96DBB36A663DBA7540058E = {
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 1]]";
+					};
+				};
+			};
+			buildConfigurationList = D36583FFECA3A2330AC63DA1 /* Build configuration list for PBXProject "RightHere" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 496DEDDC218B0D20A480EBDD;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3AFDE577D6A40CC3FEC1CF06 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EE96DBB36A663DBA7540058E /* RightHere */,
+				70A90DB811898559D634FA8C /* RightHereExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		54A32F1EFBC3133E6990E3EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56EFE290D1E5DBE7FBD4C334 /* FinderSync.swift in Sources */,
+				D2266168DBE524B703D51BD5 /* SharedDefaults.swift in Sources */,
+				59E25F4FDB2492EBFB187CEA /* TemplateAssets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7B92ED146F9983DBF4DFF327 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16CEFBB121EF02F55312E90F /* App.swift in Sources */,
+				81A63B57B2FD0BD174D15BF7 /* ContentView.swift in Sources */,
+				85C18ABB3F52DC6F7D9234A4 /* SharedDefaults.swift in Sources */,
+				57E3A9A3855880C111039BC8 /* TemplateAssets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A44C05342677EAC9BD52A454 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 70A90DB811898559D634FA8C /* RightHereExtension */;
+			targetProxy = DFF5C1FBB72BE1B3AC3BEE47 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		08C8B61A0B4521C4F6C29B5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = RightHereExtension/RightHereExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WV6JA6UHLN;
+				INFOPLIST_FILE = RightHereExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere.Extension";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		55B5A2D7768E6A73C2151613 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = RightHereExtension/RightHereExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WV6JA6UHLN;
+				INFOPLIST_FILE = RightHereExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere.Extension";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		5A3913E136D27C9C00BA3468 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = RightHere/RightHere.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WV6JA6UHLN;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		BE25EEDBC75C967ACCC799F0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E4F5049A3D24F1C6C2C1AB53 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E6E0BFA5A1818A9DF057935F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = RightHere/RightHere.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WV6JA6UHLN;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		403F0A3A954F2B7BA068FEF8 /* Build configuration list for PBXNativeTarget "RightHereExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08C8B61A0B4521C4F6C29B5C /* Debug */,
+				55B5A2D7768E6A73C2151613 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		505AF3745E27F3FE91EDA758 /* Build configuration list for PBXNativeTarget "RightHere" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6E0BFA5A1818A9DF057935F /* Debug */,
+				5A3913E136D27C9C00BA3468 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D36583FFECA3A2330AC63DA1 /* Build configuration list for PBXProject "RightHere" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BE25EEDBC75C967ACCC799F0 /* Debug */,
+				E4F5049A3D24F1C6C2C1AB53 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 85CC2D5EEDEDD3EAED61A59E /* Project object */;
+}
