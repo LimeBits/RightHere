@@ -32,6 +32,24 @@ macOS Finder 右键「新建文件」扩展。在任意文件夹右键，即可�
 ./monitor.sh
 ```
 
+## 分发计划
+
+当前脚本主要服务本机开发部署。由于 RightHere 包含 FinderSync extension，不能依赖 ad-hoc 或 Apple Development 证书稳定分发给其他机器；正式分发需要 Apple Developer Program 提供的 Developer ID Application 证书和 Apple 公证。
+
+后续应新增 `Scripts/package-release-dmg.sh`，用于完整生成可分发 DMG：
+
+```text
+1. Release build
+2. 使用 Developer ID Application 证书签名主 App 和 RightHereExtension.appex
+3. codesign --verify --deep --strict 验证签名
+4. 创建 DMG
+5. xcrun notarytool submit --wait 提交公证
+6. xcrun stapler staple 绑定公证票据
+7. spctl --assess 验证 Gatekeeper 可接受
+```
+
+在这个发布脚本完成前，推荐只使用 `deploy.sh --build` 做本机验证。
+
 ## 目录结构
 
 ```
