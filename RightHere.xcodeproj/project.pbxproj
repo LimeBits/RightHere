@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		16CEFBB121EF02F55312E90F /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9468A8F6B7C27ED6975F2708 /* App.swift */; };
+		2B4F7F0C4D9C4D5F9F62E7A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32B11A522FD0716E008B849E /* Assets.xcassets */; };
 		56EFE290D1E5DBE7FBD4C334 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */; };
 		57E3A9A3855880C111039BC8 /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
 		59E25F4FDB2492EBFB187CEA /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
@@ -122,6 +123,7 @@
 			buildConfigurationList = 505AF3745E27F3FE91EDA758 /* Build configuration list for PBXNativeTarget "RightHere" */;
 			buildPhases = (
 				7B92ED146F9983DBF4DFF327 /* Sources */,
+				6F37AF9224B5497F8C4742D4 /* Resources */,
 				80EE3095188B7C78075BCB66 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -175,6 +177,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		6F37AF9224B5497F8C4742D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B4F7F0C4D9C4D5F9F62E7A1 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		54A32F1EFBC3133E6990E3EF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -224,7 +237,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere.Extension";
 				SDKROOT = macosx;
@@ -247,7 +260,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere.Extension";
 				SDKROOT = macosx;
@@ -265,11 +278,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WV6JA6UHLN;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere";
 				SDKROOT = macosx;
@@ -327,7 +341,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -384,7 +398,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -406,11 +420,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WV6JA6UHLN;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere";
 				SDKROOT = macosx;

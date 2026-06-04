@@ -9,17 +9,6 @@ DIST_DIR="${ROOT_DIR}/dist"
 VOLUME_NAME="RightHere"
 BUNDLE_ID="com.b-vibe.RightHere"
 
-# ── 读取版本号 ────────────────────────────────────────────────
-PLIST="${ROOT_DIR}/RightHere/Info.plist"
-if [[ -f "${PLIST}" ]]; then
-    APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${PLIST}" 2>/dev/null || echo "1.0")
-else
-    APP_VERSION="1.0"
-fi
-BUILD_TIMESTAMP="$(date '+%Y%m%d-%H%M')"
-DMG_NAME="RightHere-${APP_VERSION}-${BUILD_TIMESTAMP}"
-DMG_PATH="${DIST_DIR}/${DMG_NAME}.dmg"
-DMG_RW_PATH="${DIST_DIR}/${DMG_NAME}-rw.dmg"
 MOUNT_ROOT="${DIST_DIR}/dmg-mount"
 
 # ── 先打包 app ────────────────────────────────────────────────
@@ -31,6 +20,14 @@ if [[ ! -d "${APP_DIR}" ]]; then
     printf '✗ RightHere.app 不存在，package-app.sh 可能失败\n' >&2
     exit 1
 fi
+
+# ── 读取版本号 ────────────────────────────────────────────────
+PLIST="${APP_DIR}/Contents/Info.plist"
+APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${PLIST}" 2>/dev/null || echo "unknown")
+BUILD_TIMESTAMP="$(date '+%Y%m%d-%H%M')"
+DMG_NAME="RightHere-${APP_VERSION}-${BUILD_TIMESTAMP}"
+DMG_PATH="${DIST_DIR}/${DMG_NAME}.dmg"
+DMG_RW_PATH="${DIST_DIR}/${DMG_NAME}-rw.dmg"
 
 # ── 准备工作目录 ──────────────────────────────────────────────
 rm -rf "${MOUNT_ROOT}"

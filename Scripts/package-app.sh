@@ -51,29 +51,6 @@ printf '→ 复制 app...\n'
 rm -rf "${APP_DIR}"
 cp -R "${DERIVED_APP}" "${APP_DIR}"
 
-# ── 生成 .icns ────────────────────────────────────────────────
-ICONSET_DIR="${ROOT_DIR}/RightHere/Assets.xcassets/AppIcon.appiconset"
-RESOURCES_DIR="${APP_DIR}/Contents/Resources"
-mkdir -p "${RESOURCES_DIR}"
-
-if [[ -d "${ICONSET_DIR}" ]] && ls "${ICONSET_DIR}"/*.png &>/dev/null; then
-    printf '→ 生成 AppIcon.icns...\n'
-    TMP_ICONSET="$(mktemp -d)/AppIcon.iconset"
-    mkdir -p "${TMP_ICONSET}"
-    for size in 16 32 128 256 512; do
-        src="${ICONSET_DIR}/icon_${size}x${size}.png"
-        src2x="${ICONSET_DIR}/icon_$((size*2))x$((size*2)).png"
-        [[ -f "${src}" ]]   && cp "${src}"   "${TMP_ICONSET}/icon_${size}x${size}.png"
-        [[ -f "${src2x}" ]] && cp "${src2x}" "${TMP_ICONSET}/icon_${size}x${size}@2x.png"
-    done
-    iconutil -c icns "${TMP_ICONSET}" -o "${RESOURCES_DIR}/AppIcon.icns"
-    rm -rf "$(dirname "${TMP_ICONSET}")"
-
-    # 把图标文件名写入 Info.plist，否则系统找不到
-    /usr/libexec/PlistBuddy -c "Delete :CFBundleIconFile" "${APP_DIR}/Contents/Info.plist" 2>/dev/null || true
-    /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "${APP_DIR}/Contents/Info.plist"
-fi
-
 # ── 清除隔离标记 + ad-hoc 签名 ────────────────────────────────
 printf '→ 清除隔离标记...\n'
 xattr -cr "${APP_DIR}"

@@ -46,7 +46,14 @@ sleep 3
 # ── 激活 Finder 扩展 ──────────────────────────────────────────
 echo "→ 激活 Finder 扩展..."
 pluginkit -e use -i "${BUNDLE_ID}" 2>/dev/null || true
-sleep 1
+
+echo "→ 等待扩展进程启动..."
+for i in 1 2 3 4 5; do
+    if pgrep -x RightHereExtension > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
 
 # ── 重启 Finder ───────────────────────────────────────────────
 echo "→ 重启 Finder..."
