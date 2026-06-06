@@ -1,205 +1,184 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var enabledTypes: Set<FileType> = Set(FileType.allCases)
-    @State private var isExtensionActive = false
+    @State private var availableTemplates: [FileTemplate] = []
+    @State private var enabledTemplates: Set<FileTemplate> = []
+    @State private var hasRecentFinderResponse = false
     @State private var timer: Timer? = nil
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header Section
-            VStack(spacing: 8) {
-                HStack {
-                    Image(systemName: "doc.badge.plus")
-                        .font(.system(size: 32))
-                        .foregroundColor(.blue)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("RightHere")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                        Text("Finder 右键“新建文件”扩展工具")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
+            HStack(spacing: 12) {
+                Image(systemName: "doc.badge.plus")
+                    .font(.system(size: 28))
+                    .foregroundColor(.blue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("RightHere")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Finder 右键“新建文件”")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 16)
-                
-                Divider()
+
+                Spacer()
             }
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
-            
-            // Content List
-            ScrollView {
-                VStack(spacing: 20) {
-                    
-                    // 1. Extension Status Card
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("扩展启用状态")
-                                .font(.system(size: 14, weight: .semibold))
-                            Spacer()
-                            
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(isExtensionActive ? Color.green : Color.orange)
-                                    .frame(width: 8, height: 8)
-                                Text(isExtensionActive ? "已启用" : "未开启")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(isExtensionActive ? .green : .orange)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(isExtensionActive ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
-                            )
-                        }
-                        
-                        Text("由于 macOS 安全限制，您需要手动在“系统设置”中开启 Finder 扩展插件，右键菜单才会生效。")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                            .lineSpacing(4)
-                        
-                        Text("macOS 15 已通过命令行自动启用扩展，无需手动操作。如需重新启用，请运行项目目录下的 deploy.sh。")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                            .lineSpacing(3)
-                        
-                    }
-                    .padding(16)
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                    )
-                    
-                    // 2. File Formats Card
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("右键菜单显示的类型")
-                            .font(.system(size: 14, weight: .semibold))
-                        
-                        Text("勾选您希望在 Finder 右键新建菜单中出现的文件类型：")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                        
-                        Divider()
-                        
-                        ForEach(FileType.allCases) { type in
-                            Toggle(isOn: Binding(
-                                get: { enabledTypes.contains(type) },
-                                set: { isChecked in
-                                    if isChecked {
-                                        enabledTypes.insert(type)
-                                    } else {
-                                        enabledTypes.remove(type)
-                                    }
-                                    saveSettings()
-                                }
-                            )) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: getIcon(for: type))
-                                        .font(.system(size: 14))
-                                        .foregroundColor(getIconColor(for: type))
-                                        .frame(width: 20)
-                                    Text(type.displayName)
-                                        .font(.system(size: 13))
-                                }
-                            }
-                            .toggleStyle(.checkbox)
-                        }
-                    }
-                    .padding(16)
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                    )
-                    
-                    // 3. Custom Templates Card
-                    VStack(alignment: .leading, spacing: 12) {
+            .padding(.horizontal, 22)
+            .padding(.top, 22)
+            .padding(.bottom, 14)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text("自定义模板")
                             .font(.system(size: 14, weight: .semibold))
-                        
-                        Text("您可以打开应用专属模板目录，修改里面的文件内容（如设置 Word 默认字体、边距，或向 Markdown 写入初始格式），此后右键新建的文件将自动继承您的自定义模板。")
-                            .font(.system(size: 12))
+                        Text("勾选要显示在 Finder 右键菜单中的模板。使用 template.rtf 这样的命名添加模板。")
+                            .font(.system(size: 11))
                             .foregroundColor(.secondary)
-                            .lineSpacing(4)
-                        
-                        Button(action: openTemplatesDirectory) {
-                            HStack {
-                                Image(systemName: "folder")
-                                Text("打开共享模板文件夹")
-                                    .fontWeight(.medium)
-                            }
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(Color.primary.opacity(0.08))
-                            .cornerRadius(6)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
                     }
-                    .padding(16)
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                    )
+
+                    Spacer()
+
+                    Button(action: openTemplatesDirectory) {
+                        Label("打开模板文件夹", systemImage: "folder")
+                    }
+                    .font(.system(size: 12))
+
+                    Button(action: refreshTemplates) {
+                        Label("刷新", systemImage: "arrow.clockwise")
+                    }
+                    .font(.system(size: 12))
                 }
-                .padding(20)
+
+                Divider()
+
+                TemplateListScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(availableTemplates) { template in
+                            templateRow(template)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 28)
+                }
+                .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 260)
             }
+            .padding(18)
+
+            Divider()
+
+            HStack(spacing: 10) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(hasRecentFinderResponse ? Color.green : Color.secondary)
+                        .frame(width: 7, height: 7)
+                    Text("Finder 右键响应：\(hasRecentFinderResponse ? "最近可用" : "等待检测")")
+                }
+
+                Spacer()
+
+                Text(appVersionText)
+            }
+            .font(.system(size: 11))
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 18)
+            .frame(height: 34, alignment: .center)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.36))
         }
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             loadSettings()
-            checkExtensionStatus()
+            refreshExistingTemplatesOnFirstOpen()
+            checkFinderResponseStatus()
             
             // Poll extension status periodically
             timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-                checkExtensionStatus()
+                checkFinderResponseStatus()
             }
         }
         .onDisappear {
             timer?.invalidate()
         }
     }
-    
-    private func getIcon(for type: FileType) -> String {
-        switch type {
-        case .txt: return "doc.text"
-        case .md: return "arrow.down.doc"
-        case .docx: return "doc.richtext"
-        case .xlsx: return "tablecells"
-        case .pptx: return "play.rectangle"
+
+    private func templateRow(_ template: FileTemplate) -> some View {
+        HStack(spacing: 0) {
+            Toggle("", isOn: Binding(
+                get: { enabledTemplates.contains(template) },
+                set: { isChecked in
+                    if isChecked {
+                        enabledTemplates.insert(template)
+                    } else {
+                        enabledTemplates.remove(template)
+                    }
+                    saveSettings()
+                }
+            ))
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+            .frame(width: 28, alignment: .leading)
+
+            Image(systemName: getIcon(for: template))
+                .font(.system(size: 15))
+                .foregroundColor(getIconColor(for: template))
+                .frame(width: 22, height: 22)
+                .padding(.leading, 10)
+                .padding(.trailing, 10)
+
+            Text(template.displayName)
+                .font(.system(size: 13))
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+    }
+
+    private func getIcon(for template: FileTemplate) -> String {
+        switch template.fileExtension {
+        case "txt": return "doc.text"
+        case "md": return "arrow.down.doc"
+        case "rtf": return "doc.richtext"
+        case "docx": return "doc.richtext"
+        case "xlsx": return "tablecells"
+        case "pptx": return "play.rectangle"
+        case "csv": return "tablecells"
+        case "json": return "curlybraces"
+        case "swift": return "swift"
+        case "py": return "chevron.left.forwardslash.chevron.right"
+        default: return "doc"
         }
     }
     
-    private func getIconColor(for type: FileType) -> Color {
-        switch type {
-        case .txt: return .secondary
-        case .md: return Color(red: 0.18, green: 0.67, blue: 0.73)
-        case .docx: return .blue
-        case .xlsx: return .green
-        case .pptx: return .orange
+    private func getIconColor(for template: FileTemplate) -> Color {
+        switch template.fileExtension {
+        case "txt": return .secondary
+        case "md": return Color(red: 0.18, green: 0.67, blue: 0.73)
+        case "rtf", "docx": return .blue
+        case "xlsx", "csv": return .green
+        case "pptx": return .orange
+        case "json", "swift", "py": return .purple
+        default: return .secondary
         }
     }
     
     private func loadSettings() {
-        let saved = SharedDefaults.getEnabledFileTypes()
-        self.enabledTypes = Set(saved)
+        let available = SharedDefaults.getLocalAvailableFileTemplates()
+        let enabled = SharedDefaults.getLocalEnabledFileTemplates()
+        self.availableTemplates = available
+        self.enabledTemplates = Set(enabled)
+    }
+
+    private func refreshExistingTemplatesOnFirstOpen() {
+        SharedDefaults.refreshLocalTemplateCacheFromDiskIfNeeded()
+        loadSettings()
     }
     
     private func saveSettings() {
-        let array = Array(enabledTypes)
-        SharedDefaults.setEnabledFileTypes(array)
+        SharedDefaults.setLocalEnabledFileTemplates(Array(enabledTemplates))
     }
     
     private func openSystemExtensionSettings() {
@@ -210,16 +189,172 @@ struct ContentView: View {
     }
     
     private func openTemplatesDirectory() {
+        TemplateAssets.initializeDefaultTemplates()
+        SharedDefaults.refreshTemplateCacheFromDisk()
+        loadSettings()
         if let url = SharedDefaults.templatesDirectoryURL {
             NSWorkspace.shared.open(url)
         }
     }
+
+    private func refreshTemplates() {
+        SharedDefaults.refreshTemplateCacheFromDisk()
+        loadSettings()
+    }
     
-    private func checkExtensionStatus() {
-        if let lastActive = UserDefaults.standard.object(forKey: "extensionLastActive") as? Date {
-            isExtensionActive = Date().timeIntervalSince(lastActive) < 30.0
-        } else {
-            isExtensionActive = false
+    private func checkFinderResponseStatus() {
+        hasRecentFinderResponse = false
+    }
+
+    private var appVersionText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "未知版本"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+
+        if let build, !build.isEmpty {
+            return "RightHere \(version) (\(build))"
+        }
+
+        return "RightHere \(version)"
+    }
+}
+
+private struct TemplateListScrollView<Content: View>: NSViewRepresentable {
+    @ViewBuilder var content: Content
+
+    func makeNSView(context: Context) -> NSScrollView {
+        TemplateListScrollContainer(rootView: content)
+    }
+
+    func updateNSView(_ container: NSScrollView, context: Context) {
+        guard let container = container as? TemplateListScrollContainer<Content> else { return }
+        container.update(rootView: content)
+    }
+}
+
+private final class TemplateListScrollContainer<Content: View>: NSScrollView {
+    private let thumbView = NSView()
+    private var hostingView: NSHostingView<Content>
+    private var trackingArea: NSTrackingArea?
+    private var isHovering = false
+
+    init(rootView: Content) {
+        self.hostingView = NSHostingView(rootView: rootView)
+        super.init(frame: .zero)
+
+        drawsBackground = false
+        hasVerticalScroller = false
+        hasHorizontalScroller = false
+        autohidesScrollers = true
+        borderType = .noBorder
+
+        contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(scrollPositionChanged),
+            name: NSView.boundsDidChangeNotification,
+            object: contentView
+        )
+
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        documentView = hostingView
+
+        NSLayoutConstraint.activate([
+            hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            hostingView.widthAnchor.constraint(equalTo: contentView.widthAnchor)
+        ])
+
+        thumbView.wantsLayer = true
+        thumbView.layer?.backgroundColor = NSColor.tertiaryLabelColor.withAlphaComponent(0.32).cgColor
+        thumbView.layer?.cornerRadius = 2.5
+        thumbView.alphaValue = 0
+        addSubview(thumbView)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    func update(rootView: Content) {
+        hostingView.rootView = rootView
+        needsLayout = true
+        updateThumb()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovering = true
+        updateThumb()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovering = false
+        updateThumb()
+    }
+
+    override func layout() {
+        super.layout()
+        updateThumb()
+    }
+
+    @objc private func scrollPositionChanged() {
+        updateThumb()
+    }
+
+    private func updateThumb() {
+        guard let documentView else {
+            thumbView.alphaValue = 0
+            return
+        }
+
+        let visibleHeight = contentView.bounds.height
+        let documentHeight = documentView.bounds.height
+        guard documentHeight > visibleHeight + 1 else {
+            thumbView.alphaValue = 0
+            return
+        }
+
+        let trackInset: CGFloat = 6
+        let thumbWidth: CGFloat = 5
+        let trackHeight = max(0, bounds.height - trackInset * 2)
+        let thumbHeight = max(28, trackHeight * visibleHeight / documentHeight)
+        let maxOffset = max(1, documentHeight - visibleHeight)
+        let visibleY = contentView.documentVisibleRect.origin.y
+        let progress = min(max(visibleY / maxOffset, 0), 1)
+        let travel = max(0, trackHeight - thumbHeight)
+        let thumbY = trackInset + travel * progress
+
+        thumbView.frame = CGRect(
+            x: bounds.width - thumbWidth - 4,
+            y: thumbY,
+            width: thumbWidth,
+            height: thumbHeight
+        )
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.12
+            thumbView.animator().alphaValue = isHovering ? 1 : 0
         }
     }
 }

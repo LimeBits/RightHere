@@ -16,8 +16,9 @@ targets:
         DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "11.0"
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSUIElement: YES
         CURRENT_PROJECT_VERSION: "1"
-        MARKETING_VERSION: "1.0"
+        MARKETING_VERSION: "0.1.4"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -48,7 +49,7 @@ targets:
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
         CURRENT_PROJECT_VERSION: "1"
-        MARKETING_VERSION: "1.0"
+        MARKETING_VERSION: "0.1.4"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
     attributes:

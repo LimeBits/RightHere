@@ -11,8 +11,10 @@ macOS Finder 右键「新建文件」扩展。在任意文件夹右键，即可�
 
 ## 系统要求
 
-- macOS 13.0 或更高版本
+- macOS 11.0 或更高版本
 - Apple Silicon (arm64)
+
+> 当前版本已在 macOS 15.0 上验证；macOS 11/12/13/14 仍需实机回归测试。
 
 ## 安装（本机开发版）
 
@@ -29,6 +31,39 @@ macOS Finder 右键「新建文件」扩展。在任意文件夹右键，即可�
 # 实时查看扩展日志
 ./monitor.sh
 ```
+
+## 分支与发布约定
+
+本项目按个人开发者工作流维护：
+
+- `dev`：日常开发分支，用于实现、调试和本机验证。
+- `main`：稳定发布分支，代表已经确认可交付的版本。
+
+当用户说「把目前这个版本提交到本地并且推送到仓库」时，默认含义是：
+
+1. 在当前开发分支提交工作区变更。
+2. 确认构建、部署或相关测试已经通过。
+3. 将当前确认版本合并到 `main`。
+4. 推送 `main` 到远端仓库。
+5. 如果这是一次版本发布，再同步创建版本提交、tag 和 release 记录。
+
+## 分发计划
+
+当前脚本主要服务本机开发部署。由于 RightHere 包含 FinderSync extension，不能依赖 ad-hoc 或 Apple Development 证书稳定分发给其他机器；正式分发需要 Apple Developer Program 提供的 Developer ID Application 证书和 Apple 公证。
+
+后续应新增 `Scripts/package-release-dmg.sh`，用于完整生成可分发 DMG：
+
+```text
+1. Release build
+2. 使用 Developer ID Application 证书签名主 App 和 RightHereExtension.appex
+3. codesign --verify --deep --strict 验证签名
+4. 创建 DMG
+5. xcrun notarytool submit --wait 提交公证
+6. xcrun stapler staple 绑定公证票据
+7. spctl --assess 验证 Gatekeeper 可接受
+```
+
+在这个发布脚本完成前，推荐只使用 `deploy.sh --build` 做本机验证。
 
 ## 目录结构
 
