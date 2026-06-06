@@ -32,6 +32,21 @@ macOS Finder 右键「新建文件」扩展。在任意文件夹右键，即可�
 ./monitor.sh
 ```
 
+## 分支与发布约定
+
+本项目按个人开发者工作流维护：
+
+- `dev`：日常开发分支，用于实现、调试和本机验证。
+- `main`：稳定发布分支，代表已经确认可交付的版本。
+
+当用户说「把目前这个版本提交到本地并且推送到仓库」时，默认含义是：
+
+1. 在当前开发分支提交工作区变更。
+2. 确认构建、部署或相关测试已经通过。
+3. 将当前确认版本合并到 `main`。
+4. 推送 `main` 到远端仓库。
+5. 如果这是一次版本发布，再同步创建版本提交、tag 和 release 记录。
+
 ## 分发计划
 
 当前脚本主要服务本机开发部署。由于 RightHere 包含 FinderSync extension，不能依赖 ad-hoc 或 Apple Development 证书稳定分发给其他机器；正式分发需要 Apple Developer Program 提供的 Developer ID Application 证书和 Apple 公证。
