@@ -4,11 +4,6 @@ import SwiftUI
 @main
 struct RightHereApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-
-    init() {
-        // Initialize default templates in App Groups shared folder
-        TemplateAssets.initializeDefaultTemplates()
-    }
     
     var body: some Scene {
         Settings {
@@ -50,10 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         if settingsWindow == nil {
             let contentView = ContentView()
-                .frame(minWidth: 480, minHeight: 380)
+                .frame(minWidth: 500, minHeight: 410)
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 520, height: 620),
+                contentRect: NSRect(x: 0, y: 0, width: 560, height: 480),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
@@ -70,6 +65,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openTemplatesDirectory() {
+        TemplateAssets.initializeDefaultTemplates()
+        SharedDefaults.refreshTemplateCacheFromDisk()
         if let url = SharedDefaults.templatesDirectoryURL {
             NSWorkspace.shared.open(url)
         }

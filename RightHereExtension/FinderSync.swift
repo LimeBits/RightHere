@@ -3,47 +3,71 @@ import FinderSync
 
 class FinderSync: FIFinderSync {
 
-    private var enabledTypes: [FileType] = []
+    private var enabledTemplates: [FileTemplate] = SharedDefaults.defaultFileTemplates
+    private var templateRecordsByExtension: [String: TemplateRecord] = Dictionary(
+        uniqueKeysWithValues: SharedDefaults.defaultFileTemplates.compactMap { template in
+            SharedDefaults.getLocalTemplateRecord(for: template).map { (template.fileExtension, $0) }
+        }
+    )
 
     override init() {
         super.init()
 
         NSLog("RightHereExtension: Initializing Finder Sync Extension")
 
-        // Use getpwuid to get the real home directory (FileManager returns sandboxed paths inside container)
-        var watchedURLs: Set<URL> = []
-        if let pw = getpwuid(getuid()) {
-            let realHome = String(cString: pw.pointee.pw_dir)
-            let homeURL = URL(fileURLWithPath: realHome)
-            watchedURLs.insert(homeURL)
-            for sub in ["Desktop", "Documents", "Downloads", "Music", "Pictures", "Movies"] {
-                watchedURLs.insert(homeURL.appendingPathComponent(sub))
-            }
-        }
-        FIFinderSyncController.default().directoryURLs = watchedURLs
-        NSLog("RightHereExtension: watching directories: %@", watchedURLs.map { $0.path }.joined(separator: ", "))
-
-        loadSettings()
+        configureWatchedDirectories()
 
         DistributedNotificationCenter.default().addObserver(
             self,
-            selector: #selector(settingsChanged),
+            selector: #selector(settingsChanged(_:)),
             name: Notification.Name("com.b-vibe.RightHere.SettingsChanged"),
             object: nil
         )
     }
 
-    @objc private func settingsChanged() {
-        loadSettings()
+    deinit {
+        DistributedNotificationCenter.default().removeObserver(self)
     }
 
-    private func loadSettings() {
-        enabledTypes = SharedDefaults.getEnabledFileTypes()
+    @objc private func settingsChanged(_ notification: Notification) {
+        guard let enabledExtensions = notification.userInfo?["enabledExtensions"] as? [String] else {
+            return
+        }
+
+        if let data = notification.userInfo?["templateRecords"] as? Data,
+           let records = try? JSONDecoder().decode([TemplateRecord].self, from: data) {
+            templateRecordsByExtension = Dictionary(
+                uniqueKeysWithValues: records.map { ($0.template.fileExtension, $0) }
+            )
+        }
+
+        let enabled = Set(enabledExtensions.map { $0.lowercased() })
+        let availableTemplates = Array(templateRecordsByExtension.values.map { $0.template }).sorted()
+        enabledTemplates = availableTemplates.filter { enabled.contains($0.fileExtension) }
+    }
+
+    private func configureWatchedDirectories() {
+        guard let homeURL = realHomeDirectoryURL() else {
+            FIFinderSyncController.default().directoryURLs = []
+            NSLog("RightHereExtension: no real home directory found; watching no directories")
+            return
+        }
+
+        FIFinderSyncController.default().directoryURLs = [homeURL]
+        NSLog("RightHereExtension: watching Finder home directory tree: %@", homeURL.path)
+    }
+
+    private func realHomeDirectoryURL() -> URL? {
+        guard let pw = getpwuid(getuid()) else { return nil }
+        return URL(fileURLWithPath: String(cString: pw.pointee.pw_dir), isDirectory: true)
     }
 
     private func updateHeartbeat() {
-        // 用 standard UserDefaults 写心跳，避免触发 App Group 容器访问权限弹窗
-        UserDefaults.standard.set(Date(), forKey: "extensionLastActive")
+        SharedDefaults.markExtensionActive()
+    }
+
+    private var isFinderFrontmost: Bool {
+        NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder"
     }
 
     // MARK: - Finder Sync Menu
@@ -51,17 +75,19 @@ class FinderSync: FIFinderSync {
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
         updateHeartbeat()
 
+        guard isFinderFrontmost else { return nil }
         guard menuKind == .contextualMenuForItems || menuKind == .contextualMenuForContainer else { return nil }
+        guard let targetDir = currentTargetDirectory(for: menuKind), isAllowedMenuDirectory(targetDir) else { return nil }
 
-        let activeTypes = enabledTypes
-        guard !activeTypes.isEmpty else { return nil }
+        let activeTemplates = enabledTemplates
+        guard !activeTemplates.isEmpty else { return nil }
 
         let mainMenu = NSMenu(title: "")
         let newFileItem = NSMenuItem(title: "新建文件", action: nil, keyEquivalent: "")
         let submenu = NSMenu(title: "新建文件")
 
-        for (index, type) in activeTypes.enumerated() {
-            let item = NSMenuItem(title: type.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
+        for (index, template) in activeTemplates.enumerated() {
+            let item = NSMenuItem(title: template.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
             item.tag = index
             submenu.addItem(item)
         }
@@ -73,60 +99,102 @@ class FinderSync: FIFinderSync {
 
     @objc func createNewFile(_ sender: NSMenuItem) {
         NSLog("RightHereExtension: createNewFile called, tag=%d", sender.tag)
-        let activeTypes = enabledTypes
-        guard sender.tag >= 0, sender.tag < activeTypes.count else {
-            NSLog("RightHereExtension: invalid tag %d, activeTypes count=%d", sender.tag, activeTypes.count)
+        let activeTemplates = enabledTemplates
+        guard sender.tag >= 0, sender.tag < activeTemplates.count else {
+            NSLog("RightHereExtension: invalid tag %d, activeTemplates count=%d", sender.tag, activeTemplates.count)
             return
         }
-        let type = activeTypes[sender.tag]
+        let template = activeTemplates[sender.tag]
 
         // Determine destination directory
-        let targetDir: URL
-        if let targeted = FIFinderSyncController.default().targetedURL() {
-            var isDir: ObjCBool = false
-            if FileManager.default.fileExists(atPath: targeted.path, isDirectory: &isDir), isDir.boolValue {
-                targetDir = targeted
-            } else {
-                targetDir = targeted.deletingLastPathComponent()
-            }
-        } else if let selected = FIFinderSyncController.default().selectedItemURLs()?.first {
-            targetDir = selected.deletingLastPathComponent()
-        } else {
+        guard isFinderFrontmost,
+              let targetDir = destinationDirectoryForCreate(),
+              isAllowedMenuDirectory(targetDir) else {
             NSLog("RightHereExtension: could not determine target directory")
             return
         }
 
         NSLog("RightHereExtension: target directory: %@", targetDir.path)
 
-        // Ensure template exists
-        guard let templatesDir = SharedDefaults.templatesDirectoryURL else {
-            NSLog("RightHereExtension: templates directory URL is nil")
+        guard let templateRecord = templateRecordsByExtension[template.fileExtension] else {
+            NSLog("RightHereExtension: template record missing: %@", template.templateFileName)
             return
         }
-        let templateURL = templatesDir.appendingPathComponent("template.\(type.fileExtension)")
+
         let fileManager = FileManager.default
-        if !fileManager.fileExists(atPath: templateURL.path) {
-            TemplateAssets.initializeDefaultTemplates()
-            guard fileManager.fileExists(atPath: templateURL.path) else {
-                NSLog("RightHereExtension: template missing after re-init: %@", templateURL.path)
-                return
-            }
-        }
 
         // Find a non-colliding destination name
-        var destinationURL = targetDir.appendingPathComponent("\(type.defaultFileName).\(type.fileExtension)")
+        var destinationURL = targetDir.appendingPathComponent("\(template.defaultFileName).\(template.fileExtension)")
         var count = 2
         while fileManager.fileExists(atPath: destinationURL.path) {
-            destinationURL = targetDir.appendingPathComponent("\(type.defaultFileName) (\(count)).\(type.fileExtension)")
+            destinationURL = targetDir.appendingPathComponent("\(template.defaultFileName) (\(count)).\(template.fileExtension)")
             count += 1
         }
 
-        // Copy template to destination
         do {
-            try fileManager.copyItem(at: templateURL, to: destinationURL)
+            try templateRecord.data.write(to: destinationURL, options: .atomic)
             NSLog("RightHereExtension: created file at %@", destinationURL.path)
         } catch {
             NSLog("RightHereExtension: failed to create file: %@", error.localizedDescription)
         }
+    }
+
+    private func currentTargetDirectory(for menuKind: FIMenuKind) -> URL? {
+        if menuKind == .contextualMenuForContainer {
+            return FIFinderSyncController.default().targetedURL()
+        }
+
+        if let selected = FIFinderSyncController.default().selectedItemURLs()?.first {
+            return selected.deletingLastPathComponent()
+        }
+
+        return FIFinderSyncController.default().targetedURL()
+    }
+
+    private func destinationDirectoryForCreate() -> URL? {
+        if let targeted = FIFinderSyncController.default().targetedURL() {
+            return directoryURL(for: targeted)
+        }
+
+        if let selected = FIFinderSyncController.default().selectedItemURLs()?.first {
+            return directoryURL(for: selected)
+        }
+
+        return nil
+    }
+
+    private func directoryURL(for url: URL) -> URL {
+        if url.hasDirectoryPath {
+            return url
+        }
+
+        do {
+            let values = try url.resourceValues(forKeys: [.isDirectoryKey])
+            if values.isDirectory == true {
+                return url
+            }
+        } catch {
+            NSLog("RightHereExtension: failed to read URL resource values: %@", error.localizedDescription)
+        }
+
+        return url.deletingLastPathComponent()
+    }
+
+    private func isAllowedMenuDirectory(_ directory: URL) -> Bool {
+        let path = directory.standardizedFileURL.path
+
+        if path == "/" || path == "/Applications" || path.hasPrefix("/Applications/") {
+            return false
+        }
+
+        guard let homeURL = realHomeDirectoryURL() else { return true }
+        let homePath = homeURL.standardizedFileURL.path
+        let sensitiveHomePaths = [
+            "\(homePath)/Library",
+            "\(homePath)/Library/Containers",
+            "\(homePath)/Library/Group Containers"
+        ]
+
+        return !sensitiveHomePaths.contains { path == $0 || path.hasPrefix("\($0)/") }
     }
 }

@@ -254,7 +254,9 @@ killall Finder
 
 ---
 
+## 分发签名方式对比
 
+| 场景 | 签名方式 | 成本 | 是否适合公开分发 |
 |------|---------|------|------------|
 | 当前（本机开发） | Apple Development | 免费 | ✗ 仅限自己设备 |
 | 本地/网络分发 | Developer ID Application | $99/年 | ✓ 需公证（notarize） |
@@ -284,6 +286,38 @@ killall Finder
 
 ---
 
+## 坑 16：首次打开设置页看不到旧模板文件夹里的自定义类型
+
+**现象**：用户安装新版后，App Group 的 Templates 目录里已经存在 `template.rtf` 等旧模板，但首次打开设置页只显示内置 txt/md/docx/xlsx/pptx。必须点「刷新」或「打开模板文件夹」后，rtf 才出现在自定义模板列表。
+
+**原因**：设置页为了避免首次打开触发 App Group 权限弹窗，只读取 `UserDefaults.standard` 里的本地模板缓存；如果缓存尚未建立，就回退到内置模板列表。旧模板文件虽然已经在共享模板目录里，但没有被同步进本地缓存。
+
+**解法**：首次打开设置页时做一次静默扫描：
+- 只读取已有模板目录并更新本地缓存；
+- 不创建默认模板；
+- 不写 App Group UserDefaults；
+- 仅在本地缓存变化时通知 extension。
+
+这样能发现旧模板目录里的 `template.rtf`，同时避免恢复到「打开设置页就重复权限弹窗」的状态。
+
+---
+
+## 坑 17：SwiftUI / AppKit 原生滚动条不适合 hover 即显示的轻量列表
+
+**现象**：自定义模板列表的滚动条希望「鼠标进入列表区域即显示」，但使用 SwiftUI `ScrollView(showsIndicators:)` 或 AppKit overlay scroller 时，滚动条经常只在实际滚动时出现；而非 overlay scroller 又会显示较粗的轨道，视觉过重。
+
+**原因**：macOS 原生 overlay scroller 的显示策略由系统控制，主要响应滚动手势，不适合做固定的 hover affordance。SwiftUI 的 `showsIndicators` 在 macOS 上动态切换也不总是可靠。
+
+**解法**：隐藏系统 scroller，使用 `NSScrollView` 外加一条自绘的轻量 thumb：
+- `NSTrackingArea` 监听鼠标进入/离开列表区域；
+- `NSView.boundsDidChangeNotification` 监听滚动位置；
+- 根据 `documentVisibleRect.origin.y / (documentHeight - visibleHeight)` 计算进度；
+- thumb 使用浅色、窄宽度、圆角，并在 hover 时淡入淡出。
+
+注意：AppKit 坐标系和直觉方向容易相反，顶部内容对应的 thumb 位置需要显式映射到顶部，滚到底时映射到底部。
+
+---
+
 ## 快速调试流程
 
 ```bash
@@ -299,4 +333,3 @@ pluginkit -m -p com.apple.FinderSync | grep RightHere
 # 手动重启 Finder
 killall Finder
 ```
-

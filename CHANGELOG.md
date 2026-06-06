@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.3] - 2026-06-06
+
+### 新增
+- 自定义模板列表支持安装后首次打开设置页时静默扫描已有模板目录，自动发现 `template.rtf` 等历史自定义模板。
+- 设置页模板列表加入自定义轻量滚动条：鼠标悬停区域即显示，颜色更浅，滚动进度与列表位置一致。
+
+### 优化
+- 设置页改为更紧凑的自定义模板管理界面，复选框统一左对齐，模板图标与名称列对齐。
+- 删除模板行下方的 `template.xxx` 副标题，仅保留文件类型名称。
+- 设置窗口增高，底部状态栏加高，避免版本号与 Finder 响应状态贴近窗口底部。
+- Finder extension 菜单构建阶段减少 App Group 读写，避免右键或首次打开设置页时重复触发系统权限弹窗。
+
+### 修复
+- 修复 SwiftUI `ScrollView(showsIndicators:)` 在 macOS 上 hover 切换滚动条不可靠的问题。
+- 修复自定义滚动条进度方向反向的问题。
+- 修复自定义模板（如 rtf）需要手动刷新/打开模板文件夹后才出现在设置页的问题。
+
+### 测试
+- 已通过 `xcodebuild -project RightHere.xcodeproj -scheme RightHere -configuration Debug build`。
+- 已通过 `./deploy.sh --build --force` 在本机部署，FinderSync extension 状态为启用。
+
+---
+
 ## [0.1.2] - 2026-06-04
 
 ### 修复
