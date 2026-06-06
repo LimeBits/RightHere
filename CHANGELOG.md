@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.4] - 2026-06-06
+
+### 优化
+- 更新 macOS App icon 为蓝色圆角底板 + 白色文件加号图标，匹配当前应用视觉。
+- 重新生成 `16/32/64/128/256/512/1024` 全套 AppIcon PNG 资源。
+
+### 修复
+- 修复由截图源图外侧白色背景/高光残留导致的 App icon 白边问题，深色背景下显示更干净。
+
+### 测试
+- 已通过 `xcodebuild -project RightHere.xcodeproj -scheme RightHere -configuration Debug -arch arm64 build`。
+- 已通过 `./deploy.sh --build --force` 在本机部署，FinderSync extension 状态为启用。
+
+---
+
 ## [0.1.3] - 2026-06-06
 
 ### 新增
