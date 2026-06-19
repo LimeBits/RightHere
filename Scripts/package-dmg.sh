@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 打包 RightHere DMG 分发包
-# 用法：./Scripts/package-dmg.sh [--build] [--universal] [--with-installer-script]
+# 用法：./Scripts/package-dmg.sh [--build] [--universal] [--skip-signing] [--with-installer-script]
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,7 +16,7 @@ MOUNT_ROOT="${DIST_DIR}/dmg-mount"
 PACKAGE_APP_ARGS=()
 for arg in "$@"; do
     case "${arg}" in
-        --build|--universal)
+        --build|--universal|--skip-signing)
             PACKAGE_APP_ARGS+=("${arg}")
             ;;
         --with-installer-script)
@@ -87,7 +87,10 @@ if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
     INSTALLER_POSITION_SCRIPT='    set position of item "安装并启用 RightHere.command" of container window to {280, 300}'
 fi
 
-/usr/bin/osascript <<APPLESCRIPT
+if [[ -n "${CI:-}" ]]; then
+    printf '→ CI 环境中跳过 Finder 窗口布局。\n'
+else
+    /usr/bin/osascript <<APPLESCRIPT
 tell application "Finder"
   tell folder POSIX file "${MOUNT_DIR}"
     open
@@ -110,6 +113,7 @@ ${INSTALLER_POSITION_SCRIPT}
   end tell
 end tell
 APPLESCRIPT
+fi
 
 # ── 压缩为只读 DMG ────────────────────────────────────────────
 printf '→ 压缩 DMG...\n'

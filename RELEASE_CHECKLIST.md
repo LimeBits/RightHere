@@ -38,8 +38,8 @@ Use this checklist before publishing a GitHub release.
 - Commit source and documentation changes.
 - Push `main`.
 - Create and push an annotated tag matching the app version.
-- Create a GitHub Release from the tag.
-- Upload the generated Universal zip or DMG as release assets.
+- GitHub Actions will create the GitHub Release from the tag.
+- GitHub Actions will upload the generated Universal DMG and `.sha256` checksum as release assets.
 - Download the uploaded asset and launch it once on a clean machine or test account.
 
 ## Future Signing

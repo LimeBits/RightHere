@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v0.1.5"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build DMG and publish release
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build DMG
+        shell: bash
+        run: ./Scripts/package-dmg.sh --build --universal --skip-signing
+
+      - name: Find DMG
+        id: artifact
+        shell: bash
+        run: |
+          dmg="$(ls -t dist/RightHere-*.dmg | head -1)"
+          shasum -a 256 "${dmg}" > "${dmg}.sha256"
+          echo "dmg=${dmg}" >> "${GITHUB_OUTPUT}"
+          echo "sha256=${dmg}.sha256" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: RightHere ${{ steps.release.outputs.tag }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            ${{ steps.artifact.outputs.dmg }}
+            ${{ steps.artifact.outputs.sha256 }}
+          draft: false
+          prerelease: false

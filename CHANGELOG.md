@@ -23,6 +23,11 @@
 - 已通过 `xcodebuild` 双架构 Debug 构建：`arm64 + x86_64`。
 - 已生成 Universal DMG 用于内部验证。
 
+### 分发
+- GitHub Release 可上传安装包：`dist/RightHere-0.1.5-20260619-2237.dmg`。
+- 安装包 SHA-256：`fa6e9774f143d0f9d49b52419e2916ae7824e1279061c2c40c42332fecbb432a`。
+- 详细安装和发布说明已同步到 `RELEASE_NOTES.md`。
+
 ---
 
 ## [0.1.4] - 2026-06-06

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 编译并打包 RightHere.app（默认保留 Xcode build 产物签名）
-# 用法：./Scripts/package-app.sh [--build] [--universal]
+# 用法：./Scripts/package-app.sh [--build] [--universal] [--skip-signing]
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -9,6 +9,7 @@ DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Pro
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
 DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
 UNIVERSAL=false
+SKIP_SIGNING=false
 NATIVE_ARCH="$(uname -m)"
 
 BUILD_SETTINGS=()
@@ -17,34 +18,63 @@ if [[ -n "${DEVELOPMENT_TEAM}" ]]; then
     BUILD_SETTINGS+=(DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}")
     XCODEBUILD_FLAGS+=(-allowProvisioningUpdates)
 fi
-for arg in "$@"; do [ "$arg" = "--universal" ] && UNIVERSAL=true; done
+for arg in "$@"; do
+    case "${arg}" in
+        --universal)
+            UNIVERSAL=true
+            ;;
+        --skip-signing)
+            SKIP_SIGNING=true
+            ;;
+    esac
+done
+
+if [[ "${SKIP_SIGNING}" == true ]]; then
+    BUILD_SETTINGS+=(
+        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGNING_REQUIRED=NO
+        CODE_SIGN_IDENTITY=
+    )
+fi
+
+run_xcodebuild() {
+    local build_log
+    build_log="$(mktemp "${TMPDIR:-/tmp}/righthere-xcodebuild.XXXXXX.log")"
+
+    if ! xcodebuild "$@" >"${build_log}" 2>&1; then
+        grep -E "error:|warning:|Build succeeded|Build FAILED" "${build_log}" | tail -60 || true
+        printf '✗ xcodebuild failed. Full log: %s\n' "${build_log}" >&2
+        return 1
+    fi
+
+    grep -E "error:|warning:|Build succeeded|Build FAILED" "${build_log}" | tail -20 || true
+    rm -f "${build_log}"
+}
 
 # ── 可选：先编译 ──────────────────────────────────────────────
 if [[ "${1:-}" == "--build" ]]; then
     printf '→ 编译 Release build...\n'
     if [ "$UNIVERSAL" = true ]; then
         printf '  模式: Universal Binary (arm64 + x86_64)\n'
-        xcodebuild \
+        run_xcodebuild \
             -project "${ROOT_DIR}/RightHere.xcodeproj" \
             -scheme RightHere \
             -configuration Release \
-            "${XCODEBUILD_FLAGS[@]}" \
+            ${XCODEBUILD_FLAGS[@]+"${XCODEBUILD_FLAGS[@]}"} \
             ARCHS="arm64 x86_64" \
             ONLY_ACTIVE_ARCH=NO \
-            "${BUILD_SETTINGS[@]}" \
-            build \
-            2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20 || true
+            ${BUILD_SETTINGS[@]+"${BUILD_SETTINGS[@]}"} \
+            build
     else
         printf '  模式: %s\n' "${NATIVE_ARCH}"
-        xcodebuild \
+        run_xcodebuild \
             -project "${ROOT_DIR}/RightHere.xcodeproj" \
             -scheme RightHere \
             -configuration Release \
-            "${XCODEBUILD_FLAGS[@]}" \
+            ${XCODEBUILD_FLAGS[@]+"${XCODEBUILD_FLAGS[@]}"} \
             -arch "${NATIVE_ARCH}" \
-            "${BUILD_SETTINGS[@]}" \
-            build \
-            2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20 || true
+            ${BUILD_SETTINGS[@]+"${BUILD_SETTINGS[@]}"} \
+            build
     fi
     DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Products/Release/RightHere.app 2>/dev/null | head -1 || true)
 fi
@@ -68,7 +98,9 @@ cp -R "${DERIVED_APP}" "${APP_DIR}"
 printf '→ 清除隔离标记...\n'
 xattr -cr "${APP_DIR}"
 
-if [[ -n "${CODESIGN_IDENTITY}" ]]; then
+if [[ "${SKIP_SIGNING}" == true ]]; then
+    printf '→ 已启用 --skip-signing，跳过重签。\n'
+elif [[ -n "${CODESIGN_IDENTITY}" ]]; then
     printf '→ 使用指定证书重签 extension...\n'
     APPEX="${APP_DIR}/Contents/PlugIns/RightHereExtension.appex"
     if [[ -d "${APPEX}" ]]; then
