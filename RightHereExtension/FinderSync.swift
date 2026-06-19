@@ -83,11 +83,18 @@ class FinderSync: FIFinderSync {
         guard !activeTemplates.isEmpty else { return nil }
 
         let mainMenu = NSMenu(title: "")
+        mainMenu.autoenablesItems = false
+
         let newFileItem = NSMenuItem(title: "新建文件", action: nil, keyEquivalent: "")
+        newFileItem.isEnabled = true
+
         let submenu = NSMenu(title: "新建文件")
+        submenu.autoenablesItems = false
 
         for (index, template) in activeTemplates.enumerated() {
             let item = NSMenuItem(title: template.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
+            item.target = self
+            item.isEnabled = true
             item.tag = index
             submenu.addItem(item)
         }

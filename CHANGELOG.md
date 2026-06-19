@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.1.5] - 2026-06-19
+
+### 新增
+- 菜单栏新增「帮助与反馈」，支持检查 GitHub Releases 更新、打开项目主页、打开 Issues、复制诊断信息和创建反馈 Issue。
+- 新增 `LICENSE`、`PRIVACY.md`、`RELEASE_CHECKLIST.md`、GitHub Issue 模板和 `Scripts/doctor.sh`，完善开源协作准备。
+- 设置页新增 Finder 最近响应状态、模板空状态和全部模板禁用提示。
+
+### 优化
+- 开源仓库移除个人 Team ID，改为通过 `DEVELOPMENT_TEAM` 环境变量进行本地开发签名。
+- `deploy.sh` 和打包脚本支持本机架构与 Universal Binary 构建。
+- DMG 改为标准拖拽安装布局：`RightHere.app` 拖到 `Applications`，内部安装脚本改为可选参数。
+- App icon 增加透明安全边距，改善 Launchpad 中的视觉尺寸。
+- README 补充本地开发、签名、隐私、打包和公开分发状态说明。
+
+### 修复
+- 修复主 App 无法可靠读取 FinderSync extension 最近活跃时间的问题。
+- 手动检查更新时，如果 GitHub Releases 尚未创建，显示更明确的提示。
+
+### 测试
+- 已通过脚本语法检查和 `git diff --check`。
+- 已通过 `xcodebuild` 双架构 Debug 构建：`arm64 + x86_64`。
+- 已生成 Universal DMG 用于内部验证。
+
+---
+
 ## [0.1.4] - 2026-06-06
 
 ### 优化
@@ -53,7 +78,7 @@
 
 ### 文档
 - DEVLOG 补充坑 13（App Group 权限弹窗）、坑 14（extension 进程未启动）、坑 15（bundle 修改导致菜单消失）
-- README 系统要求恢复为 macOS 11.0 或更高版本
+- README 系统要求曾恢复为 macOS 11.0 或更高版本；后续开源目标已统一为 macOS 12.0+。
 
 ### 测试
 - 已在 macOS 15.0 上验证菜单栏常驻、Downloads 与 Desktop 新建文件、Finder 右键菜单可用

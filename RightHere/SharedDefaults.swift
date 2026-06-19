@@ -11,6 +11,7 @@ public struct SharedDefaults {
     public static let enabledTypesKey = "enabledFileTypes"
     public static let disabledTypesKey = "disabledFileTypes"
     public static let extensionLastActiveKey = "extensionLastActive"
+    public static let extensionDidBecomeActiveNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDidBecomeActive")
     public static let templateCacheKey = "templateCache"
     public static let localTemplateCacheKey = "localTemplateCache"
     public static let localDisabledTypesKey = "localDisabledFileTypes"
@@ -127,6 +128,16 @@ public struct SharedDefaults {
     }
 
     public static func markExtensionActive() {
+        UserDefaults.standard.set(Date(), forKey: extensionLastActiveKey)
+        DistributedNotificationCenter.default().postNotificationName(
+            extensionDidBecomeActiveNotificationName,
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+    }
+
+    public static func recordExtensionActiveLocally() {
         UserDefaults.standard.set(Date(), forKey: extensionLastActiveKey)
     }
 

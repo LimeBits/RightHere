@@ -10,6 +10,15 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALLED_APP="/Applications/RightHere.app"
 BUNDLE_ID="com.b-vibe.RightHere.Extension"
 UNIVERSAL=false
+NATIVE_ARCH="$(uname -m)"
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
+
+BUILD_SETTINGS=()
+XCODEBUILD_FLAGS=()
+if [ -n "$DEVELOPMENT_TEAM" ]; then
+    BUILD_SETTINGS+=(DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM")
+    XCODEBUILD_FLAGS+=(-allowProvisioningUpdates)
+fi
 
 for arg in "$@"; do
     [ "$arg" = "--universal" ] && UNIVERSAL=true
@@ -25,15 +34,19 @@ if [ "$1" = "--build" ]; then
         xcodebuild -project "$PROJECT_DIR/RightHere.xcodeproj" \
                    -scheme RightHere \
                    -configuration Debug \
+                   "${XCODEBUILD_FLAGS[@]}" \
                    ARCHS="arm64 x86_64" \
                    ONLY_ACTIVE_ARCH=NO \
+                   "${BUILD_SETTINGS[@]}" \
                    build 2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20
     else
-        echo "  模式: arm64 (本机)"
+        echo "  模式: ${NATIVE_ARCH} (本机)"
         xcodebuild -project "$PROJECT_DIR/RightHere.xcodeproj" \
                    -scheme RightHere \
                    -configuration Debug \
-                   -arch arm64 \
+                   "${XCODEBUILD_FLAGS[@]}" \
+                   -arch "$NATIVE_ARCH" \
+                   "${BUILD_SETTINGS[@]}" \
                    build 2>&1 | grep -E "error:|warning:|Build succeeded|Build FAILED" | tail -20
     fi
     DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Products/Debug/RightHere.app 2>/dev/null | head -1)

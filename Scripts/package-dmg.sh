@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 打包 RightHere DMG 分发包
-# 用法：./Scripts/package-dmg.sh [--build]
+# 用法：./Scripts/package-dmg.sh [--build] [--universal] [--with-installer-script]
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -8,13 +8,23 @@ APP_DIR="${ROOT_DIR}/RightHere.app"
 DIST_DIR="${ROOT_DIR}/dist"
 VOLUME_NAME="RightHere"
 BUNDLE_ID="com.b-vibe.RightHere"
+INCLUDE_INSTALLER_SCRIPT=false
 
 MOUNT_ROOT="${DIST_DIR}/dmg-mount"
 
 # ── 先打包 app ────────────────────────────────────────────────
-BUILD_FLAG=""
-[[ "${1:-}" == "--build" ]] && BUILD_FLAG="--build"
-"${ROOT_DIR}/Scripts/package-app.sh" ${BUILD_FLAG}
+PACKAGE_APP_ARGS=()
+for arg in "$@"; do
+    case "${arg}" in
+        --build|--universal)
+            PACKAGE_APP_ARGS+=("${arg}")
+            ;;
+        --with-installer-script)
+            INCLUDE_INSTALLER_SCRIPT=true
+            ;;
+    esac
+done
+"${ROOT_DIR}/Scripts/package-app.sh" "${PACKAGE_APP_ARGS[@]}"
 
 if [[ ! -d "${APP_DIR}" ]]; then
     printf '✗ RightHere.app 不存在，package-app.sh 可能失败\n' >&2
@@ -55,9 +65,13 @@ trap cleanup EXIT
 # ── 拷贝内容 ──────────────────────────────────────────────────
 printf '→ 填充 DMG 内容...\n'
 /bin/cp -R "${APP_DIR}" "${MOUNT_DIR}/"
-# 用 .command 后缀——macOS 双击会用 Terminal 执行，.sh 双击只会打开文本编辑器
-/bin/cp "${ROOT_DIR}/Scripts/install.sh" "${MOUNT_DIR}/安装 RightHere.command"
-chmod +x "${MOUNT_DIR}/安装 RightHere.command"
+/bin/ln -s /Applications "${MOUNT_DIR}/Applications"
+if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
+    # 可选的一键安装脚本：内部测试时可自动复制、启动、启用扩展并重启 Finder。
+    # 用 .command 后缀，macOS 双击会用 Terminal 执行；.sh 双击只会打开文本编辑器。
+    /bin/cp "${ROOT_DIR}/Scripts/install.sh" "${MOUNT_DIR}/安装并启用 RightHere.command"
+    chmod +x "${MOUNT_DIR}/安装并启用 RightHere.command"
+fi
 
 # Volume 图标
 ICNS="${APP_DIR}/Contents/Resources/AppIcon.icns"
@@ -68,6 +82,11 @@ if [[ -f "${ICNS}" ]]; then
 fi
 
 # ── Finder 窗口布局（参考 LocalFlow 风格）────────────────────
+INSTALLER_POSITION_SCRIPT=""
+if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
+    INSTALLER_POSITION_SCRIPT='    set position of item "安装并启用 RightHere.command" of container window to {280, 300}'
+fi
+
 /usr/bin/osascript <<APPLESCRIPT
 tell application "Finder"
   tell folder POSIX file "${MOUNT_DIR}"
@@ -81,8 +100,9 @@ tell application "Finder"
     set icon size of theViewOptions to 120
     set text size of theViewOptions to 13
     set background color of theViewOptions to {56797, 56797, 61166}
-    set position of item "RightHere.app" of container window to {170, 170}
-    set position of item "安装 RightHere.command" of container window to {390, 170}
+    set position of item "RightHere.app" of container window to {150, 155}
+    set position of item "Applications" of container window to {410, 155}
+${INSTALLER_POSITION_SCRIPT}
     close
     open
     update without registering applications
@@ -109,4 +129,7 @@ APP_SIZE="$(du -sh "${DMG_PATH}" | awk '{print $1}')"
 printf '  大小: %s\n' "${APP_SIZE}"
 printf '\n分发方式：\n'
 printf '  将 %s 发给朋友\n' "$(basename "${DMG_PATH}")"
-printf '  朋友打开 DMG 后双击「安装 RightHere.command」即可\n'
+printf '  推荐拖动 RightHere.app 到 Applications\n'
+if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
+    printf '  也可双击「安装并启用 RightHere.command」用于内部测试\n'
+fi

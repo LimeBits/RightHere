@@ -1,21 +1,21 @@
-# macOS build artifacts
-DerivedData/
-*.xcuserstate
-*.xcodeproj/project.xcworkspace/xcuserdata/
-xcuserdata/
-
-# Packaged app and dist
-RightHere.app/
-dist/
-
-# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 
-# Scripts temp
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+xcuserdata/
+
+# Local build and release artifacts
+RightHere.app/
+dist/
+*.dmg
 Scripts/dmg-mount/
 
-# Debug logs
+# Local screenshots and scratch files
+ScreenShot_*
+*.log
 claude_debug.log
 latest

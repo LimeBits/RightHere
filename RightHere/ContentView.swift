@@ -3,7 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @State private var availableTemplates: [FileTemplate] = []
     @State private var enabledTemplates: Set<FileTemplate> = []
-    @State private var hasRecentFinderResponse = false
+    @State private var lastFinderCall: Date? = nil
+    @State private var now = Date()
     @State private var timer: Timer? = nil
     
     var body: some View {
@@ -54,16 +55,27 @@ struct ContentView: View {
 
                 Divider()
 
-                TemplateListScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(availableTemplates) { template in
-                            templateRow(template)
+                if availableTemplates.isEmpty {
+                    emptyTemplatesView
+                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 260)
+                } else {
+                    VStack(spacing: 10) {
+                        if enabledTemplates.isEmpty {
+                            disabledTemplatesWarning
                         }
+
+                        TemplateListScrollView {
+                            VStack(spacing: 0) {
+                                ForEach(availableTemplates) { template in
+                                    templateRow(template)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.trailing, 28)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 152, maxHeight: 230)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.trailing, 28)
                 }
-                .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 260)
             }
             .padding(18)
 
@@ -72,9 +84,9 @@ struct ContentView: View {
             HStack(spacing: 10) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(hasRecentFinderResponse ? Color.green : Color.secondary)
+                        .fill(isRecentFinderCall ? Color.green : Color.secondary)
                         .frame(width: 7, height: 7)
-                    Text("Finder 右键响应：\(hasRecentFinderResponse ? "最近可用" : "等待检测")")
+                    Text(finderCallStatusText)
                 }
 
                 Spacer()
@@ -93,8 +105,8 @@ struct ContentView: View {
             refreshExistingTemplatesOnFirstOpen()
             checkFinderResponseStatus()
             
-            // Poll extension status periodically
-            timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                now = Date()
                 checkFinderResponseStatus()
             }
         }
@@ -135,6 +147,40 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
+    }
+
+    private var emptyTemplatesView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "tray")
+                .font(.system(size: 24))
+                .foregroundColor(.secondary)
+
+            Text("没有找到可用模板")
+                .font(.system(size: 13, weight: .semibold))
+
+            Text("请打开模板文件夹，添加 template.txt、template.md 或 template.rtf。")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var disabledTemplatesWarning: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundColor(.orange)
+
+            Text("当前没有启用任何模板，Finder 右键菜单不会显示“新建文件”。")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.orange.opacity(0.10))
+        .cornerRadius(6)
     }
 
     private func getIcon(for template: FileTemplate) -> String {
@@ -203,7 +249,36 @@ struct ContentView: View {
     }
     
     private func checkFinderResponseStatus() {
-        hasRecentFinderResponse = false
+        lastFinderCall = SharedDefaults.getExtensionLastActive()
+    }
+
+    private var isRecentFinderCall: Bool {
+        guard let lastFinderCall else { return false }
+        return now.timeIntervalSince(lastFinderCall) < 15
+    }
+
+    private var finderCallStatusText: String {
+        guard let lastFinderCall else {
+            return "最近 Finder 调用：尚未检测到"
+        }
+
+        let elapsed = max(0, Int(now.timeIntervalSince(lastFinderCall)))
+
+        if elapsed < 10 {
+            return "最近 Finder 调用：刚刚"
+        }
+
+        if elapsed < 60 {
+            return "最近 Finder 调用：\(elapsed) 秒前"
+        }
+
+        let minutes = elapsed / 60
+        if minutes < 60 {
+            return "最近 Finder 调用：\(minutes) 分钟前"
+        }
+
+        let hours = minutes / 60
+        return "最近 Finder 调用：\(hours) 小时前"
     }
 
     private var appVersionText: String {
