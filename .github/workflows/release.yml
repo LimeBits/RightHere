@@ -17,7 +17,7 @@ permissions:
 jobs:
   build-release:
     name: Build DMG and publish release
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -25,6 +25,12 @@ jobs:
 
       - name: Show Xcode version
         run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
 
       - name: Resolve release tag
         id: release
