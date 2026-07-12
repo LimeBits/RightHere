@@ -4,6 +4,7 @@ struct ContentView: View {
     @State private var availableTemplates: [FileTemplate] = []
     @State private var enabledTemplates: Set<FileTemplate> = []
     @State private var lastFinderCall: Date? = nil
+    @State private var extensionRegistrationState: FinderExtensionRegistrationState = .checking
     @State private var now = Date()
     @State private var timer: Timer? = nil
     
@@ -31,6 +32,8 @@ struct ContentView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 12) {
+                finderExtensionStatusView
+
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("自定义模板")
@@ -104,6 +107,7 @@ struct ContentView: View {
             loadSettings()
             refreshExistingTemplatesOnFirstOpen()
             checkFinderResponseStatus()
+            refreshFinderExtensionRegistration()
             
             timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
                 now = Date()
@@ -183,6 +187,39 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    private var finderExtensionStatusView: some View {
+        HStack(spacing: 10) {
+            Image(systemName: extensionRegistrationState.symbolName)
+                .foregroundColor(extensionRegistrationState.symbolColor)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(extensionRegistrationState.title)
+                    .font(.system(size: 12, weight: .semibold))
+                Text(extensionRegistrationState.message)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 8)
+
+            Button(action: openSystemExtensionSettings) {
+                Label("扩展设置", systemImage: "gearshape")
+            }
+            .font(.system(size: 11))
+
+            Button(action: refreshFinderExtensionRegistration) {
+                Label("刷新", systemImage: "arrow.clockwise")
+            }
+            .font(.system(size: 11))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(extensionRegistrationState.backgroundColor)
+        .cornerRadius(6)
+    }
+
     private func getIcon(for template: FileTemplate) -> String {
         switch template.fileExtension {
         case "txt": return "doc.text"
@@ -246,6 +283,16 @@ struct ContentView: View {
     private func refreshTemplates() {
         SharedDefaults.refreshTemplateCacheFromDisk()
         loadSettings()
+    }
+
+    private func refreshFinderExtensionRegistration() {
+        extensionRegistrationState = .checking
+        DispatchQueue.global(qos: .utility).async {
+            let state = FinderExtensionInspector.currentRegistrationState()
+            DispatchQueue.main.async {
+                extensionRegistrationState = state
+            }
+        }
     }
     
     private func checkFinderResponseStatus() {
@@ -430,6 +477,170 @@ private final class TemplateListScrollContainer<Content: View>: NSScrollView {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.12
             thumbView.animator().alphaValue = isHovering ? 1 : 0
+        }
+    }
+}
+
+enum FinderExtensionRegistrationState: Equatable {
+    case checking
+    case enabled(String)
+    case disabled(String)
+    case notRegistered
+    case unavailable(String)
+
+    var title: String {
+        switch self {
+        case .checking:
+            return "Finder 扩展状态：正在检查"
+        case .enabled:
+            return "Finder 扩展状态：已启用"
+        case .disabled:
+            return "Finder 扩展状态：未启用"
+        case .notRegistered:
+            return "Finder 扩展状态：系统未发现 RightHere"
+        case .unavailable:
+            return "Finder 扩展状态：无法读取"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .checking:
+            return "正在读取系统扩展注册状态。"
+        case .enabled:
+            return "如果右键菜单仍未出现，请在 Finder 中打开用户目录后右键空白处。"
+        case .disabled:
+            return "请在系统设置中启用 RightHere 的 Finder 扩展。"
+        case .notRegistered:
+            return "当前安装包可能未正确签名，或系统尚未注册内嵌扩展。"
+        case .unavailable(let detail):
+            return detail
+        }
+    }
+
+    var launchAlertMessage: String {
+        switch self {
+        case .disabled:
+            return "RightHere 已安装，但 Finder 扩展还没有启用。请在系统设置中启用 RightHere，然后重启 Finder。"
+        case .notRegistered:
+            return "RightHere 已安装，但系统没有发现它的 Finder 扩展。常见原因是安装了未签名/跳过签名的测试包。请换用已签名安装包，或用自己的 Apple Developer 账号重新构建。"
+        case .unavailable(let detail):
+            return "RightHere 暂时无法读取 Finder 扩展状态。\n\n\(detail)"
+        case .checking, .enabled:
+            return ""
+        }
+    }
+
+    var shouldAlertOnLaunch: Bool {
+        switch self {
+        case .disabled, .notRegistered, .unavailable:
+            return true
+        case .checking, .enabled:
+            return false
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .checking:
+            return "clock"
+        case .enabled:
+            return "checkmark.circle.fill"
+        case .disabled:
+            return "exclamationmark.circle.fill"
+        case .notRegistered:
+            return "xmark.circle.fill"
+        case .unavailable:
+            return "questionmark.circle.fill"
+        }
+    }
+
+    var symbolColor: Color {
+        switch self {
+        case .checking:
+            return .secondary
+        case .enabled:
+            return .green
+        case .disabled:
+            return .orange
+        case .notRegistered, .unavailable:
+            return .red
+        }
+    }
+
+    var backgroundColor: Color {
+        switch self {
+        case .enabled:
+            return Color.green.opacity(0.10)
+        case .disabled:
+            return Color.orange.opacity(0.10)
+        case .notRegistered, .unavailable:
+            return Color.red.opacity(0.10)
+        case .checking:
+            return Color.secondary.opacity(0.08)
+        }
+    }
+}
+
+enum FinderExtensionInspector {
+    static let extensionBundleIdentifier = "com.b-vibe.RightHere.Extension"
+
+    static func currentRegistrationState() -> FinderExtensionRegistrationState {
+        let result = runPlugInKit(arguments: ["-m", "-A", "-i", extensionBundleIdentifier])
+
+        guard result.exitCode == 0 else {
+            return .unavailable(result.output.isEmpty ? "pluginkit 查询失败。" : result.output)
+        }
+
+        let lines = result.output
+            .split(whereSeparator: \.isNewline)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard let line = lines.first(where: { $0.contains(extensionBundleIdentifier) }) else {
+            return .notRegistered
+        }
+
+        if line.hasPrefix("+") {
+            return .enabled(line)
+        }
+
+        if line.hasPrefix("-") || line.hasPrefix("!") {
+            return .disabled(line)
+        }
+
+        return .unavailable(line)
+    }
+
+    static func openExtensionSettings() {
+        let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        let urlString = majorVersion >= 13
+            ? "x-apple.systempreferences:com.apple.ExtensionsPreferences"
+            : "x-apple.systempreferences:com.apple.preferences.extensions"
+
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private static func runPlugInKit(arguments: [String]) -> (exitCode: Int32, output: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
+        process.arguments = arguments
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            return (process.terminationStatus, output.trimmingCharacters(in: .whitespacesAndNewlines))
+        } catch {
+            return (1, error.localizedDescription)
         }
     }
 }
