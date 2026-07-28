@@ -19,12 +19,12 @@
 
 ## GitHub Release 安装包
 
-- 上传附件：`dist/RightHere-0.1.6-20260728-2341.dmg`
+- 上传附件：`RightHere-0.1.6-build3-20260728-1554.dmg`
 - 文件大小：2.3 MB
 - 镜像格式：UDZO，只读压缩 DMG
-- SHA-256：`4709ad475c31ac531a99d71d4a26c641ca41f1346dbe4f6de545ace63685b9ab`
+- SHA-256：`7e6be412bbbe43b094724e90cca198aac3a2ef264c1913c686c70902f1a985bc`
 
-建议创建 tag `v0.1.6` 后，在 GitHub Release 中上传 DMG 作为 release asset。`dist/` 已被 `.gitignore` 排除，不建议把 DMG 直接提交到 Git 仓库。
+已创建 tag `v0.1.6`，GitHub Actions 已自动生成并上传 DMG release asset。`dist/` 已被 `.gitignore` 排除，不建议把 DMG 直接提交到 Git 仓库。
 
 ## 发布说明
 
@@ -32,7 +32,7 @@ RightHere 是一个 macOS Finder 右键「新建文件」扩展。安装后可�
 
 安装方式：
 
-1. 下载 `RightHere-0.1.6-20260728-2341.dmg`。
+1. 下载 `RightHere-0.1.6-build3-20260728-1554.dmg`。
 2. 打开 DMG。
 3. 将 `RightHere.app` 拖到 `Applications`。
 4. 启动 RightHere，并在系统设置的 Finder 扩展中启用 RightHere。
