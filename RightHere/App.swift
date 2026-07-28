@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         observeExtensionActivity()
         configureStatusItem()
+        showExtensionSetupAlertIfNeeded()
     }
 
     deinit {
@@ -73,9 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "打开设置", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "打开模板文件夹", action: #selector(openTemplatesDirectory), keyEquivalent: ""))
-        if shouldShowExtensionSettingsMenuItem {
-            menu.addItem(NSMenuItem(title: "打开扩展设置", action: #selector(openExtensionSettings), keyEquivalent: ""))
-        }
+        menu.addItem(NSMenuItem(title: "打开扩展设置", action: #selector(openExtensionSettings), keyEquivalent: ""))
         menu.addItem(buildHelpMenuItem())
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "退出 RightHere", action: #selector(quit), keyEquivalent: "q"))
@@ -144,17 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openExtensionSettings() {
-        let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-        let urlString: String
-        if majorVersion >= 13 {
-            urlString = "x-apple.systempreferences:com.apple.ExtensionsPreferences"
-        } else {
-            urlString = "x-apple.systempreferences:com.apple.preferences.extensions"
-        }
-
-        if let url = URL(string: urlString) {
-            NSWorkspace.shared.open(url)
-        }
+        FinderExtensionInspector.openExtensionSettings()
     }
 
     @objc private func quit() {
@@ -207,10 +196,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.alertStyle = .informational
         alert.addButton(withTitle: "好的")
         alert.runModal()
-    }
-
-    private var shouldShowExtensionSettingsMenuItem: Bool {
-        ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 15
     }
 
     private func checkForUpdates(isManual: Bool) {
@@ -430,5 +415,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func openURL(_ urlString: String) {
         guard let url = URL(string: urlString) else { return }
         NSWorkspace.shared.open(url)
+    }
+
+    private func showExtensionSetupAlertIfNeeded() {
+        DispatchQueue.global(qos: .utility).async {
+            let state = FinderExtensionInspector.currentRegistrationState()
+            guard state.shouldAlertOnLaunch else { return }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                let alert = NSAlert()
+                alert.messageText = "Finder 扩展尚未就绪"
+                alert.informativeText = state.launchAlertMessage
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "打开扩展设置")
+                alert.addButton(withTitle: "打开 RightHere 设置")
+                alert.addButton(withTitle: "稍后")
+
+                let response = alert.runModal()
+                if response == .alertFirstButtonReturn {
+                    FinderExtensionInspector.openExtensionSettings()
+                } else if response == .alertSecondButtonReturn {
+                    self.openSettings()
+                }
+            }
+        }
     }
 }
