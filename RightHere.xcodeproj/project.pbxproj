@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		16CEFBB121EF02F55312E90F /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9468A8F6B7C27ED6975F2708 /* App.swift */; };
-		2B4F7F0C4D9C4D5F9F62E7A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32B11A522FD0716E008B849E /* Assets.xcassets */; };
 		56EFE290D1E5DBE7FBD4C334 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */; };
 		57E3A9A3855880C111039BC8 /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
 		59E25F4FDB2492EBFB187CEA /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
 		81A63B57B2FD0BD174D15BF7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057037DF9ABFEED4C9C2DB9E /* ContentView.swift */; };
+		84EEB2941987A5D5EE58FAAA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8CAAC7405CE8EDAD0A756DCB /* Assets.xcassets */; };
 		85C18ABB3F52DC6F7D9234A4 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
 		B48AFB7C2815E1D9BE6145B4 /* RightHereExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AD648F2A507467F3290D7CB /* RightHereExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D2266168DBE524B703D51BD5 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
@@ -44,9 +44,9 @@
 
 /* Begin PBXFileReference section */
 		057037DF9ABFEED4C9C2DB9E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		32B11A522FD0716E008B849E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		67B0B9D6440E658DD8206334 /* RightHere.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RightHere.entitlements; sourceTree = "<group>"; };
 		6AD648F2A507467F3290D7CB /* RightHereExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RightHereExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8CAAC7405CE8EDAD0A756DCB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9468A8F6B7C27ED6975F2708 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		9AEC9CF385B8341BF6E41060 /* RightHere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightHere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateAssets.swift; sourceTree = "<group>"; };
@@ -88,8 +88,8 @@
 		F69C199A0BA2934B87047751 /* RightHere */ = {
 			isa = PBXGroup;
 			children = (
-				32B11A522FD0716E008B849E /* Assets.xcassets */,
 				9468A8F6B7C27ED6975F2708 /* App.swift */,
+				8CAAC7405CE8EDAD0A756DCB /* Assets.xcassets */,
 				057037DF9ABFEED4C9C2DB9E /* ContentView.swift */,
 				67B0B9D6440E658DD8206334 /* RightHere.entitlements */,
 				D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */,
@@ -123,7 +123,7 @@
 			buildConfigurationList = 505AF3745E27F3FE91EDA758 /* Build configuration list for PBXNativeTarget "RightHere" */;
 			buildPhases = (
 				7B92ED146F9983DBF4DFF327 /* Sources */,
-				6F37AF9224B5497F8C4742D4 /* Resources */,
+				A4EB8DFD029FB054103587C3 /* Resources */,
 				80EE3095188B7C78075BCB66 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -148,10 +148,12 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					70A90DB811898559D634FA8C = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Sandbox\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 1]]";
 					};
 					EE96DBB36A663DBA7540058E = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 1]]";
 					};
@@ -178,11 +180,11 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		6F37AF9224B5497F8C4742D4 /* Resources */ = {
+		A4EB8DFD029FB054103587C3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2B4F7F0C4D9C4D5F9F62E7A1 /* Assets.xcassets in Resources */,
+				84EEB2941987A5D5EE58FAAA /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -226,19 +228,14 @@
 			buildSettings = {
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = RightHereExtension/RightHereExtension.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = RightHereExtension/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 0.1.5;
+				MARKETING_VERSION = 0.1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere.Extension";
 				SDKROOT = macosx;
 			};
@@ -249,19 +246,14 @@
 			buildSettings = {
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = RightHereExtension/RightHereExtension.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = RightHereExtension/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 0.1.5;
+				MARKETING_VERSION = 0.1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere.Extension";
 				SDKROOT = macosx;
 			};
@@ -275,7 +267,7 @@
 				CODE_SIGN_ENTITLEMENTS = RightHere/RightHere.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -284,7 +276,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 0.1.5;
+				MARKETING_VERSION = 0.1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere";
 				SDKROOT = macosx;
 			};
@@ -417,7 +409,7 @@
 				CODE_SIGN_ENTITLEMENTS = RightHere/RightHere.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -426,7 +418,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 0.1.5;
+				MARKETING_VERSION = 0.1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.b-vibe.RightHere";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;

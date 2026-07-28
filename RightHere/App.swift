@@ -34,10 +34,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: SharedDefaults.extensionDidBecomeActiveNotificationName,
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(extensionDiagnosticReceived(_:)),
+            name: SharedDefaults.extensionDiagnosticNotificationName,
+            object: nil
+        )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(extensionDiagnosticSnapshotReceived(_:)),
+            name: SharedDefaults.extensionDiagnosticSnapshotNotificationName,
+            object: nil
+        )
+
+        SharedDefaults.requestExtensionDiagnosticSnapshot()
     }
 
     @objc private func extensionDidBecomeActive(_ notification: Notification) {
         SharedDefaults.recordExtensionActiveLocally()
+    }
+
+    @objc private func extensionDiagnosticReceived(_ notification: Notification) {
+        guard let record = SharedDefaults.diagnosticRecord(from: notification) else { return }
+        SharedDefaults.mergeExtensionDiagnosticsLocally([record])
+    }
+
+    @objc private func extensionDiagnosticSnapshotReceived(_ notification: Notification) {
+        SharedDefaults.mergeExtensionDiagnosticsLocally(
+            SharedDefaults.diagnosticRecords(from: notification)
+        )
     }
 
     private func configureStatusItem() {
@@ -365,12 +390,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let availableTemplates = SharedDefaults.getLocalAvailableFileTemplates()
         let enabledTemplates = SharedDefaults.getLocalEnabledFileTemplates()
+        let diagnosticRecords = SharedDefaults.getLocalExtensionDiagnostics()
         let lastActiveDescription: String
         if let lastActive = SharedDefaults.getExtensionLastActive() {
             let seconds = Int(Date().timeIntervalSince(lastActive))
             lastActiveDescription = "\(seconds)s ago"
         } else {
             lastActiveDescription = "never"
+        }
+
+        let diagnosticLog: String
+        if diagnosticRecords.isEmpty {
+            diagnosticLog = "No extension diagnostics captured"
+        } else {
+            let formatter = ISO8601DateFormatter()
+            diagnosticLog = diagnosticRecords.map { record in
+                "[\(formatter.string(from: record.timestamp))] \(record.message)"
+            }.joined(separator: "\n")
         }
 
         return """
@@ -381,6 +417,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Templates: \(enabledTemplates.count) enabled / \(availableTemplates.count) available
         Enabled extensions: \(enabledTemplates.map { $0.fileExtension }.joined(separator: ", "))
         Templates directory: \(SharedDefaults.templatesDirectoryURL?.path ?? "unavailable")
+
+        Recent extension diagnostics:
+        \(diagnosticLog)
         """
     }
 

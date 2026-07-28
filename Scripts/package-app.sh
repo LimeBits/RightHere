@@ -6,11 +6,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="${ROOT_DIR}/RightHere.app"
 DERIVED_APP=$(ls -td ~/Library/Developer/Xcode/DerivedData/RightHere-*/Build/Products/Release/RightHere.app 2>/dev/null | head -1 || true)
+if [[ -z "${RIGHTHERE_CODESIGN_IDENTITY:-}" && -f "${ROOT_DIR}/Scripts/dev-identity.sh" ]]; then
+    # shellcheck disable=SC1091
+    source "${ROOT_DIR}/Scripts/dev-identity.sh"
+fi
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
-DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
+if [[ -z "${CODESIGN_IDENTITY}" && "${RIGHTHERE_USE_LOCAL_CODESIGN:-0}" == "1" ]]; then
+    CODESIGN_IDENTITY="${RIGHTHERE_CODESIGN_IDENTITY:-}"
+fi
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-${RIGHTHERE_DEVELOPMENT_TEAM:-}}"
 UNIVERSAL=false
 SKIP_SIGNING=false
 NATIVE_ARCH="$(uname -m)"
+APP_ENTITLEMENTS="${ROOT_DIR}/RightHere/RightHere.entitlements"
+EXTENSION_ENTITLEMENTS="${ROOT_DIR}/RightHereExtension/RightHereExtension.entitlements"
 
 BUILD_SETTINGS=()
 XCODEBUILD_FLAGS=()
@@ -39,7 +48,7 @@ fi
 
 run_xcodebuild() {
     local build_log
-    build_log="$(mktemp "${TMPDIR:-/tmp}/righthere-xcodebuild.XXXXXX.log")"
+    build_log="$(mktemp "${TMPDIR:-/tmp}/righthere-xcodebuild.XXXXXX")"
 
     if ! xcodebuild "$@" >"${build_log}" 2>&1; then
         grep -E "error:|warning:|Build succeeded|Build FAILED" "${build_log}" | tail -60 || true
@@ -104,11 +113,20 @@ elif [[ -n "${CODESIGN_IDENTITY}" ]]; then
     printf '→ 使用指定证书重签 extension...\n'
     APPEX="${APP_DIR}/Contents/PlugIns/RightHereExtension.appex"
     if [[ -d "${APPEX}" ]]; then
-        codesign --force --sign "${CODESIGN_IDENTITY}" --deep "${APPEX}"
+        codesign --force --sign "${CODESIGN_IDENTITY}" \
+            --options runtime \
+            --timestamp \
+            --entitlements "${EXTENSION_ENTITLEMENTS}" \
+            --deep \
+            "${APPEX}"
     fi
 
     printf '→ 使用指定证书重签 app...\n'
-    codesign --force --sign "${CODESIGN_IDENTITY}" "${APP_DIR}"
+    codesign --force --sign "${CODESIGN_IDENTITY}" \
+        --options runtime \
+        --timestamp \
+        --entitlements "${APP_ENTITLEMENTS}" \
+        "${APP_DIR}"
 else
     printf '→ 未设置 CODESIGN_IDENTITY，保留 Xcode build 产物签名。\n'
 fi

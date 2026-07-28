@@ -13,6 +13,7 @@ RightHere.app/
 dist/
 *.dmg
 Scripts/dmg-mount/
+Scripts/dev-identity.sh
 
 # Local screenshots and scratch files
 ScreenShot_*

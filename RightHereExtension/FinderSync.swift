@@ -3,17 +3,24 @@ import FinderSync
 
 class FinderSync: FIFinderSync {
 
+    private struct PendingMenuAction {
+        let template: FileTemplate
+        let targetDirectory: URL
+        let allowsNonFinderFrontmost: Bool
+        let createdAt: Date
+    }
+
     private var enabledTemplates: [FileTemplate] = SharedDefaults.defaultFileTemplates
     private var templateRecordsByExtension: [String: TemplateRecord] = Dictionary(
         uniqueKeysWithValues: SharedDefaults.defaultFileTemplates.compactMap { template in
             SharedDefaults.getLocalTemplateRecord(for: template).map { (template.fileExtension, $0) }
         }
     )
+    private var pendingMenuActions: [Int: PendingMenuAction] = [:]
+    private var nextMenuActionTag = 1
 
     override init() {
         super.init()
-
-        NSLog("RightHereExtension: Initializing Finder Sync Extension")
 
         configureWatchedDirectories()
 
@@ -23,6 +30,15 @@ class FinderSync: FIFinderSync {
             name: Notification.Name("com.b-vibe.RightHere.SettingsChanged"),
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(diagnosticSnapshotRequested(_:)),
+            name: SharedDefaults.extensionDiagnosticSnapshotRequestName,
+            object: nil
+        )
+
+        recordDiagnostic("extension initialized pid=\(ProcessInfo.processInfo.processIdentifier)")
+        SharedDefaults.publishExtensionDiagnosticSnapshot()
     }
 
     deinit {
@@ -46,6 +62,10 @@ class FinderSync: FIFinderSync {
         enabledTemplates = availableTemplates.filter { enabled.contains($0.fileExtension) }
     }
 
+    @objc private func diagnosticSnapshotRequested(_ notification: Notification) {
+        SharedDefaults.publishExtensionDiagnosticSnapshot()
+    }
+
     private func configureWatchedDirectories() {
         guard let homeURL = realHomeDirectoryURL() else {
             FIFinderSyncController.default().directoryURLs = []
@@ -66,8 +86,54 @@ class FinderSync: FIFinderSync {
         SharedDefaults.markExtensionActive()
     }
 
-    private var isFinderFrontmost: Bool {
-        NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder"
+    private func recordDiagnostic(_ message: String) {
+        NSLog("RightHereExtension: %@", message)
+        SharedDefaults.recordExtensionDiagnostic(message)
+    }
+
+    private var frontmostApplicationIdentifier: String {
+        NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "<unknown>"
+    }
+
+    private func menuKindDescription(_ menuKind: FIMenuKind) -> String {
+        switch menuKind {
+        case .contextualMenuForItems:
+            return "items"
+        case .contextualMenuForContainer:
+            return "container"
+        case .contextualMenuForSidebar:
+            return "sidebar"
+        case .toolbarItemMenu:
+            return "toolbar"
+        @unknown default:
+            return "unknown(\(menuKind.rawValue))"
+        }
+    }
+
+    private func diagnosticPath(_ url: URL?) -> String {
+        url?.standardizedFileURL.path ?? "<nil>"
+    }
+
+    private func diagnosticPaths(_ urls: [URL]?) -> String {
+        guard let urls, !urls.isEmpty else { return "<none>" }
+        return urls.map { $0.standardizedFileURL.path }.joined(separator: " | ")
+    }
+
+    private func isDesktopDirectory(_ directory: URL) -> Bool {
+        guard let homeURL = realHomeDirectoryURL() else { return false }
+        let desktopURL = homeURL.appendingPathComponent("Desktop", isDirectory: true)
+        return directory.standardizedFileURL.path == desktopURL.standardizedFileURL.path
+    }
+
+    private func nextActionTag() -> Int {
+        let tag = nextMenuActionTag
+        nextMenuActionTag = nextMenuActionTag == Int.max ? 1 : nextMenuActionTag + 1
+        return tag
+    }
+
+    private func removeExpiredMenuActions() {
+        let expirationDate = Date().addingTimeInterval(-300)
+        pendingMenuActions = pendingMenuActions.filter { $0.value.createdAt >= expirationDate }
     }
 
     // MARK: - Finder Sync Menu
@@ -75,12 +141,63 @@ class FinderSync: FIFinderSync {
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
         updateHeartbeat()
 
-        guard isFinderFrontmost else { return nil }
-        guard menuKind == .contextualMenuForItems || menuKind == .contextualMenuForContainer else { return nil }
-        guard let targetDir = currentTargetDirectory(for: menuKind), isAllowedMenuDirectory(targetDir) else { return nil }
+        let controller = FIFinderSyncController.default()
+        let frontmostIdentifier = frontmostApplicationIdentifier
+        let finderFrontmost = frontmostIdentifier == "com.apple.finder"
+        let targetedURL = controller.targetedURL()
+        let selectedURLs = controller.selectedItemURLs()
+        let kindDescription = menuKindDescription(menuKind)
+
+        recordDiagnostic(
+            "menu request pid=\(ProcessInfo.processInfo.processIdentifier) "
+                + "kind=\(kindDescription) frontmost=\(frontmostIdentifier) "
+                + "finderFrontmost=\(finderFrontmost ? "yes" : "no") "
+                + "targeted=\(diagnosticPath(targetedURL)) selected=\(diagnosticPaths(selectedURLs))"
+        )
+
+        guard menuKind == .contextualMenuForItems || menuKind == .contextualMenuForContainer else {
+            recordDiagnostic("menu rejected kind=\(kindDescription) reason=unsupported-menu-kind")
+            return nil
+        }
+        guard let targetDir = currentTargetDirectory(
+            for: menuKind,
+            targetedURL: targetedURL,
+            selectedURLs: selectedURLs
+        ) else {
+            recordDiagnostic("menu rejected kind=\(kindDescription) reason=missing-target-directory")
+            return nil
+        }
+
+        let isDesktopException = !finderFrontmost
+            && menuKind == .contextualMenuForContainer
+            && isDesktopDirectory(targetDir)
+        guard finderFrontmost || isDesktopException else {
+            recordDiagnostic(
+                "menu rejected kind=\(kindDescription) reason=finder-not-frontmost "
+                    + "target=\(diagnosticPath(targetDir))"
+            )
+            return nil
+        }
+        guard isAllowedMenuDirectory(targetDir) else {
+            recordDiagnostic(
+                "menu rejected kind=\(kindDescription) reason=disallowed-target-directory "
+                    + "target=\(diagnosticPath(targetDir))"
+            )
+            return nil
+        }
 
         let activeTemplates = enabledTemplates
-        guard !activeTemplates.isEmpty else { return nil }
+        guard !activeTemplates.isEmpty else {
+            recordDiagnostic("menu rejected kind=\(kindDescription) reason=no-enabled-templates")
+            return nil
+        }
+
+        let mode = isDesktopException ? "desktop-exception" : "finder-frontmost"
+        recordDiagnostic(
+            "menu accepted kind=\(kindDescription) mode=\(mode) "
+                + "target=\(diagnosticPath(targetDir)) templates=\(activeTemplates.count)"
+        )
+        removeExpiredMenuActions()
 
         let mainMenu = NSMenu(title: "")
         mainMenu.autoenablesItems = false
@@ -91,11 +208,17 @@ class FinderSync: FIFinderSync {
         let submenu = NSMenu(title: "新建文件")
         submenu.autoenablesItems = false
 
-        for (index, template) in activeTemplates.enumerated() {
+        for template in activeTemplates {
             let item = NSMenuItem(title: template.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
             item.target = self
             item.isEnabled = true
-            item.tag = index
+            item.tag = nextActionTag()
+            pendingMenuActions[item.tag] = PendingMenuAction(
+                template: template,
+                targetDirectory: targetDir,
+                allowsNonFinderFrontmost: isDesktopException,
+                createdAt: Date()
+            )
             submenu.addItem(item)
         }
 
@@ -105,26 +228,51 @@ class FinderSync: FIFinderSync {
     }
 
     @objc func createNewFile(_ sender: NSMenuItem) {
-        NSLog("RightHereExtension: createNewFile called, tag=%d", sender.tag)
-        let activeTemplates = enabledTemplates
-        guard sender.tag >= 0, sender.tag < activeTemplates.count else {
-            NSLog("RightHereExtension: invalid tag %d, activeTemplates count=%d", sender.tag, activeTemplates.count)
+        let controller = FIFinderSyncController.default()
+        let frontmostIdentifier = frontmostApplicationIdentifier
+        let finderFrontmost = frontmostIdentifier == "com.apple.finder"
+        let targetedURL = controller.targetedURL()
+        let selectedURLs = controller.selectedItemURLs()
+
+        recordDiagnostic(
+            "create request pid=\(ProcessInfo.processInfo.processIdentifier) tag=\(sender.tag) "
+                + "frontmost=\(frontmostIdentifier) finderFrontmost=\(finderFrontmost ? "yes" : "no") "
+                + "targeted=\(diagnosticPath(targetedURL)) selected=\(diagnosticPaths(selectedURLs))"
+        )
+
+        guard let action = pendingMenuActions.removeValue(forKey: sender.tag) else {
+            recordDiagnostic("create rejected reason=missing-menu-context tag=\(sender.tag)")
             return
         }
-        let template = activeTemplates[sender.tag]
+        let template = action.template
+        let targetDir = action.targetDirectory
 
-        // Determine destination directory
-        guard isFinderFrontmost,
-              let targetDir = destinationDirectoryForCreate(),
-              isAllowedMenuDirectory(targetDir) else {
-            NSLog("RightHereExtension: could not determine target directory")
+        guard finderFrontmost || action.allowsNonFinderFrontmost else {
+            recordDiagnostic("create rejected reason=finder-not-frontmost")
+            return
+        }
+        guard isAllowedMenuDirectory(targetDir) else {
+            recordDiagnostic(
+                "create rejected reason=disallowed-target-directory target=\(diagnosticPath(targetDir))"
+            )
             return
         }
 
-        NSLog("RightHereExtension: target directory: %@", targetDir.path)
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: targetDir.path, isDirectory: &isDirectory),
+              isDirectory.boolValue else {
+            recordDiagnostic(
+                "create rejected reason=target-directory-unavailable target=\(diagnosticPath(targetDir))"
+            )
+            return
+        }
+
+        recordDiagnostic(
+            "create accepted template=\(template.fileExtension) target=\(diagnosticPath(targetDir))"
+        )
 
         guard let templateRecord = templateRecordsByExtension[template.fileExtension] else {
-            NSLog("RightHereExtension: template record missing: %@", template.templateFileName)
+            recordDiagnostic("create failed reason=template-record-missing template=\(template.templateFileName)")
             return
         }
 
@@ -140,30 +288,29 @@ class FinderSync: FIFinderSync {
 
         do {
             try templateRecord.data.write(to: destinationURL, options: .atomic)
-            NSLog("RightHereExtension: created file at %@", destinationURL.path)
+            recordDiagnostic("create succeeded destination=\(diagnosticPath(destinationURL))")
         } catch {
-            NSLog("RightHereExtension: failed to create file: %@", error.localizedDescription)
+            recordDiagnostic(
+                "create failed destination=\(diagnosticPath(destinationURL)) error=\(error.localizedDescription)"
+            )
         }
     }
 
-    private func currentTargetDirectory(for menuKind: FIMenuKind) -> URL? {
+    private func currentTargetDirectory(
+        for menuKind: FIMenuKind,
+        targetedURL: URL?,
+        selectedURLs: [URL]?
+    ) -> URL? {
         if menuKind == .contextualMenuForContainer {
-            return FIFinderSyncController.default().targetedURL()
+            guard let targetedURL else { return nil }
+            return directoryURL(for: targetedURL)
         }
 
-        if let selected = FIFinderSyncController.default().selectedItemURLs()?.first {
-            return selected.deletingLastPathComponent()
+        if let targetedURL {
+            return directoryURL(for: targetedURL)
         }
 
-        return FIFinderSyncController.default().targetedURL()
-    }
-
-    private func destinationDirectoryForCreate() -> URL? {
-        if let targeted = FIFinderSyncController.default().targetedURL() {
-            return directoryURL(for: targeted)
-        }
-
-        if let selected = FIFinderSyncController.default().selectedItemURLs()?.first {
+        if let selected = selectedURLs?.first {
             return directoryURL(for: selected)
         }
 

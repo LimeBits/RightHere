@@ -12,9 +12,17 @@ public struct SharedDefaults {
     public static let disabledTypesKey = "disabledFileTypes"
     public static let extensionLastActiveKey = "extensionLastActive"
     public static let extensionDidBecomeActiveNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDidBecomeActive")
+    public static let extensionDiagnosticNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDiagnostic")
+    public static let extensionDiagnosticSnapshotRequestName = Notification.Name("com.b-vibe.RightHere.ExtensionDiagnosticSnapshotRequest")
+    public static let extensionDiagnosticSnapshotNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDiagnosticSnapshot")
     public static let templateCacheKey = "templateCache"
     public static let localTemplateCacheKey = "localTemplateCache"
     public static let localDisabledTypesKey = "localDisabledFileTypes"
+    private static let extensionDiagnosticBufferKey = "extensionDiagnosticBuffer"
+    private static let extensionDiagnosticRecordUserInfoKey = "record"
+    private static let extensionDiagnosticRecordsUserInfoKey = "records"
+    private static let maximumDiagnosticRecordCount = 100
+    private static let diagnosticLock = NSLock()
     
     public static var sharedContainerURL: URL? {
         return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
@@ -145,6 +153,101 @@ public struct SharedDefaults {
         UserDefaults.standard.object(forKey: extensionLastActiveKey) as? Date
     }
 
+    public static func recordExtensionDiagnostic(_ message: String) {
+        let record = ExtensionDiagnosticRecord(timestamp: Date(), message: message)
+
+        diagnosticLock.lock()
+        var records = loadDiagnosticRecords()
+        records.append(record)
+        records = Array(records.suffix(maximumDiagnosticRecordCount))
+        saveDiagnosticRecords(records)
+        diagnosticLock.unlock()
+
+        guard let data = try? JSONEncoder().encode(record) else { return }
+        DistributedNotificationCenter.default().postNotificationName(
+            extensionDiagnosticNotificationName,
+            object: nil,
+            userInfo: [extensionDiagnosticRecordUserInfoKey: data],
+            deliverImmediately: true
+        )
+    }
+
+    public static func requestExtensionDiagnosticSnapshot() {
+        DistributedNotificationCenter.default().postNotificationName(
+            extensionDiagnosticSnapshotRequestName,
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+    }
+
+    public static func publishExtensionDiagnosticSnapshot() {
+        diagnosticLock.lock()
+        let records = loadDiagnosticRecords()
+        diagnosticLock.unlock()
+
+        guard let data = try? JSONEncoder().encode(records) else { return }
+        DistributedNotificationCenter.default().postNotificationName(
+            extensionDiagnosticSnapshotNotificationName,
+            object: nil,
+            userInfo: [extensionDiagnosticRecordsUserInfoKey: data],
+            deliverImmediately: true
+        )
+    }
+
+    public static func diagnosticRecord(from notification: Notification) -> ExtensionDiagnosticRecord? {
+        guard let data = notification.userInfo?[extensionDiagnosticRecordUserInfoKey] as? Data else {
+            return nil
+        }
+        return try? JSONDecoder().decode(ExtensionDiagnosticRecord.self, from: data)
+    }
+
+    public static func diagnosticRecords(from notification: Notification) -> [ExtensionDiagnosticRecord] {
+        guard let data = notification.userInfo?[extensionDiagnosticRecordsUserInfoKey] as? Data else {
+            return []
+        }
+        return (try? JSONDecoder().decode([ExtensionDiagnosticRecord].self, from: data)) ?? []
+    }
+
+    public static func mergeExtensionDiagnosticsLocally(_ incomingRecords: [ExtensionDiagnosticRecord]) {
+        guard !incomingRecords.isEmpty else { return }
+
+        diagnosticLock.lock()
+        var recordsByID: [UUID: ExtensionDiagnosticRecord] = [:]
+        for record in loadDiagnosticRecords() {
+            recordsByID[record.id] = record
+        }
+        for record in incomingRecords {
+            recordsByID[record.id] = record
+        }
+
+        let mergedRecords = recordsByID.values
+            .sorted { $0.timestamp < $1.timestamp }
+            .suffix(maximumDiagnosticRecordCount)
+        saveDiagnosticRecords(Array(mergedRecords))
+        diagnosticLock.unlock()
+    }
+
+    public static func getLocalExtensionDiagnostics(limit: Int = 30) -> [ExtensionDiagnosticRecord] {
+        diagnosticLock.lock()
+        let records = loadDiagnosticRecords()
+        diagnosticLock.unlock()
+        return Array(records.suffix(max(0, limit)))
+    }
+
+    private static func loadDiagnosticRecords() -> [ExtensionDiagnosticRecord] {
+        guard let data = UserDefaults.standard.data(forKey: extensionDiagnosticBufferKey),
+              let records = try? JSONDecoder().decode([ExtensionDiagnosticRecord].self, from: data) else {
+            return []
+        }
+        return records
+    }
+
+    private static func saveDiagnosticRecords(_ records: [ExtensionDiagnosticRecord]) {
+        guard let data = try? JSONEncoder().encode(records) else { return }
+        UserDefaults.standard.set(data, forKey: extensionDiagnosticBufferKey)
+    }
+
     private static func getDisabledFileExtensions(availableTemplates: [FileTemplate]) -> Set<String> {
         guard let defaults = sharedSuite else { return [] }
 
@@ -269,6 +372,18 @@ public struct SharedDefaults {
             TemplateRecord(template: FileTemplate(fileExtension: "xlsx"), data: Data(base64Encoded: TemplateAssets.xlsxBase64) ?? Data()),
             TemplateRecord(template: FileTemplate(fileExtension: "pptx"), data: Data(base64Encoded: TemplateAssets.pptxBase64) ?? Data())
         ]
+    }
+}
+
+public struct ExtensionDiagnosticRecord: Codable, Hashable, Identifiable {
+    public let id: UUID
+    public let timestamp: Date
+    public let message: String
+
+    public init(id: UUID = UUID(), timestamp: Date, message: String) {
+        self.id = id
+        self.timestamp = timestamp
+        self.message = message
     }
 }
 

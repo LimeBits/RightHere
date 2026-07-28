@@ -1,31 +1,30 @@
-# RightHere 0.1.5
+# RightHere 0.1.6
 
-发布时间：2026-06-19
+发布时间：2026-07-28
 
 ## 主要变化
 
-- 菜单栏新增「帮助与反馈」，支持检查 GitHub Releases 更新、打开项目主页、打开 Issues、复制诊断信息和创建反馈 Issue。
-- 新增 `LICENSE`、`PRIVACY.md`、`RELEASE_CHECKLIST.md`、GitHub Issue 模板和 `Scripts/doctor.sh`，完善开源协作准备。
-- 设置页新增 Finder 最近响应状态、模板空状态和全部模板禁用提示。
-- 开源仓库移除个人 Team ID，改为通过 `DEVELOPMENT_TEAM` 环境变量进行本地开发签名。
-- `deploy.sh` 和打包脚本支持本机架构与 Universal Binary 构建。
-- DMG 改为标准拖拽安装布局：将 `RightHere.app` 拖到 `Applications`。
+- 修复其他 App 位于前台时，在真实桌面背景右键无法稳定显示「新建文件」菜单的问题。
+- 菜单生成时固定模板和目标目录，避免点击子菜单时焦点变化导致文件创建到错误位置。
+- FinderSync extension 自动保留最近 100 条本地诊断记录，主 App 启动后自动同步。
+- 「复制诊断信息」和反馈 Issue 自动附带最近的扩展菜单与文件创建诊断记录。
+- 本地打包脚本支持读取本机 `Scripts/dev-identity.sh` 中的 Team ID，便于开发机快速生成 FinderSync 验证包。
 
 ## 已验证
 
-- 脚本语法检查：`bash -n deploy.sh Scripts/package-app.sh Scripts/package-dmg.sh Scripts/install.sh Scripts/doctor.sh Scripts/check-installed-version.sh monitor.sh`
+- 脚本语法检查：`bash -n Scripts/package-app.sh Scripts/package-dmg.sh`
 - 文档/补丁空白检查：`git diff --check`
-- Debug build：`xcodebuild` 双架构构建，`arm64 + x86_64`
-- 已生成 Universal DMG 用于内部验证
+- Release Universal build：`arm64 + x86_64`
+- 已生成 Universal DMG 并在本机验证桌面背景右键菜单
 
 ## GitHub Release 安装包
 
-- 上传附件：`dist/RightHere-0.1.5-20260619-2237.dmg`
+- 上传附件：`dist/RightHere-0.1.6-20260728-2341.dmg`
 - 文件大小：2.3 MB
 - 镜像格式：UDZO，只读压缩 DMG
-- SHA-256：`fa6e9774f143d0f9d49b52419e2916ae7824e1279061c2c40c42332fecbb432a`
+- SHA-256：`4709ad475c31ac531a99d71d4a26c641ca41f1346dbe4f6de545ace63685b9ab`
 
-建议创建 tag `v0.1.5` 后，在 GitHub Release 中上传上面的 DMG 作为 release asset。`dist/` 已被 `.gitignore` 排除，不建议把 DMG 直接提交到 Git 仓库。
+建议创建 tag `v0.1.6` 后，在 GitHub Release 中上传 DMG 作为 release asset。`dist/` 已被 `.gitignore` 排除，不建议把 DMG 直接提交到 Git 仓库。
 
 ## 发布说明
 
@@ -33,7 +32,7 @@ RightHere 是一个 macOS Finder 右键「新建文件」扩展。安装后可�
 
 安装方式：
 
-1. 下载 `RightHere-0.1.5-20260619-2237.dmg`。
+1. 下载 `RightHere-0.1.6-20260728-2341.dmg`。
 2. 打开 DMG。
 3. 将 `RightHere.app` 拖到 `Applications`。
 4. 启动 RightHere，并在系统设置的 Finder 扩展中启用 RightHere。

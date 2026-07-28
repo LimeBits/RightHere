@@ -13,17 +13,22 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.b-vibe.RightHere
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
         DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSUIElement: YES
-        CURRENT_PROJECT_VERSION: "2"
-        MARKETING_VERSION: "0.1.5"
+        CURRENT_PROJECT_VERSION: "3"
+        MARKETING_VERSION: "0.1.6"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
     entitlements:
       path: RightHere/RightHere.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - group.com.b-vibe.RightHere
     attributes:
       SystemCapabilities:
         com.apple.Sandbox:
@@ -44,14 +49,23 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.b-vibe.RightHere.Extension
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
         DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "2"
-        MARKETING_VERSION: "0.1.5"
+        CURRENT_PROJECT_VERSION: "3"
+        MARKETING_VERSION: "0.1.6"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - group.com.b-vibe.RightHere
+        com.apple.security.files.downloads.read-write: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.security.temporary-exception.files.home-relative-path.read-write:
+          - /Desktop/
     attributes:
       SystemCapabilities:
         com.apple.Sandbox:
