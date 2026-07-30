@@ -4,8 +4,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_FILE="${ROOT_DIR}/RightHere.xcodeproj/project.pbxproj"
-APP_BUNDLE_ID="com.b-vibe.RightHere"
-EXTENSION_BUNDLE_ID="com.b-vibe.RightHere.Extension"
+APP_BUNDLE_ID="com.LimeBits.RightHere"
+EXTENSION_BUNDLE_ID="com.LimeBits.RightHere.Extension"
 
 section() {
     printf '\n== %s ==\n' "$1"

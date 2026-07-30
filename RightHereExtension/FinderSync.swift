@@ -27,7 +27,7 @@ class FinderSync: FIFinderSync {
         DistributedNotificationCenter.default().addObserver(
             self,
             selector: #selector(settingsChanged(_:)),
-            name: Notification.Name("com.b-vibe.RightHere.SettingsChanged"),
+            name: Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil
         )
         DistributedNotificationCenter.default().addObserver(

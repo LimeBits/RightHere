@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="${ROOT_DIR}/RightHere.app"
 DIST_DIR="${RIGHTHERE_DIST_DIR:-${ROOT_DIR}/dist}"
 VOLUME_NAME="RightHere"
-BUNDLE_ID="com.b-vibe.RightHere"
+BUNDLE_ID="com.LimeBits.RightHere"
 INCLUDE_INSTALLER_SCRIPT=false
 BUILD_APP=false
 
@@ -199,7 +199,8 @@ printf '  大小: %s\n' "${APP_SIZE}"
 printf '  校验: %s.sha256\n' "${DMG_PATH}"
 printf '\n分发方式：\n'
 printf '  将 %s 发给朋友\n' "$(basename "${DMG_PATH}")"
-printf '  推荐拖动 RightHere.app 到 Applications\n'
 if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
-    printf '  也可双击「安装并启用 RightHere.command」用于内部测试\n'
+    printf '  推荐双击「安装并启用 RightHere.command」，它会安装 App、启用 Finder 扩展并重启 Finder\n'
+else
+    printf '  推荐拖动 RightHere.app 到 Applications\n'
 fi

@@ -1,41 +1,44 @@
-# RightHere 0.1.6
+# RightHere 0.1.7
 
-发布时间：2026-07-28
+发布时间：2026-07-30
+
+## 这一版的定位
+
+RightHere 0.1.7 是面向公开新用户验证的正式分发版本。用于普通用户安装验证的包必须是：
+
+- Universal Binary：`arm64 + x86_64`
+- Developer ID Application 签名
+- Apple notarization 公证通过
+- stapler 已绑定公证票据
+- Gatekeeper 验证通过
+
+Apple Development 签名包和 ad-hoc ZIP 只用于开发机快速验证，不再作为普通新用户安装验证依据。
 
 ## 主要变化
 
-- 修复其他 App 位于前台时，在真实桌面背景右键无法稳定显示「新建文件」菜单的问题。
-- 菜单生成时固定模板和目标目录，避免点击子菜单时焦点变化导致文件创建到错误位置。
-- FinderSync extension 自动保留最近 100 条本地诊断记录，主 App 启动后自动同步。
-- 「复制诊断信息」和反馈 Issue 自动附带最近的扩展菜单与文件创建诊断记录。
-- 本地打包脚本支持读取本机 `Scripts/dev-identity.sh` 中的 Team ID，便于开发机快速生成 FinderSync 验证包。
+- 新增 `Scripts/package-developer-id.sh`，统一执行归档、Developer ID 导出、DMG 打包、DMG 签名、公证和 stapler 绑定。
+- 新增 `Scripts/notarize.sh`，复用 `righthere-notary` keychain profile 完成公证和 Gatekeeper 验证。
+- 正式分发脚本强制校验主 App 和 FinderSync extension 都包含 `arm64` 与 `x86_64`。
+- Bundle ID 切换为 `com.LimeBits.RightHere`，FinderSync extension 切换为 `com.LimeBits.RightHere.Extension`，App Group 切换为 `group.com.LimeBits.RightHere`。
+- 安装脚本会停用旧 bundle id 的 FinderSync 状态、启用新扩展并重启 Finder。
+- 设置页只在系统明确返回未启用或未注册时显示 Finder 扩展提示，不再展示容易误导的“暂时不可读”状态。
+- 启动时移除 Finder 扩展未就绪弹窗，降低首次安装干扰。
+- 补齐标准 macOS AppIcon 10 个槽位，改善 Launchpad 图标首次透明或延迟刷新的问题。
+- 菜单栏图标居中绘制并略微放大，改善视觉尺寸和垂直位置。
 
-## 已验证
+## 正式打包命令
 
-- 脚本语法检查：`bash -n Scripts/package-app.sh Scripts/package-dmg.sh`
-- 文档/补丁空白检查：`git diff --check`
-- Release Universal build：`arm64 + x86_64`
-- 已生成 Universal DMG 并在本机验证桌面背景右键菜单
+```bash
+cd /Users/bruce/Desktop/b-vibe/RightHere
+RIGHTHERE_DEVELOPMENT_TEAM=WV6JA6UHLN Scripts/package-developer-id.sh
+```
 
-## GitHub Release 安装包
+脚本成功后会输出 `dist/RightHere-0.1.7-build4-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
 
-- 上传附件：`RightHere-0.1.6-build3-20260728-1554.dmg`
-- 文件大小：2.3 MB
-- 镜像格式：UDZO，只读压缩 DMG
-- SHA-256：`7e6be412bbbe43b094724e90cca198aac3a2ef264c1913c686c70902f1a985bc`
+## 验证重点
 
-已创建 tag `v0.1.6`，GitHub Actions 已自动生成并上传 DMG release asset。`dist/` 已被 `.gitignore` 排除，不建议把 DMG 直接提交到 Git 仓库。
-
-## 发布说明
-
-RightHere 是一个 macOS Finder 右键「新建文件」扩展。安装后可以在 Finder 中快速创建 txt、Markdown、Word、Excel、PowerPoint 或自定义模板文件。
-
-安装方式：
-
-1. 下载 `RightHere-0.1.6-build3-20260728-1554.dmg`。
-2. 打开 DMG。
-3. 将 `RightHere.app` 拖到 `Applications`。
-4. 启动 RightHere，并在系统设置的 Finder 扩展中启用 RightHere。
-5. 如果 Finder 右键菜单没有立即出现，重启 Finder 或注销后重新登录。
-
-注意：当前分发包仍主要面向开发机或受信任设备验证。公开分发给普通用户前，仍建议补齐 Developer ID 签名、公证和 stapler 绑定公证票据。
+- 在 Intel Mac 上双击 DMG 安装后，RightHere 能正常打开。
+- Finder 右键菜单能出现「新建文件」。
+- 首次安装后不再出现误导性的 Finder 扩展授权弹窗。
+- Launchpad 图标能正常显示。
+- 菜单栏图标大小和位置接近系统菜单栏图标。

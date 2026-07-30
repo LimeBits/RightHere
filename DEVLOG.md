@@ -26,7 +26,7 @@ macOS Finder 右键"新建文件"扩展，基于 FinderSync Framework。
 ```xml
 <key>com.apple.security.application-groups</key>
 <array>
-    <string>group.com.b-vibe.RightHere</string>
+    <string>group.com.LimeBits.RightHere</string>
 </array>
 ```
 同时在 Xcode Signing & Capabilities 里也要为两个 target 都添加 App Groups capability，并勾选同一个 group id。
@@ -92,13 +92,13 @@ for (index, type) in activeTypes.enumerated() {
 **解法**：
 ```bash
 # 启用扩展
-pluginkit -e use -i com.b-vibe.RightHere.Extension
+pluginkit -e use -i com.LimeBits.RightHere.Extension
 
 # 查看状态（+ 表示已启用）
 pluginkit -m -p com.apple.FinderSync | grep RightHere
 
 # 禁用扩展
-pluginkit -e ignore -i com.b-vibe.RightHere.Extension
+pluginkit -e ignore -i com.LimeBits.RightHere.Extension
 ```
 
 ---
@@ -222,7 +222,7 @@ fi
 
 **现象**：在 Finder 里右键，还没点任何菜单项，就反复弹出系统权限请求窗口，无法操作。
 
-**原因**：`menu(for:)` 里调用了 `updateHeartbeat()`，该函数通过 `SharedDefaults.sharedSuite`（即 `UserDefaults(suiteName: "group.com.b-vibe.RightHere")`）写入数据。在沙盒环境下，每次访问 App Group 容器都会触发 `tccd`（透明度、同意和控制守护进程）的权限检查，导致每次右键都弹出权限窗口。
+**原因**：`menu(for:)` 里调用了 `updateHeartbeat()`，该函数通过 `SharedDefaults.sharedSuite`（即 `UserDefaults(suiteName: "group.com.LimeBits.RightHere")`）写入数据。在沙盒环境下，每次访问 App Group 容器都会触发 `tccd`（透明度、同意和控制守护进程）的权限检查，导致每次右键都弹出权限窗口。
 
 **解法**：心跳数据改用 `UserDefaults.standard` 写入，不走 App Group 容器，彻底避免权限检查：
 ```swift
@@ -264,9 +264,11 @@ killall Finder
 
 获得 Developer ID 后的打包流程：
 ```bash
-./Scripts/package-dmg.sh --build   # 编译 + 打包 + 生成 DMG
-# 产物在 dist/RightHere-版本号-时间戳.dmg
+./Scripts/package-developer-id.sh  # archive/export + DMG + sign + notarize + staple
+# 产物在 dist/RightHere-版本号-build号-时间戳.dmg
 ```
+
+普通 `package-dmg.sh --skip-signing` 只适合 CI/打包流程验证，不适合新电脑安装验证 FinderSync。
 
 ---
 

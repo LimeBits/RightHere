@@ -21,7 +21,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         observeExtensionActivity()
         configureStatusItem()
-        showExtensionSetupAlertIfNeeded()
     }
 
     deinit {
@@ -68,8 +67,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureStatusItem() {
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "doc.badge.plus", accessibilityDescription: "RightHere")
+        statusItem.button?.image = makeStatusBarIcon()
         statusItem.button?.imagePosition = .imageOnly
+        statusItem.button?.imageScaling = .scaleProportionallyDown
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "打开设置", action: #selector(openSettings), keyEquivalent: ","))
@@ -83,6 +83,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem.menu = menu
         self.statusItem = statusItem
+    }
+
+    private func makeStatusBarIcon() -> NSImage? {
+        let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
+        guard let symbol = NSImage(
+            systemSymbolName: "doc.badge.plus",
+            accessibilityDescription: "RightHere"
+        )?.withSymbolConfiguration(symbolConfiguration) else {
+            return nil
+        }
+
+        let canvasSize = NSSize(width: 18, height: 18)
+        let image = NSImage(size: canvasSize)
+        image.lockFocus()
+        symbol.draw(
+            in: NSRect(x: 0, y: 0.25, width: canvasSize.width, height: canvasSize.height),
+            from: .zero,
+            operation: .sourceOver,
+            fraction: 1
+        )
+        image.unlockFocus()
+        image.isTemplate = true
+        return image
     }
 
     private func buildHelpMenuItem() -> NSMenuItem {
@@ -417,27 +440,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSWorkspace.shared.open(url)
     }
 
-    private func showExtensionSetupAlertIfNeeded() {
-        DispatchQueue.global(qos: .utility).async {
-            let state = FinderExtensionInspector.currentRegistrationState()
-            guard state.shouldAlertOnLaunch else { return }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                let alert = NSAlert()
-                alert.messageText = "Finder 扩展尚未就绪"
-                alert.informativeText = state.launchAlertMessage
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: "打开扩展设置")
-                alert.addButton(withTitle: "打开 RightHere 设置")
-                alert.addButton(withTitle: "稍后")
-
-                let response = alert.runModal()
-                if response == .alertFirstButtonReturn {
-                    FinderExtensionInspector.openExtensionSettings()
-                } else if response == .alertSecondButtonReturn {
-                    self.openSettings()
-                }
-            }
-        }
-    }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 public struct SharedDefaults {
-    public static let groupIdentifier = "group.com.b-vibe.RightHere"
+    public static let groupIdentifier = "group.com.LimeBits.RightHere"
     
     public static var sharedSuite: UserDefaults? {
         return UserDefaults(suiteName: groupIdentifier)
@@ -11,10 +11,10 @@ public struct SharedDefaults {
     public static let enabledTypesKey = "enabledFileTypes"
     public static let disabledTypesKey = "disabledFileTypes"
     public static let extensionLastActiveKey = "extensionLastActive"
-    public static let extensionDidBecomeActiveNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDidBecomeActive")
-    public static let extensionDiagnosticNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDiagnostic")
-    public static let extensionDiagnosticSnapshotRequestName = Notification.Name("com.b-vibe.RightHere.ExtensionDiagnosticSnapshotRequest")
-    public static let extensionDiagnosticSnapshotNotificationName = Notification.Name("com.b-vibe.RightHere.ExtensionDiagnosticSnapshot")
+    public static let extensionDidBecomeActiveNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDidBecomeActive")
+    public static let extensionDiagnosticNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnostic")
+    public static let extensionDiagnosticSnapshotRequestName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshotRequest")
+    public static let extensionDiagnosticSnapshotNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshot")
     public static let templateCacheKey = "templateCache"
     public static let localTemplateCacheKey = "localTemplateCache"
     public static let localDisabledTypesKey = "localDisabledFileTypes"
@@ -269,7 +269,7 @@ public struct SharedDefaults {
     private static func notifySettingsChanged() {
         // Notify Finder Sync extension of the update
         DistributedNotificationCenter.default().postNotificationName(
-            Notification.Name("com.b-vibe.RightHere.SettingsChanged"),
+            Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil,
             userInfo: nil,
             deliverImmediately: true
@@ -285,7 +285,7 @@ public struct SharedDefaults {
         }
 
         DistributedNotificationCenter.default().postNotificationName(
-            Notification.Name("com.b-vibe.RightHere.SettingsChanged"),
+            Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil,
             userInfo: userInfo,
             deliverImmediately: true

@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.b-vibe.RightHere</string>
+		<string>group.com.LimeBits.RightHere</string>
 	</array>
 </dict>
 </plist>

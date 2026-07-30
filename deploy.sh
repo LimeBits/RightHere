@@ -8,7 +8,11 @@ set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALLED_APP="/Applications/RightHere.app"
-BUNDLE_ID="com.b-vibe.RightHere.Extension"
+BUNDLE_ID="com.LimeBits.RightHere.Extension"
+OLD_BUNDLE_IDS=(
+    "com.b-vibe.RightHere.Extension"
+    "com.b-vibe.RightHere.FinderSync"
+)
 UNIVERSAL=false
 NATIVE_ARCH="$(uname -m)"
 DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
@@ -97,6 +101,9 @@ open "$INSTALLED_APP"
 sleep 2
 
 echo "→ 启用扩展..."
+for old_bundle_id in "${OLD_BUNDLE_IDS[@]}"; do
+    pluginkit -e ignore -i "$old_bundle_id" 2>/dev/null || true
+done
 pluginkit -e use -i "$BUNDLE_ID"
 sleep 1
 

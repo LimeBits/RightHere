@@ -43,7 +43,7 @@ jobs:
           fi
           echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
 
-      - name: Build DMG
+      - name: Build unsigned CI DMG
         shell: bash
         run: ./Scripts/package-dmg.sh --build --universal --skip-signing
 
@@ -60,10 +60,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}
-          name: RightHere ${{ steps.release.outputs.tag }}
+          name: RightHere ${{ steps.release.outputs.tag }} unsigned CI build
           body_path: RELEASE_NOTES.md
           files: |
             ${{ steps.artifact.outputs.dmg }}
             ${{ steps.artifact.outputs.sha256 }}
           draft: false
-          prerelease: false
+          prerelease: true

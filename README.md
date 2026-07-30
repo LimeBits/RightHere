@@ -108,7 +108,7 @@ DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-app.sh --build --universal
 
 ## 公开分发状态
 
-目前仓库优先支持本地开发和开源协作。公开分发给普通用户仍需要：
+RightHere 0.1.7 起，公开新用户验证只使用 Developer ID 分发链路：
 
 1. Apple Developer Program
 2. Developer ID Application 证书
@@ -117,7 +117,24 @@ DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-app.sh --build --universal
 5. stapler 绑定公证票据
 6. Gatekeeper 验证
 
-在这些完成前，DMG 更适合开发机或受信任设备验证。
+GitHub Actions 自动生成的 DMG 只适合 CI/打包流程验证，不适合新电脑直接安装验证 FinderSync。普通新用户验证请使用本机 Developer ID 签名、公证并 staple 后的 Universal DMG。
+
+正式分发包使用：
+
+```bash
+RIGHTHERE_DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-developer-id.sh
+```
+
+首次使用前需要在 Xcode 里登录有效 Apple Developer 账号，并准备 notarytool 凭据：
+
+```bash
+xcrun notarytool store-credentials "righthere-notary" \
+  --apple-id "you@example.com" \
+  --team-id "YOURTEAMID" \
+  --password "app-specific-password"
+```
+
+RightHere 使用 App Group 和 FinderSync extension，因此 Developer ID 导出还需要主 App 与 extension 都具备匹配的 Developer ID provisioning profile。正式分发脚本会校验主 App 和 FinderSync extension 均为 Universal Binary（`arm64 + x86_64`）。
 
 ## 常见问题
 

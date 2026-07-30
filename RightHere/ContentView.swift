@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -117,6 +118,10 @@ struct ContentView: View {
         .onDisappear {
             timer?.invalidate()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            checkFinderResponseStatus()
+            refreshFinderExtensionRegistration(silently: true)
+        }
     }
 
     private func templateRow(_ template: FileTemplate) -> some View {
@@ -187,7 +192,16 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    @ViewBuilder
     private var finderExtensionStatusView: some View {
+        if !extensionRegistrationState.shouldShowStatusBanner {
+            EmptyView()
+        } else {
+            finderExtensionStatusBanner
+        }
+    }
+
+    private var finderExtensionStatusBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: extensionRegistrationState.symbolName)
                 .foregroundColor(extensionRegistrationState.symbolColor)
@@ -204,12 +218,15 @@ struct ContentView: View {
 
             Spacer(minLength: 8)
 
-            Button(action: openSystemExtensionSettings) {
-                Label("扩展设置", systemImage: "gearshape")
+            Button(action: {
+                openSystemExtensionSettings()
+                refreshFinderExtensionRegistrationAfterDelay()
+            }) {
+                Label(extensionRegistrationState.settingsButtonTitle, systemImage: "gearshape")
             }
             .font(.system(size: 11))
 
-            Button(action: refreshFinderExtensionRegistration) {
+            Button(action: { refreshFinderExtensionRegistration() }) {
                 Label("刷新", systemImage: "arrow.clockwise")
             }
             .font(.system(size: 11))
@@ -265,10 +282,7 @@ struct ContentView: View {
     }
     
     private func openSystemExtensionSettings() {
-        // macOS 13+: open Extensions preference pane directly
-        if let url = URL(string: "x-apple.systempreferences:com.apple.ExtensionsPreferences") {
-            NSWorkspace.shared.open(url)
-        }
+        FinderExtensionInspector.openExtensionSettings()
     }
     
     private func openTemplatesDirectory() {
@@ -285,13 +299,25 @@ struct ContentView: View {
         loadSettings()
     }
 
-    private func refreshFinderExtensionRegistration() {
-        extensionRegistrationState = .checking
+    private func refreshFinderExtensionRegistration(silently: Bool = false) {
+        if !silently {
+            extensionRegistrationState = .checking
+        }
+
         DispatchQueue.global(qos: .utility).async {
             let state = FinderExtensionInspector.currentRegistrationState()
             DispatchQueue.main.async {
                 extensionRegistrationState = state
             }
+        }
+    }
+
+    private func refreshFinderExtensionRegistrationAfterDelay() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            refreshFinderExtensionRegistration(silently: true)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            refreshFinderExtensionRegistration(silently: true)
         }
     }
     
@@ -499,7 +525,7 @@ enum FinderExtensionRegistrationState: Equatable {
         case .notRegistered:
             return "Finder 扩展状态：系统未发现 RightHere"
         case .unavailable:
-            return "Finder 扩展状态：无法读取"
+            return "Finder 扩展状态：暂时不可读"
         }
     }
 
@@ -533,10 +559,28 @@ enum FinderExtensionRegistrationState: Equatable {
 
     var shouldAlertOnLaunch: Bool {
         switch self {
-        case .disabled, .notRegistered, .unavailable:
+        case .disabled, .notRegistered:
             return true
-        case .checking, .enabled:
+        case .checking, .enabled, .unavailable:
             return false
+        }
+    }
+
+    var shouldShowStatusBanner: Bool {
+        switch self {
+        case .disabled, .notRegistered:
+            return true
+        case .checking, .enabled, .unavailable:
+            return false
+        }
+    }
+
+    var settingsButtonTitle: String {
+        switch self {
+        case .disabled, .notRegistered:
+            return "扩展设置"
+        case .checking, .enabled, .unavailable:
+            return "打开扩展"
         }
     }
 
@@ -551,7 +595,7 @@ enum FinderExtensionRegistrationState: Equatable {
         case .notRegistered:
             return "xmark.circle.fill"
         case .unavailable:
-            return "questionmark.circle.fill"
+            return "info.circle.fill"
         }
     }
 
@@ -563,8 +607,10 @@ enum FinderExtensionRegistrationState: Equatable {
             return .green
         case .disabled:
             return .orange
-        case .notRegistered, .unavailable:
+        case .notRegistered:
             return .red
+        case .unavailable:
+            return .secondary
         }
     }
 
@@ -574,8 +620,10 @@ enum FinderExtensionRegistrationState: Equatable {
             return Color.green.opacity(0.10)
         case .disabled:
             return Color.orange.opacity(0.10)
-        case .notRegistered, .unavailable:
+        case .notRegistered:
             return Color.red.opacity(0.10)
+        case .unavailable:
+            return Color.secondary.opacity(0.08)
         case .checking:
             return Color.secondary.opacity(0.08)
         }
@@ -583,14 +631,62 @@ enum FinderExtensionRegistrationState: Equatable {
 }
 
 enum FinderExtensionInspector {
-    static let extensionBundleIdentifier = "com.b-vibe.RightHere.Extension"
+    static let extensionBundleIdentifier = "com.LimeBits.RightHere.Extension"
 
     static func currentRegistrationState() -> FinderExtensionRegistrationState {
-        let result = runPlugInKit(arguments: ["-m", "-A", "-i", extensionBundleIdentifier])
+        let result = runPlugInKit(arguments: ["-m", "-i", extensionBundleIdentifier])
+        if let state = registrationState(from: result) {
+            return state
+        }
+
+        let finderSyncResult = runPlugInKit(arguments: ["-m", "-p", "com.apple.FinderSync"])
+        if let state = registrationState(from: finderSyncResult) {
+            return state
+        }
 
         guard result.exitCode == 0 else {
-            return .unavailable(result.output.isEmpty ? "pluginkit 查询失败。" : result.output)
+            return .unavailable(unavailableMessage(for: result.output))
         }
+
+        guard finderSyncResult.exitCode == 0 else {
+            return .unavailable(unavailableMessage(for: finderSyncResult.output))
+        }
+
+        return .notRegistered
+    }
+
+    static func openExtensionSettings() {
+        let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+
+        if majorVersion < 13 {
+            let paneURL = URL(fileURLWithPath: "/System/Library/PreferencePanes/Extensions.prefPane")
+            if FileManager.default.fileExists(atPath: paneURL.path),
+               NSWorkspace.shared.open(paneURL) {
+                return
+            }
+        }
+
+        let urlStrings = majorVersion >= 13
+            ? [
+                "x-apple.systempreferences:com.apple.LoginItems-Settings.extension",
+                "x-apple.systempreferences:com.apple.ExtensionsPreferences"
+            ]
+            : [
+                "x-apple.systempreferences:com.apple.preferences.extensions?Finder",
+                "x-apple.systempreferences:com.apple.preferences.extensions"
+            ]
+
+        for urlString in urlStrings {
+            if let url = URL(string: urlString), NSWorkspace.shared.open(url) {
+                break
+            }
+        }
+    }
+
+    private static func registrationState(
+        from result: (exitCode: Int32, output: String)
+    ) -> FinderExtensionRegistrationState? {
+        guard result.exitCode == 0 else { return nil }
 
         let lines = result.output
             .split(whereSeparator: \.isNewline)
@@ -598,7 +694,7 @@ enum FinderExtensionInspector {
             .filter { !$0.isEmpty }
 
         guard let line = lines.first(where: { $0.contains(extensionBundleIdentifier) }) else {
-            return .notRegistered
+            return nil
         }
 
         if line.hasPrefix("+") {
@@ -612,15 +708,13 @@ enum FinderExtensionInspector {
         return .unavailable(line)
     }
 
-    static func openExtensionSettings() {
-        let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-        let urlString = majorVersion >= 13
-            ? "x-apple.systempreferences:com.apple.ExtensionsPreferences"
-            : "x-apple.systempreferences:com.apple.preferences.extensions"
-
-        if let url = URL(string: urlString) {
-            NSWorkspace.shared.open(url)
+    private static func unavailableMessage(for output: String) -> String {
+        let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedOutput.localizedCaseInsensitiveContains("unauthorized discovery flag") {
+            return "系统暂时不允许 RightHere 读取 Finder 扩展列表。这不代表扩展不可用；请在系统偏好设置的“扩展”中确认 RightHere。"
         }
+
+        return trimmedOutput.isEmpty ? "系统暂时没有返回 Finder 扩展状态。" : trimmedOutput
     }
 
     private static func runPlugInKit(arguments: [String]) -> (exitCode: Int32, output: String) {

@@ -39,9 +39,11 @@ Use this checklist before publishing a GitHub release.
 - Push `main`.
 - Create and push an annotated tag matching the app version.
 - GitHub Actions will create the GitHub Release from the tag.
-- GitHub Actions will upload the generated Universal DMG and `.sha256` checksum as release assets.
-- Download the uploaded asset and launch it once on a clean machine or test account.
+- GitHub Actions will upload an unsigned CI DMG and `.sha256` checksum as release assets.
+- Treat GitHub Actions assets as CI verification until Developer ID secrets/profiles are configured.
+- For a cross-machine installable release, run `./Scripts/package-developer-id.sh`.
+- Download the Developer ID DMG and launch it once on a clean machine or test account.
 
 ## Future Signing
 
-Before broad public distribution, add Developer ID signing and notarization so macOS Gatekeeper presents a trustworthy install experience.
+Before broad public distribution, confirm Developer ID signing, notarization, stapling, and Gatekeeper verification all pass.

@@ -4,7 +4,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="RightHere.app"
 APP_SRC="${SCRIPT_DIR}/${APP_NAME}"
 APP_DEST="/Applications/${APP_NAME}"
-BUNDLE_ID="com.b-vibe.RightHere.Extension"
+BUNDLE_ID="com.LimeBits.RightHere.Extension"
+OLD_BUNDLE_IDS=(
+    "com.b-vibe.RightHere.Extension"
+    "com.b-vibe.RightHere.FinderSync"
+)
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  RightHere 安装程序"
@@ -45,7 +49,11 @@ sleep 3
 
 # ── 激活 Finder 扩展 ──────────────────────────────────────────
 echo "→ 激活 Finder 扩展..."
+for old_bundle_id in "${OLD_BUNDLE_IDS[@]}"; do
+    pluginkit -e ignore -i "${old_bundle_id}" 2>/dev/null || true
+done
 pluginkit -e use -i "${BUNDLE_ID}" 2>/dev/null || true
+sleep 1
 
 echo "→ 等待扩展进程启动..."
 for i in 1 2 3 4 5; do
@@ -76,16 +84,13 @@ else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  ✓ 文件已安装到 /Applications"
     echo ""
-    echo "  还需要一步手动操作："
+    echo "  Finder 扩展暂时没有返回已启用状态。"
+    echo "  如果右键菜单没有出现，请重启电脑后再试一次本安装程序。"
     echo ""
-    echo "  1. 打开「访达」→「应用程序」"
-    echo "  2. 找到 RightHere，按住 Control 再点击"
-    echo "  3. 选择「打开」，弹窗里再点「打开」"
-    echo "  4. 完成后再次双击本安装脚本"
+    echo "  在 Finder 中右键点击用户目录、桌面或文稿里的文件夹，"
+    echo "  应该可以看到「新建文件」菜单。"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    # 自动打开应用程序文件夹
-    open /Applications
-    osascript -e 'display alert "还需一步操作" message "请在「应用程序」文件夹中找到 RightHere，按住 Control 键点击它，选择「打开」，然后在弹出的对话框中点击「打开」。完成后再次双击安装脚本。" as warning' 2>/dev/null || true
+    osascript -e 'display notification "如果 Finder 右键菜单没有出现，请重启电脑后再运行一次安装程序。" with title "RightHere 已安装"' 2>/dev/null || true
 fi
 
 echo ""

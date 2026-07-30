@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.7] - 2026-07-30
+
+### 新增
+- 新增 Developer ID 正式分发脚本：归档、Developer ID 导出、DMG 打包、DMG 签名、公证和 stapler 绑定走同一条命令。
+- 正式分发脚本强制校验 Universal Binary，确保主 App 和 FinderSync extension 同时包含 `arm64` 与 `x86_64`。
+- 安装脚本会清理旧 bundle id 的 FinderSync 状态，并启用新的 `com.LimeBits.RightHere.Extension` 后重启 Finder。
+
+### 优化
+- 主 App 和 FinderSync extension 切换到 `com.LimeBits.RightHere` / `com.LimeBits.RightHere.Extension`，App Group 切换到 `group.com.LimeBits.RightHere`。
+- 设置页不再把系统扩展列表读取失败当作用户必须处理的错误；只有明确未启用或未注册时才显示提示。
+- 启动时不再弹出 Finder 扩展未就绪提示，减少普通用户首次安装后的干扰。
+- 补齐标准 macOS AppIcon 10 个槽位，改善 Launchpad 首次显示透明或延迟刷新的情况。
+- 菜单栏图标改为居中绘制并略微放大，改善与系统菜单栏图标的视觉尺寸一致性。
+- GitHub Actions 生成的 DMG 明确标记为未签名 CI 测试包，避免误当作公开分发包。
+
+### 分发
+- 公开新用户验证只接受 Developer ID Application 签名、公证并 staple 的 Universal DMG。
+- Apple Development 签名或 ad-hoc ZIP 只用于开发机快速验证，不作为普通新用户安装验证依据。
+
+---
+
 ## [0.1.6] - 2026-07-28
 
 ### 新增

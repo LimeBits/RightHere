@@ -1,6 +1,6 @@
 name: RightHere
 options:
-  bundleIdPrefix: com.b-vibe
+  bundleIdPrefix: com.LimeBits
   deploymentTarget:
     macOS: "12.0"
 targets:
@@ -11,15 +11,16 @@ targets:
       - path: RightHere
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.b-vibe.RightHere
+        PRODUCT_BUNDLE_IDENTIFIER: com.LimeBits.RightHere
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
+        ENABLE_HARDENED_RUNTIME: YES
         DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSUIElement: YES
-        CURRENT_PROJECT_VERSION: "3"
-        MARKETING_VERSION: "0.1.6"
+        CURRENT_PROJECT_VERSION: "4"
+        MARKETING_VERSION: "0.1.7"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -28,7 +29,7 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
-          - group.com.b-vibe.RightHere
+          - group.com.LimeBits.RightHere
     attributes:
       SystemCapabilities:
         com.apple.Sandbox:
@@ -47,21 +48,22 @@ targets:
       - path: RightHere/TemplateAssets.swift
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.b-vibe.RightHere.Extension
+        PRODUCT_BUNDLE_IDENTIFIER: com.LimeBits.RightHere.Extension
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
+        ENABLE_HARDENED_RUNTIME: YES
         DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "3"
-        MARKETING_VERSION: "0.1.6"
+        CURRENT_PROJECT_VERSION: "4"
+        MARKETING_VERSION: "0.1.7"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
-          - group.com.b-vibe.RightHere
+          - group.com.LimeBits.RightHere
         com.apple.security.files.downloads.read-write: true
         com.apple.security.files.user-selected.read-write: true
         com.apple.security.temporary-exception.files.home-relative-path.read-write:
