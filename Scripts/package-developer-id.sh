@@ -105,10 +105,7 @@ if ! printf '%s\n' "${SIGNATURE_INFO}" | grep -q '^Authority=Developer ID Applic
     printf 'Run this from the same macOS account that has the Developer ID Application private key in Keychain.\n' >&2
     exit 1
 fi
-if ! spctl --assess --type exec --verbose=4 "${EXPORTED_APP}"; then
-    printf 'error: Gatekeeper assessment failed for exported app.\n' >&2
-    exit 1
-fi
+printf '%s\n' '-> Developer ID signature is present; Gatekeeper verification runs after notarization.'
 
 printf '%s\n' '-> Verifying universal binaries...'
 APP_ARCHS="$(lipo -archs "${EXPORTED_APP}/Contents/MacOS/RightHere")"
