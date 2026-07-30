@@ -1,4 +1,4 @@
-name: Release
+name: CI Package
 
 on:
   push:
@@ -12,11 +12,11 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-release:
-    name: Build DMG and publish release
+  build-ci-package:
+    name: Build unsigned CI package
     runs-on: macos-15
 
     steps:
@@ -56,14 +56,11 @@ jobs:
           echo "dmg=${dmg}" >> "${GITHUB_OUTPUT}"
           echo "sha256=${dmg}.sha256" >> "${GITHUB_OUTPUT}"
 
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload unsigned CI artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.release.outputs.tag }}
-          name: RightHere ${{ steps.release.outputs.tag }} unsigned CI build
-          body_path: RELEASE_NOTES.md
-          files: |
+          name: RightHere-${{ steps.release.outputs.tag }}-unsigned-ci
+          path: |
             ${{ steps.artifact.outputs.dmg }}
             ${{ steps.artifact.outputs.sha256 }}
-          draft: false
-          prerelease: true
+          if-no-files-found: error

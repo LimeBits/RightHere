@@ -98,7 +98,17 @@ fi
 
 printf '%s\n' '-> Verifying exported app signature...'
 codesign --verify --deep --strict --verbose=4 "${EXPORTED_APP}"
-spctl --assess --type exec --verbose=4 "${EXPORTED_APP}"
+SIGNATURE_INFO="$(codesign -dvv "${EXPORTED_APP}" 2>&1)"
+printf '%s\n' "${SIGNATURE_INFO}" | grep -E '^(Authority|TeamIdentifier|Runtime Version)=' || true
+if ! printf '%s\n' "${SIGNATURE_INFO}" | grep -q '^Authority=Developer ID Application:'; then
+    printf 'error: exported app is not signed with Developer ID Application.\n' >&2
+    printf 'Run this from the same macOS account that has the Developer ID Application private key in Keychain.\n' >&2
+    exit 1
+fi
+if ! spctl --assess --type exec --verbose=4 "${EXPORTED_APP}"; then
+    printf 'error: Gatekeeper assessment failed for exported app.\n' >&2
+    exit 1
+fi
 
 printf '%s\n' '-> Verifying universal binaries...'
 APP_ARCHS="$(lipo -archs "${EXPORTED_APP}/Contents/MacOS/RightHere")"
