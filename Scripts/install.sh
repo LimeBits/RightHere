@@ -39,8 +39,12 @@ echo "→ 移除系统隔离标记（需要管理员密码）..."
 sudo xattr -cr "${APP_DEST}"
 
 # ── 注册到 LaunchServices ─────────────────────────────────────
+echo "→ 刷新应用图标缓存..."
+touch "${APP_DEST}"
+touch "${APP_DEST}/Contents/Resources/AppIcon.icns" 2>/dev/null || true
 /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister \
     -f -R -trusted "${APP_DEST}" 2>/dev/null || true
+killall Dock 2>/dev/null || true
 
 # ── 启动 app ──────────────────────────────────────────────────
 echo "→ 启动 RightHere..."
