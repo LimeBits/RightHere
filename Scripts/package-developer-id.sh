@@ -122,7 +122,7 @@ if [[ " ${APPEX_ARCHS} " != *" arm64 "* || " ${APPEX_ARCHS} " != *" x86_64 "* ]]
 fi
 
 if [[ -z "${CODESIGN_IDENTITY}" ]]; then
-    CODESIGN_IDENTITY="$(codesign -dvv "${EXPORTED_APP}" 2>&1 | awk -F= '/^Authority=Developer ID Application:/ { print $2; exit }')"
+    CODESIGN_IDENTITY="$(printf '%s\n' "${SIGNATURE_INFO}" | awk -F= '/^Authority=Developer ID Application:/ && !found { print $2; found=1 }')"
 fi
 
 printf '%s\n' '-> Staging exported app for DMG packaging...'
