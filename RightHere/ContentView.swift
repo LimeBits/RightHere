@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var lastFinderCall: Date? = nil
     @State private var extensionRegistrationState: FinderExtensionRegistrationState = .checking
     @State private var automaticallyChecksForUpdates = true
+    @State private var isDisablingFinderExtension = false
     @State private var now = Date()
     @State private var timer: Timer? = nil
     
@@ -36,6 +37,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 12) {
                 finderExtensionStatusView
                 updateSettingsView
+                extensionControlView
 
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 3) {
@@ -92,17 +94,22 @@ struct ContentView: View {
                     Circle()
                         .fill(isRecentFinderCall ? Color.green : Color.secondary)
                         .frame(width: 7, height: 7)
-                    Text(finderCallStatusText)
-                }
-
-                Spacer()
-
-                Text(appVersionText)
+                Text(finderCallStatusText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer(minLength: 16)
+
+            Text(appVersionText)
+                .lineLimit(1)
+                .layoutPriority(1)
+        }
             .font(.system(size: 11))
             .foregroundColor(.secondary)
             .padding(.horizontal, 18)
-            .frame(height: 34, alignment: .center)
+            .frame(minHeight: 38, alignment: .center)
             .background(Color(NSColor.controlBackgroundColor).opacity(0.36))
         }
         .background(Color(NSColor.windowBackgroundColor))
@@ -272,6 +279,34 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    private var extensionControlView: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "puzzlepiece.extension")
+                .foregroundColor(.secondary)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Finder 扩展")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("退出 App 后扩展仍可能继续工作；可在卸载前停用。")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            Button(action: disableFinderExtension) {
+                Label("停用扩展", systemImage: "power")
+            }
+            .font(.system(size: 11))
+            .disabled(isDisablingFinderExtension)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+        .cornerRadius(6)
+    }
+
     private func getIcon(for template: FileTemplate) -> String {
         switch template.fileExtension {
         case "txt": return "doc.text"
@@ -309,6 +344,32 @@ struct ContentView: View {
 
     private func loadUpdateSettings() {
         automaticallyChecksForUpdates = RightHereUpdater.shared.automaticallyChecksForUpdates
+    }
+
+    private func disableFinderExtension() {
+        let alert = NSAlert()
+        alert.messageText = "停用 Finder 扩展？"
+        alert.informativeText = "停用后，Finder 右键菜单里的“新建文件”会消失。重新打开 RightHere 会再次启用扩展。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "停用")
+        alert.addButton(withTitle: "取消")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        isDisablingFinderExtension = true
+        FinderExtensionBootstrap.disableExtensionAndRestartFinder { succeeded in
+            isDisablingFinderExtension = false
+            refreshFinderExtensionRegistration(silently: true)
+
+            let resultAlert = NSAlert()
+            resultAlert.messageText = succeeded ? "Finder 扩展已停用" : "停用 Finder 扩展失败"
+            resultAlert.informativeText = succeeded
+                ? "Finder 已重启。重新打开 RightHere 时会自动启用扩展。"
+                : "系统没有接受停用请求。可以稍后再试，或在系统设置的扩展中手动停用 RightHere。"
+            resultAlert.alertStyle = succeeded ? .informational : .warning
+            resultAlert.addButton(withTitle: "好的")
+            resultAlert.runModal()
+        }
     }
 
     private func refreshExistingTemplatesOnFirstOpen() {

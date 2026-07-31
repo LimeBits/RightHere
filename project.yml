@@ -23,8 +23,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHere/Info.plist
         SPARKLE_PUBLIC_ED_KEY: ""
-        CURRENT_PROJECT_VERSION: "7"
-        MARKETING_VERSION: "0.1.10"
+        CURRENT_PROJECT_VERSION: "8"
+        MARKETING_VERSION: "0.1.11"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -63,8 +63,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "7"
-        MARKETING_VERSION: "0.1.10"
+        CURRENT_PROJECT_VERSION: "8"
+        MARKETING_VERSION: "0.1.11"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:

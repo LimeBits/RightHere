@@ -77,7 +77,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "打开设置", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "打开模板文件夹", action: #selector(openTemplatesDirectory), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "打开扩展设置", action: #selector(openExtensionSettings), keyEquivalent: ""))
         menu.addItem(buildHelpMenuItem())
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "退出 RightHere", action: #selector(quit), keyEquivalent: "q"))
@@ -121,6 +120,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         submenu.addItem(NSMenuItem(title: "打开项目主页", action: #selector(openProjectHome), keyEquivalent: ""))
         submenu.addItem(NSMenuItem(title: "打开 GitHub Issues", action: #selector(openGitHubIssues), keyEquivalent: ""))
         submenu.addItem(NSMenuItem(title: "复制诊断信息", action: #selector(copyDiagnosticInfo), keyEquivalent: ""))
+        submenu.addItem(.separator())
+        submenu.addItem(NSMenuItem(title: "打开扩展设置", action: #selector(openExtensionSettings), keyEquivalent: ""))
 
         item.submenu = submenu
         return item
@@ -141,10 +142,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         if settingsWindow == nil {
             let contentView = ContentView()
-                .frame(minWidth: 500, minHeight: 410)
+                .frame(minWidth: 560, minHeight: 500)
 
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 560, height: 480),
+                contentRect: NSRect(x: 0, y: 0, width: 600, height: 560),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
@@ -483,6 +484,16 @@ enum FinderExtensionBootstrap {
         }
     }
 
+    static func disableExtensionAndRestartFinder(completion: @escaping (Bool) -> Void) {
+        DispatchQueue.global(qos: .utility).async {
+            let result = runPlugInKit(arguments: ["-e", "ignore", "-i", extensionBundleIdentifier])
+            restartFinder()
+            DispatchQueue.main.async {
+                completion(result == 0)
+            }
+        }
+    }
+
     private static func registerAppWithLaunchServices() {
         let process = Process()
         process.executableURL = URL(
@@ -493,10 +504,24 @@ enum FinderExtensionBootstrap {
         process.waitUntilExit()
     }
 
-    private static func runPlugInKit(arguments: [String]) {
+    @discardableResult
+    private static func runPlugInKit(arguments: [String]) -> Int32 {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
         process.arguments = arguments
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus
+        } catch {
+            return 1
+        }
+    }
+
+    private static func restartFinder() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+        process.arguments = ["Finder"]
         try? process.run()
         process.waitUntilExit()
     }
