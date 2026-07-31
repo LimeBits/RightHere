@@ -7,8 +7,13 @@
 - 为 FinderSync extension 增加 Documents 写入权限，修复「文稿」文件夹有菜单但新建文件无反应的问题。
 - 安装脚本刷新 LaunchServices 与 Dock 图标缓存，改善 Launchpad 首次安装后图标短暂透明的问题。
 
+### 新增
+- 接入 Sparkle 2 更新框架，App 内「检查更新」可用于后续正式版本的一键下载、签名验证和安装。
+- 新增 `Scripts/generate-appcast.sh`，用于为正式 DMG 生成 Sparkle `appcast.xml`。
+
 ### 分发
 - 继续要求公开安装包必须为 Developer ID Application 签名、公证并 staple 的 Universal DMG。
+- 正式打包现在要求提供 `SPARKLE_PUBLIC_ED_KEY`，避免发布不能自动更新的包。
 
 ---
 

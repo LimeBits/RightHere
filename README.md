@@ -122,7 +122,9 @@ GitHub Actions 自动生成的 DMG 只适合 CI/打包流程验证，不适合�
 正式分发包使用：
 
 ```bash
-RIGHTHERE_DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-developer-id.sh
+SPARKLE_PUBLIC_ED_KEY="你的 Sparkle 公钥" \
+RIGHTHERE_DEVELOPMENT_TEAM=YOURTEAMID \
+./Scripts/package-developer-id.sh
 ```
 
 首次使用前需要在 Xcode 里登录有效 Apple Developer 账号，并准备 notarytool 凭据：
@@ -135,6 +137,8 @@ xcrun notarytool store-credentials "righthere-notary" \
 ```
 
 RightHere 使用 App Group 和 FinderSync extension，因此 Developer ID 导出还需要主 App 与 extension 都具备匹配的 Developer ID provisioning profile。正式分发脚本会校验主 App 和 FinderSync extension 均为 Universal Binary（`arm64 + x86_64`）。
+
+RightHere 使用 Sparkle 2 作为 App 内更新框架。首次正式接入前，需要用 Sparkle 的 `generate_keys` 生成 EdDSA key，把公钥传给 `SPARKLE_PUBLIC_ED_KEY`；后续每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成并上传 `appcast.xml` 到同一个 GitHub Release。
 
 ## 常见问题
 

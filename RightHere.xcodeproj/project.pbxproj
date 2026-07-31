@@ -14,6 +14,7 @@
 		81A63B57B2FD0BD174D15BF7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057037DF9ABFEED4C9C2DB9E /* ContentView.swift */; };
 		84EEB2941987A5D5EE58FAAA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8CAAC7405CE8EDAD0A756DCB /* Assets.xcassets */; };
 		85C18ABB3F52DC6F7D9234A4 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
+		ADA141AC27C1374F34FC78D5 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = BB6E75E7EAB5E31211A49F9B /* Sparkle */; };
 		B48AFB7C2815E1D9BE6145B4 /* RightHereExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AD648F2A507467F3290D7CB /* RightHereExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D2266168DBE524B703D51BD5 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
 /* End PBXBuildFile section */
@@ -55,6 +56,17 @@
 		E0EF3FD383CAB640DEF54AFA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F69AC84A0B766272C55C66D4 /* RightHereExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RightHereExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E37151164A57B016EEA9AD0A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ADA141AC27C1374F34FC78D5 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		3AFDE577D6A40CC3FEC1CF06 /* Products */ = {
@@ -124,6 +136,7 @@
 			buildPhases = (
 				7B92ED146F9983DBF4DFF327 /* Sources */,
 				A4EB8DFD029FB054103587C3 /* Resources */,
+				E37151164A57B016EEA9AD0A /* Frameworks */,
 				80EE3095188B7C78075BCB66 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -133,6 +146,7 @@
 			);
 			name = RightHere;
 			packageProductDependencies = (
+				BB6E75E7EAB5E31211A49F9B /* Sparkle */,
 			);
 			productName = RightHere;
 			productReference = 9AEC9CF385B8341BF6E41060 /* RightHere.app */;
@@ -168,6 +182,9 @@
 			);
 			mainGroup = 496DEDDC218B0D20A480EBDD;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				ECA5A031BAB866F76C460D14 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3AFDE577D6A40CC3FEC1CF06 /* Products */;
 			projectDirPath = "";
@@ -274,6 +291,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://github.com/LimeBits/RightHere/releases/latest/download/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -282,6 +302,7 @@
 				MARKETING_VERSION = 0.1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere;
 				SDKROOT = macosx;
+				SPARKLE_PUBLIC_ED_KEY = "";
 			};
 			name = Release;
 		};
@@ -417,6 +438,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://github.com/LimeBits/RightHere/releases/latest/download/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -425,6 +449,7 @@
 				MARKETING_VERSION = 0.1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere;
 				SDKROOT = macosx;
+				SPARKLE_PUBLIC_ED_KEY = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 			};
 			name = Debug;
@@ -460,6 +485,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		ECA5A031BAB866F76C460D14 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BB6E75E7EAB5E31211A49F9B /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ECA5A031BAB866F76C460D14 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 85CC2D5EEDEDD3EAED61A59E /* Project object */;
 }

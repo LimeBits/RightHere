@@ -26,9 +26,15 @@ fi
 TEAM_ID="${RIGHTHERE_DEVELOPMENT_TEAM:-${DEVELOPMENT_TEAM:-}}"
 CODESIGN_IDENTITY="${RIGHTHERE_CODESIGN_IDENTITY:-${CODESIGN_IDENTITY:-}}"
 SKIP_NOTARIZE="${RIGHTHERE_SKIP_NOTARIZE:-0}"
+SPARKLE_PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY:-}"
 
 if [[ -z "${TEAM_ID}" ]]; then
     printf 'error: missing Team ID. Set RIGHTHERE_DEVELOPMENT_TEAM or DEVELOPMENT_TEAM.\n' >&2
+    exit 1
+fi
+if [[ -z "${SPARKLE_PUBLIC_ED_KEY}" ]]; then
+    printf 'error: missing Sparkle public EdDSA key. Set SPARKLE_PUBLIC_ED_KEY before release packaging.\n' >&2
+    printf 'Generate it once with Sparkle generate_keys, then keep the private key in Keychain.\n' >&2
     exit 1
 fi
 
@@ -48,6 +54,7 @@ xcodebuild \
     -destination 'generic/platform=macOS' \
     -archivePath "${ARCHIVE_PATH}" \
     DEVELOPMENT_TEAM="${TEAM_ID}" \
+    SPARKLE_PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY}" \
     ARCHS="arm64 x86_64" \
     ONLY_ACTIVE_ARCH=NO \
     -allowProvisioningUpdates \

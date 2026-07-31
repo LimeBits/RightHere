@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 import SwiftUI
 
 @main
@@ -15,6 +16,11 @@ struct RightHereApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let githubOwner = "LimeBits"
     private let githubRepo = "RightHere"
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
 
@@ -175,7 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func checkForUpdatesFromMenu() {
-        checkForUpdates(isManual: true)
+        updaterController.checkForUpdates(nil)
     }
 
     @objc private func openFeedbackIssue() {

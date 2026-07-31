@@ -19,6 +19,7 @@ Apple Development 签名包和 ad-hoc ZIP 只用于开发机快速验证，不�
 - RightHere 启动时会自动注册当前 App，并尝试启用 `com.LimeBits.RightHere.Extension`，改善普通用户拖拽安装后 Finder 右键菜单不出现的问题。
 - FinderSync extension 增加 Documents 写入权限，修复「下载」可新建文件但「文稿」有菜单却无反应的问题。
 - 安装脚本刷新 LaunchServices 与 Dock 图标缓存，改善 Launchpad 首次安装后图标短暂透明的问题。
+- 接入 Sparkle 2 更新框架，后续正式包可通过 App 内「检查更新」下载、验证并安装新版本。
 - 新增 `Scripts/package-developer-id.sh`，统一执行归档、Developer ID 导出、DMG 打包、DMG 签名、公证和 stapler 绑定。
 - 新增 `Scripts/notarize.sh`，复用 `righthere-notary` keychain profile 完成公证和 Gatekeeper 验证。
 - 正式分发脚本强制校验主 App 和 FinderSync extension 都包含 `arm64` 与 `x86_64`。
@@ -33,10 +34,18 @@ Apple Development 签名包和 ad-hoc ZIP 只用于开发机快速验证，不�
 
 ```bash
 cd /Users/bruce/Desktop/b-vibe/RightHere
-RIGHTHERE_DEVELOPMENT_TEAM=WV6JA6UHLN Scripts/package-developer-id.sh
+SPARKLE_PUBLIC_ED_KEY="你的 Sparkle 公钥" \
+RIGHTHERE_DEVELOPMENT_TEAM=WV6JA6UHLN \
+Scripts/package-developer-id.sh
 ```
 
 脚本成功后会输出 `dist/RightHere-0.1.8-build5-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
+
+生成 Sparkle appcast：
+
+```bash
+SPARKLE_GENERATE_APPCAST="/path/to/generate_appcast" Scripts/generate-appcast.sh
+```
 
 ## 验证重点
 

@@ -3,6 +3,10 @@ options:
   bundleIdPrefix: com.LimeBits
   deploymentTarget:
     macOS: "12.0"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
 targets:
   RightHere:
     type: application
@@ -19,6 +23,10 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_SUFeedURL: https://github.com/LimeBits/RightHere/releases/latest/download/appcast.xml
+        INFOPLIST_KEY_SUPublicEDKey: $(SPARKLE_PUBLIC_ED_KEY)
+        INFOPLIST_KEY_SUEnableInstallerLauncherService: YES
+        SPARKLE_PUBLIC_ED_KEY: ""
         CURRENT_PROJECT_VERSION: "5"
         MARKETING_VERSION: "0.1.8"
       configs:
@@ -28,6 +36,7 @@ targets:
       path: RightHere/RightHere.entitlements
       properties:
         com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
         com.apple.security.application-groups:
           - group.com.LimeBits.RightHere
     attributes:
@@ -38,6 +47,8 @@ targets:
           enabled: 1
     dependencies:
       - target: RightHereExtension
+      - package: Sparkle
+        product: Sparkle
 
   RightHereExtension:
     type: app-extension
