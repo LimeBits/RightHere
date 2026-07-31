@@ -5,6 +5,14 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${RIGHTHERE_DIST_DIR:-${ROOT_DIR}/dist}"
 APPCAST_DIR="${RIGHTHERE_APPCAST_DIR:-${DIST_DIR}/appcast}"
+
+if [[ -f "${ROOT_DIR}/.dev.vars" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "${ROOT_DIR}/.dev.vars"
+    set +a
+fi
+
 GENERATE_APPCAST="${SPARKLE_GENERATE_APPCAST:-}"
 
 if [[ -z "${GENERATE_APPCAST}" ]]; then

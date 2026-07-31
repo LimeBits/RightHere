@@ -18,6 +18,13 @@ EXPORT_OPTIONS="${DIST_DIR}/ExportOptions-DeveloperID.plist"
 ARCHIVE_PATH="${ARCHIVE_DIR}/RightHere.xcarchive"
 APP_DIR="${ROOT_DIR}/RightHere.app"
 
+if [[ -f "${ROOT_DIR}/.dev.vars" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "${ROOT_DIR}/.dev.vars"
+    set +a
+fi
+
 if [[ -z "${RIGHTHERE_DEVELOPMENT_TEAM:-}" && -f "${ROOT_DIR}/Scripts/dev-identity.sh" ]]; then
     # shellcheck disable=SC1091
     source "${ROOT_DIR}/Scripts/dev-identity.sh"
