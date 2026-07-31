@@ -1,10 +1,10 @@
-# RightHere 0.1.9
+# RightHere 0.1.10
 
-发布时间：2026-07-31
+发布时间：2026-08-01
 
 ## 这一版的定位
 
-RightHere 0.1.9 是修复 Sparkle 更新通道配置的正式分发版本。用于普通用户安装验证的包必须是：
+RightHere 0.1.10 是优化自动更新首次体验的正式分发版本。用于普通用户安装验证的包必须是：
 
 - Universal Binary：`arm64 + x86_64`
 - Developer ID Application 签名
@@ -16,6 +16,9 @@ Apple Development 签名包和 ad-hoc ZIP 只用于开发机快速验证，不�
 
 ## 主要变化
 
+- 默认开启自动检查更新，不再在首次启动时弹出 Sparkle 的英文授权提示。
+- 设置页新增「版本更新」开关，用户可以关闭或重新开启自动检查更新。
+- 不默认启用后台自动下载和安装更新，保留菜单栏「检查更新...」手动入口。
 - 修复 0.1.8 包内缺少 Sparkle `SUFeedURL` / `SUPublicEDKey` 配置，导致「检查更新」弹出英文错误的问题。
 - 修复 appcast 生成时只有相对 DMG 文件名、缺少 EdDSA 签名校验的问题。
 - appcast 生成脚本现在会强制校验 `sparkle:edSignature` 和 HTTPS 下载地址，避免再次上传无效更新源。
@@ -41,7 +44,7 @@ RIGHTHERE_DEVELOPMENT_TEAM=WV6JA6UHLN \
 Scripts/package-developer-id.sh
 ```
 
-脚本会从 `.dev.vars` 读取 `SPARKLE_PUBLIC_ED_KEY`。成功后会输出 `dist/RightHere-0.1.9-build6-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
+脚本会从 `.dev.vars` 读取 `SPARKLE_PUBLIC_ED_KEY`。成功后会输出 `dist/RightHere-0.1.10-build7-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
 
 生成 Sparkle appcast：
 

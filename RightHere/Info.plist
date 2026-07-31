@@ -28,6 +28,10 @@
 	<true/>
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAllowsAutomaticUpdates</key>
+	<false/>
 	<key>SUFeedURL</key>
 	<string>https://github.com/LimeBits/RightHere/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>

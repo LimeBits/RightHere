@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var enabledTemplates: Set<FileTemplate> = []
     @State private var lastFinderCall: Date? = nil
     @State private var extensionRegistrationState: FinderExtensionRegistrationState = .checking
+    @State private var automaticallyChecksForUpdates = true
     @State private var now = Date()
     @State private var timer: Timer? = nil
     
@@ -34,6 +35,7 @@ struct ContentView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 finderExtensionStatusView
+                updateSettingsView
 
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 3) {
@@ -106,6 +108,7 @@ struct ContentView: View {
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             loadSettings()
+            loadUpdateSettings()
             refreshExistingTemplatesOnFirstOpen()
             checkFinderResponseStatus()
             refreshFinderExtensionRegistration()
@@ -237,6 +240,38 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    private var updateSettingsView: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .foregroundColor(.blue)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("版本更新")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("自动检查新版本。仍可从菜单栏手动检查更新。")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            Toggle("", isOn: Binding(
+                get: { automaticallyChecksForUpdates },
+                set: { isEnabled in
+                    automaticallyChecksForUpdates = isEnabled
+                    RightHereUpdater.shared.automaticallyChecksForUpdates = isEnabled
+                }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.48))
+        .cornerRadius(6)
+    }
+
     private func getIcon(for template: FileTemplate) -> String {
         switch template.fileExtension {
         case "txt": return "doc.text"
@@ -270,6 +305,10 @@ struct ContentView: View {
         let enabled = SharedDefaults.getLocalEnabledFileTemplates()
         self.availableTemplates = available
         self.enabledTemplates = Set(enabled)
+    }
+
+    private func loadUpdateSettings() {
+        automaticallyChecksForUpdates = RightHereUpdater.shared.automaticallyChecksForUpdates
     }
 
     private func refreshExistingTemplatesOnFirstOpen() {

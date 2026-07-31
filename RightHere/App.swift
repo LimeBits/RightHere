@@ -16,11 +16,7 @@ struct RightHereApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let githubOwner = "LimeBits"
     private let githubRepo = "RightHere"
-    private let updaterController = SPUStandardUpdaterController(
-        startingUpdater: true,
-        updaterDelegate: nil,
-        userDriverDelegate: nil
-    )
+    private let updaterController = RightHereUpdater.shared.controller
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
 
@@ -447,6 +443,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSWorkspace.shared.open(url)
     }
 
+}
+
+final class RightHereUpdater {
+    static let shared = RightHereUpdater()
+
+    let controller: SPUStandardUpdaterController
+
+    private init() {
+        controller = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+    }
+
+    var automaticallyChecksForUpdates: Bool {
+        get {
+            controller.updater.automaticallyChecksForUpdates
+        }
+        set {
+            controller.updater.automaticallyChecksForUpdates = newValue
+        }
+    }
 }
 
 enum FinderExtensionBootstrap {
