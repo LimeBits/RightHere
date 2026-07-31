@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${RIGHTHERE_DIST_DIR:-${ROOT_DIR}/dist}"
 APPCAST_DIR="${RIGHTHERE_APPCAST_DIR:-${DIST_DIR}/appcast}"
+DOWNLOAD_URL_PREFIX="${RIGHTHERE_DOWNLOAD_URL_PREFIX:-https://github.com/LimeBits/RightHere/releases/latest/download/}"
 
 if [[ -f "${ROOT_DIR}/.dev.vars" ]]; then
     set -a
@@ -44,8 +45,22 @@ rm -rf "${APPCAST_DIR}"
 mkdir -p "${APPCAST_DIR}"
 cp "${latest_dmg}" "${APPCAST_DIR}/"
 
-"${GENERATE_APPCAST}" "${APPCAST_DIR}"
+"${GENERATE_APPCAST}" \
+    --download-url-prefix "${DOWNLOAD_URL_PREFIX}" \
+    "${APPCAST_DIR}"
 cp "${APPCAST_DIR}/appcast.xml" "${DIST_DIR}/appcast.xml"
+
+if ! grep -q 'sparkle:edSignature=' "${DIST_DIR}/appcast.xml"; then
+    printf 'error: generated appcast is missing sparkle:edSignature.\n' >&2
+    printf 'Run Sparkle generate_keys once and make sure the private EdDSA key is available in Keychain.\n' >&2
+    exit 1
+fi
+
+if ! grep -q 'enclosure url="https://' "${DIST_DIR}/appcast.xml"; then
+    printf 'error: generated appcast does not contain an absolute HTTPS download URL.\n' >&2
+    printf 'Set RIGHTHERE_DOWNLOAD_URL_PREFIX to the release asset URL prefix and retry.\n' >&2
+    exit 1
+fi
 
 printf '✓ Sparkle appcast ready:\n'
 printf '  %s\n' "${DIST_DIR}/appcast.xml"

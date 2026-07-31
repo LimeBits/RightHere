@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.9] - 2026-07-31
+
+### 修复
+- 将 Sparkle 更新配置写入主 App 的显式 `Info.plist`，确保正式包包含 `SUFeedURL`、`SUPublicEDKey` 和 installer launcher 设置。
+- `Scripts/generate-appcast.sh` 生成 appcast 时加入 GitHub Release 下载 URL 前缀，避免 Sparkle 拿到相对路径下载地址。
+- appcast 生成后强制校验 `sparkle:edSignature` 和 HTTPS 下载地址，避免再次发布无法被 Sparkle 验证的更新源。
+
+### 分发
+- 0.1.8 已发布包的更新配置不完整，0.1.9 作为修复版重新走 Developer ID 签名、公证和 stapler 流程。
+
+---
+
 ## [0.1.8] - 2026-07-31
 
 ### 修复

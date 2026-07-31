@@ -121,6 +121,19 @@ if ! printf '%s\n' "${SIGNATURE_INFO}" | grep -q '^Authority=Developer ID Applic
 fi
 printf '%s\n' '-> Developer ID signature is present; Gatekeeper verification runs after notarization.'
 
+printf '%s\n' '-> Verifying Sparkle update metadata...'
+EXPORTED_INFO_PLIST="${EXPORTED_APP}/Contents/Info.plist"
+EXPORTED_FEED_URL="$(/usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "${EXPORTED_INFO_PLIST}" 2>/dev/null || true)"
+EXPORTED_PUBLIC_KEY="$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "${EXPORTED_INFO_PLIST}" 2>/dev/null || true)"
+if [[ -z "${EXPORTED_FEED_URL}" ]]; then
+    printf 'error: exported app is missing SUFeedURL in Info.plist.\n' >&2
+    exit 1
+fi
+if [[ -z "${EXPORTED_PUBLIC_KEY}" || "${EXPORTED_PUBLIC_KEY}" != "${SPARKLE_PUBLIC_ED_KEY}" ]]; then
+    printf 'error: exported app has an invalid SUPublicEDKey in Info.plist.\n' >&2
+    exit 1
+fi
+
 printf '%s\n' '-> Verifying universal binaries...'
 APP_ARCHS="$(lipo -archs "${EXPORTED_APP}/Contents/MacOS/RightHere")"
 APPEX_ARCHS="$(lipo -archs "${EXPORTED_APP}/Contents/PlugIns/RightHereExtension.appex/Contents/MacOS/RightHereExtension")"

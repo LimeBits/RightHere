@@ -21,14 +21,10 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         DEVELOPMENT_TEAM: ""
         MACOSX_DEPLOYMENT_TARGET: "12.0"
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_LSUIElement: YES
-        INFOPLIST_KEY_SUFeedURL: https://github.com/LimeBits/RightHere/releases/latest/download/appcast.xml
-        INFOPLIST_KEY_SUPublicEDKey: $(SPARKLE_PUBLIC_ED_KEY)
-        INFOPLIST_KEY_SUEnableInstallerLauncherService: YES
+        INFOPLIST_FILE: RightHere/Info.plist
         SPARKLE_PUBLIC_ED_KEY: ""
-        CURRENT_PROJECT_VERSION: "5"
-        MARKETING_VERSION: "0.1.8"
+        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "0.1.9"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -67,8 +63,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "5"
-        MARKETING_VERSION: "0.1.8"
+        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "0.1.9"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:

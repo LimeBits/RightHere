@@ -4,4 +4,4 @@
 RIGHTHERE_DEVELOPMENT_TEAM="WV6JA6UHLN"
 SPARKLE_PUBLIC_ED_KEY=""
 SPARKLE_GENERATE_APPCAST="/Users/bruce/Library/Developer/Xcode/DerivedData/RightHere-ascobpeszhbvkretoqvrzomhowxg/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast"
-
+RIGHTHERE_DOWNLOAD_URL_PREFIX="https://github.com/LimeBits/RightHere/releases/latest/download/"

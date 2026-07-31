@@ -108,7 +108,7 @@ DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-app.sh --build --universal
 
 ## 公开分发状态
 
-RightHere 0.1.8 起，公开新用户验证只使用 Developer ID 分发链路：
+RightHere 0.1.9 起，公开新用户验证只使用 Developer ID 分发链路：
 
 1. Apple Developer Program
 2. Developer ID Application 证书
@@ -122,7 +122,6 @@ GitHub Actions 自动生成的 DMG 只适合 CI/打包流程验证，不适合�
 正式分发包使用：
 
 ```bash
-SPARKLE_PUBLIC_ED_KEY="你的 Sparkle 公钥" \
 RIGHTHERE_DEVELOPMENT_TEAM=YOURTEAMID \
 ./Scripts/package-developer-id.sh
 ```
@@ -138,7 +137,7 @@ xcrun notarytool store-credentials "righthere-notary" \
 
 RightHere 使用 App Group 和 FinderSync extension，因此 Developer ID 导出还需要主 App 与 extension 都具备匹配的 Developer ID provisioning profile。正式分发脚本会校验主 App 和 FinderSync extension 均为 Universal Binary（`arm64 + x86_64`）。
 
-RightHere 使用 Sparkle 2 作为 App 内更新框架。首次正式接入前，需要用 Sparkle 的 `generate_keys` 生成 EdDSA key，把公钥传给 `SPARKLE_PUBLIC_ED_KEY`；后续每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成并上传 `appcast.xml` 到同一个 GitHub Release。
+RightHere 使用 Sparkle 2 作为 App 内更新框架。首次正式接入前，需要用 Sparkle 的 `generate_keys` 生成 EdDSA key，把公钥写入本地 `.dev.vars` 的 `SPARKLE_PUBLIC_ED_KEY`；私钥保留在钥匙串。后续每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成并上传 `appcast.xml` 到同一个 GitHub Release。脚本会拒绝缺少 EdDSA 签名或 HTTPS 下载地址的 appcast。
 
 ## 常见问题
 
