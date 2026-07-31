@@ -108,7 +108,7 @@ DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-app.sh --build --universal
 
 ## 公开分发状态
 
-RightHere 0.1.7 起，公开新用户验证只使用 Developer ID 分发链路：
+RightHere 0.1.8 起，公开新用户验证只使用 Developer ID 分发链路：
 
 1. Apple Developer Program
 2. Developer ID Application 证书

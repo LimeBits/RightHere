@@ -19,8 +19,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSUIElement: YES
-        CURRENT_PROJECT_VERSION: "4"
-        MARKETING_VERSION: "0.1.7"
+        CURRENT_PROJECT_VERSION: "5"
+        MARKETING_VERSION: "0.1.8"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -56,8 +56,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "4"
-        MARKETING_VERSION: "0.1.7"
+        CURRENT_PROJECT_VERSION: "5"
+        MARKETING_VERSION: "0.1.8"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:
@@ -68,6 +68,8 @@ targets:
         com.apple.security.files.user-selected.read-write: true
         com.apple.security.temporary-exception.files.home-relative-path.read-write:
           - /Desktop/
+          - /Documents/
+          - /Library/Mobile Documents/com~apple~CloudDocs/Documents/
     attributes:
       SystemCapabilities:
         com.apple.Sandbox:

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.8] - 2026-07-31
+
+### 修复
+- RightHere 启动时自动注册当前 App 并启用 FinderSync extension，改善普通用户拖拽安装后右键菜单不出现的问题。
+- 为 FinderSync extension 增加 Documents 写入权限，修复「文稿」文件夹有菜单但新建文件无反应的问题。
+- 安装脚本刷新 LaunchServices 与 Dock 图标缓存，改善 Launchpad 首次安装后图标短暂透明的问题。
+
+### 分发
+- 继续要求公开安装包必须为 Developer ID Application 签名、公证并 staple 的 Universal DMG。
+
+---
+
 ## [0.1.7] - 2026-07-30
 
 ### 新增
