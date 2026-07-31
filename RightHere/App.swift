@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        FinderExtensionBootstrap.ensureRegisteredAndEnabled()
         observeExtensionActivity()
         configureStatusItem()
     }
@@ -440,4 +441,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSWorkspace.shared.open(url)
     }
 
+}
+
+enum FinderExtensionBootstrap {
+    private static let extensionBundleIdentifier = "com.LimeBits.RightHere.Extension"
+    private static let oldBundleIdentifiers = [
+        "com.b-vibe.RightHere.Extension",
+        "com.b-vibe.RightHere.FinderSync"
+    ]
+
+    static func ensureRegisteredAndEnabled() {
+        DispatchQueue.global(qos: .utility).async {
+            registerAppWithLaunchServices()
+            oldBundleIdentifiers.forEach { runPlugInKit(arguments: ["-e", "ignore", "-i", $0]) }
+            runPlugInKit(arguments: ["-e", "use", "-i", extensionBundleIdentifier])
+        }
+    }
+
+    private static func registerAppWithLaunchServices() {
+        let process = Process()
+        process.executableURL = URL(
+            fileURLWithPath: "/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister"
+        )
+        process.arguments = ["-f", "-R", "-trusted", Bundle.main.bundlePath]
+        try? process.run()
+        process.waitUntilExit()
+    }
+
+    private static func runPlugInKit(arguments: [String]) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
+        process.arguments = arguments
+        try? process.run()
+        process.waitUntilExit()
+    }
 }
