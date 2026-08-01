@@ -1,10 +1,10 @@
-# RightHere 0.1.11
+# RightHere 0.1.12
 
 发布时间：2026-08-01
 
 ## 这一版的定位
 
-RightHere 0.1.11 是优化设置页、扩展管理和中文更新体验的正式分发版本。用于普通用户安装验证的包必须是：
+RightHere 0.1.12 是修复 Sparkle 更新安装链路并优化更新提示体验的正式分发版本。用于普通用户安装验证的包必须是：
 
 - Universal Binary：`arm64 + x86_64`
 - Developer ID Application 签名
@@ -14,8 +14,13 @@ RightHere 0.1.11 是优化设置页、扩展管理和中文更新体验的正式
 
 Apple Development 签名包和 ad-hoc ZIP 只用于开发机快速验证，不再作为普通新用户安装验证依据。
 
+如果已经安装 `0.1.10` / `0.1.11`，并且 App 内更新仍在安装阶段失败，请手动下载并安装本版 DMG。旧版本自身缺少 Sparkle sandbox installer entitlement，可能无法完成这一次自我替换；安装到 `0.1.12` 后，后续更新链路会使用新的权限配置。
+
 ## 主要变化
 
+- 补齐 sandboxed App 使用 Sparkle installer 所需的 mach lookup entitlement，修复“发现更新后安装失败”的问题。
+- Sparkle feed 改为强制 signed appcast，并在更新前校验包签名和下载内容。
+- appcast 生成时嵌入 Markdown 更新说明，让更新窗口展示更完整的版本内容。
 - 将「打开扩展设置」移入「帮助与反馈」子菜单，减少正常使用时的菜单干扰。
 - App 和 FinderSync extension 声明中文本地化，改善 Sparkle 更新窗口在中文系统下显示英文的问题。
 - 设置页新增「停用 Finder 扩展」入口，用于卸载前清理右键菜单残留。
@@ -48,7 +53,7 @@ RIGHTHERE_DEVELOPMENT_TEAM=WV6JA6UHLN \
 Scripts/package-developer-id.sh
 ```
 
-脚本会从 `.dev.vars` 读取 `SPARKLE_PUBLIC_ED_KEY`。成功后会输出 `dist/RightHere-0.1.11-build8-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
+脚本会从 `.dev.vars` 读取 `SPARKLE_PUBLIC_ED_KEY`。成功后会输出 `dist/RightHere-0.1.12-build9-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
 
 生成 Sparkle appcast：
 

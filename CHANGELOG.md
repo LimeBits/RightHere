@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.12] - 2026-08-01
+
+### 修复
+- 补齐 sandboxed App 使用 Sparkle installer 所需的 mach lookup entitlement，修复发现更新后安装失败的问题。
+- Sparkle feed 改为强制 signed appcast，并在更新前校验包签名和下载内容。
+
+### 优化
+- appcast 生成时嵌入 Markdown 更新说明，让默认更新窗口展示更完整的版本内容。
+
+---
+
 ## [0.1.11] - 2026-08-01
 
 ### 优化

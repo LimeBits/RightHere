@@ -23,8 +23,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHere/Info.plist
         SPARKLE_PUBLIC_ED_KEY: ""
-        CURRENT_PROJECT_VERSION: "8"
-        MARKETING_VERSION: "0.1.11"
+        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "0.1.12"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -33,8 +33,14 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        com.apple.security.cs.disable-library-validation: true
         com.apple.security.application-groups:
           - group.com.LimeBits.RightHere
+        com.apple.security.temporary-exception.mach-lookup.global-name:
+          - $(PRODUCT_BUNDLE_IDENTIFIER)-spki
+          - $(PRODUCT_BUNDLE_IDENTIFIER)-spks
+        com.apple.security.temporary-exception.shared-preference.read-write:
+          - $(PRODUCT_BUNDLE_IDENTIFIER)
     attributes:
       SystemCapabilities:
         com.apple.Sandbox:
@@ -63,8 +69,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "8"
-        MARKETING_VERSION: "0.1.11"
+        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "0.1.12"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:

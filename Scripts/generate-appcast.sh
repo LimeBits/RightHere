@@ -43,9 +43,27 @@ fi
 
 rm -rf "${APPCAST_DIR}"
 mkdir -p "${APPCAST_DIR}"
+latest_dmg_name="$(basename "${latest_dmg}")"
 cp "${latest_dmg}" "${APPCAST_DIR}/"
 
+release_notes_path="${APPCAST_DIR}/${latest_dmg_name%.dmg}.md"
+cat >"${release_notes_path}" <<'MARKDOWN'
+# RightHere 0.1.12
+
+## 修复
+
+- 修复 Sparkle 能发现更新、但安装阶段失败的问题。
+- 补齐 sandbox App 使用 Sparkle installer 所需的权限配置。
+- 更新包在解压前进行签名校验，并要求 signed appcast。
+
+## 优化
+
+- 更新窗口显示更完整的版本说明。
+- 保留自动检查更新，仍可在设置中关闭。
+MARKDOWN
+
 "${GENERATE_APPCAST}" \
+    --embed-release-notes \
     --download-url-prefix "${DOWNLOAD_URL_PREFIX}" \
     "${APPCAST_DIR}"
 cp "${APPCAST_DIR}/appcast.xml" "${DIST_DIR}/appcast.xml"
@@ -53,6 +71,12 @@ cp "${APPCAST_DIR}/appcast.xml" "${DIST_DIR}/appcast.xml"
 if ! grep -q 'sparkle:edSignature=' "${DIST_DIR}/appcast.xml"; then
     printf 'error: generated appcast is missing sparkle:edSignature.\n' >&2
     printf 'Run Sparkle generate_keys once and make sure the private EdDSA key is available in Keychain.\n' >&2
+    exit 1
+fi
+
+if ! grep -q 'sparkle-signatures:' "${DIST_DIR}/appcast.xml"; then
+    printf 'error: generated appcast is missing signed feed metadata.\n' >&2
+    printf 'RightHere requires SURequireSignedFeed for release builds.\n' >&2
     exit 1
 fi
 
