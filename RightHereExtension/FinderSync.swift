@@ -10,12 +10,13 @@ class FinderSync: FIFinderSync {
         let createdAt: Date
     }
 
-    private var enabledTemplates: [FileTemplate] = SharedDefaults.defaultFileTemplates
+    private var enabledTemplates: [FileTemplate] = SharedDefaults.getEnabledFileTemplates()
     private var templateRecordsByExtension: [String: TemplateRecord] = Dictionary(
-        uniqueKeysWithValues: SharedDefaults.defaultFileTemplates.compactMap { template in
-            SharedDefaults.getLocalTemplateRecord(for: template).map { (template.fileExtension, $0) }
+        uniqueKeysWithValues: SharedDefaults.getAvailableFileTemplates().compactMap { template in
+            SharedDefaults.getTemplateRecord(for: template).map { (template.fileExtension, $0) }
         }
     )
+    private var isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
     private var pendingMenuActions: [Int: PendingMenuAction] = [:]
     private var nextMenuActionTag = 1
 
@@ -46,24 +47,42 @@ class FinderSync: FIFinderSync {
     }
 
     @objc private func settingsChanged(_ notification: Notification) {
-        guard let enabledExtensions = notification.userInfo?["enabledExtensions"] as? [String] else {
-            return
-        }
-
         if let data = notification.userInfo?["templateRecords"] as? Data,
            let records = try? JSONDecoder().decode([TemplateRecord].self, from: data) {
             templateRecordsByExtension = Dictionary(
                 uniqueKeysWithValues: records.map { ($0.template.fileExtension, $0) }
             )
+        } else {
+            templateRecordsByExtension = Dictionary(
+                uniqueKeysWithValues: SharedDefaults.getAvailableFileTemplates().compactMap { template in
+                    SharedDefaults.getTemplateRecord(for: template).map { (template.fileExtension, $0) }
+                }
+            )
         }
 
-        let enabled = Set(enabledExtensions.map { $0.lowercased() })
-        let availableTemplates = Array(templateRecordsByExtension.values.map { $0.template }).sorted()
-        enabledTemplates = availableTemplates.filter { enabled.contains($0.fileExtension) }
+        if let enabledExtensions = notification.userInfo?["enabledExtensions"] as? [String] {
+            let enabled = Set(enabledExtensions.map { $0.lowercased() })
+            let availableTemplates = Array(templateRecordsByExtension.values.map { $0.template }).sorted()
+            enabledTemplates = availableTemplates.filter { enabled.contains($0.fileExtension) }
+        } else {
+            enabledTemplates = SharedDefaults.getEnabledFileTemplates()
+        }
+
+        isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
     }
 
     @objc private func diagnosticSnapshotRequested(_ notification: Notification) {
         SharedDefaults.publishExtensionDiagnosticSnapshot()
+    }
+
+    private func reloadTemplatesFromSharedState() {
+        templateRecordsByExtension = Dictionary(
+            uniqueKeysWithValues: SharedDefaults.getAvailableFileTemplates().compactMap { template in
+                SharedDefaults.getTemplateRecord(for: template).map { (template.fileExtension, $0) }
+            }
+        )
+        enabledTemplates = SharedDefaults.getEnabledFileTemplates()
+        isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
     }
 
     private func configureWatchedDirectories() {
@@ -140,6 +159,7 @@ class FinderSync: FIFinderSync {
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
         updateHeartbeat()
+        reloadTemplatesFromSharedState()
 
         let controller = FIFinderSyncController.default()
         let frontmostIdentifier = frontmostApplicationIdentifier
@@ -154,6 +174,11 @@ class FinderSync: FIFinderSync {
                 + "finderFrontmost=\(finderFrontmost ? "yes" : "no") "
                 + "targeted=\(diagnosticPath(targetedURL)) selected=\(diagnosticPaths(selectedURLs))"
         )
+
+        guard !isFinderMenuDisabled else {
+            recordDiagnostic("menu rejected kind=\(kindDescription) reason=finder-menu-disabled")
+            return nil
+        }
 
         guard menuKind == .contextualMenuForItems || menuKind == .contextualMenuForContainer else {
             recordDiagnostic("menu rejected kind=\(kindDescription) reason=unsupported-menu-kind")

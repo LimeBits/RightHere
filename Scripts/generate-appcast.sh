@@ -48,18 +48,18 @@ cp "${latest_dmg}" "${APPCAST_DIR}/"
 
 release_notes_path="${APPCAST_DIR}/${latest_dmg_name%.dmg}.md"
 cat >"${release_notes_path}" <<'MARKDOWN'
-# RightHere 0.1.12
+# RightHere 0.1.14
 
 ## 修复
 
-- 修复 Sparkle 能发现更新、但安装阶段失败的问题。
-- 补齐 sandbox App 使用 Sparkle installer 所需的权限配置。
-- 更新包在解压前进行签名校验，并要求 signed appcast。
+- 修复普通用户拖拽 RightHere.app 到“应用程序”后，首次打开 App 仍无法自动启用 Finder 右键菜单的问题。
+- 首次启动会等待 FinderSync extension 被系统登记后再启用，并确认扩展进入已启用状态。
+- 从未启用变为已启用时自动重启 Finder，让右键“新建文件”菜单立即可用。
 
 ## 优化
 
-- 更新窗口显示更完整的版本说明。
-- 保留自动检查更新，仍可在设置中关闭。
+- 正式分发包继续使用 Developer ID 签名、公证和 staple，可供普通 Intel / Apple Silicon Mac 安装。
+- FinderSync extension 仍保持沙盒和最小文件权限。
 MARKDOWN
 
 "${GENERATE_APPCAST}" \

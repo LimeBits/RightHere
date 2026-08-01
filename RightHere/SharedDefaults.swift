@@ -18,6 +18,7 @@ public struct SharedDefaults {
     public static let templateCacheKey = "templateCache"
     public static let localTemplateCacheKey = "localTemplateCache"
     public static let localDisabledTypesKey = "localDisabledFileTypes"
+    public static let finderMenuDisabledKey = "finderMenuDisabled"
     private static let extensionDiagnosticBufferKey = "extensionDiagnosticBuffer"
     private static let extensionDiagnosticRecordUserInfoKey = "record"
     private static let extensionDiagnosticRecordsUserInfoKey = "records"
@@ -54,7 +55,12 @@ public struct SharedDefaults {
 
     public static func getLocalEnabledFileTemplates() -> [FileTemplate] {
         let availableTemplates = getLocalAvailableFileTemplates()
-        let disabled = Set(UserDefaults.standard.stringArray(forKey: localDisabledTypesKey) ?? [])
+        let disabled: Set<String>
+        if sharedSuite != nil {
+            disabled = getDisabledFileExtensions(availableTemplates: availableTemplates)
+        } else {
+            disabled = Set(UserDefaults.standard.stringArray(forKey: localDisabledTypesKey) ?? [])
+        }
         return availableTemplates.filter { !disabled.contains($0.fileExtension) }
     }
 
@@ -65,6 +71,7 @@ public struct SharedDefaults {
             .filter { !enabledExtensions.contains($0) }
 
         UserDefaults.standard.set(disabledExtensions, forKey: localDisabledTypesKey)
+        setEnabledFileTemplates(templates)
         notifyLocalSettingsChanged(enabledExtensions: enabledExtensions)
     }
 
@@ -86,6 +93,19 @@ public struct SharedDefaults {
         let records = readTemplateRecordsFromDisk()
         saveTemplateRecords(records)
         saveLocalTemplateRecords(records)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
+    public static func refreshTemplateCacheFromDiskIfNeeded() {
+        let records = readTemplateRecordsFromDisk().sorted { $0.template < $1.template }
+        let sharedChanged = records != getCachedTemplateRecords()
+        let localChanged = records != getLocalTemplateRecords()
+        guard sharedChanged || localChanged else { return }
+
+        saveTemplateRecords(records)
+        saveLocalTemplateRecords(records)
+        notifySettingsChanged()
         notifyLocalSettingsChanged()
     }
 
@@ -102,6 +122,21 @@ public struct SharedDefaults {
         let availableTemplates = getAvailableFileTemplates()
         let disabledExtensions = getDisabledFileExtensions(availableTemplates: availableTemplates)
         return availableTemplates.filter { !disabledExtensions.contains($0.fileExtension) }
+    }
+
+    public static func isFinderMenuDisabled() -> Bool {
+        if let sharedSuite {
+            return sharedSuite.bool(forKey: finderMenuDisabledKey)
+        }
+
+        return UserDefaults.standard.bool(forKey: finderMenuDisabledKey)
+    }
+
+    public static func setFinderMenuDisabled(_ isDisabled: Bool) {
+        sharedSuite?.set(isDisabled, forKey: finderMenuDisabledKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(isDisabled, forKey: finderMenuDisabledKey)
+        notifySettingsChanged()
     }
 
     public static func setEnabledFileTemplates(_ templates: [FileTemplate]) {
@@ -267,11 +302,17 @@ public struct SharedDefaults {
     }
 
     private static func notifySettingsChanged() {
-        // Notify Finder Sync extension of the update
+        let enabled = Set(getEnabledFileTemplates().map { $0.fileExtension })
+        var userInfo: [String: Any] = ["enabledExtensions": Array(enabled)]
+
+        if let data = sharedSuite?.data(forKey: templateCacheKey) {
+            userInfo["templateRecords"] = data
+        }
+
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil,
-            userInfo: nil,
+            userInfo: userInfo,
             deliverImmediately: true
         )
     }

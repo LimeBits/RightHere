@@ -332,6 +332,43 @@ FinderSync 也会出现在其他 App 的打开/保存窗口中。公开 API 无�
 
 ---
 
+## 坑 19：设置页模板开关和 Finder 右键菜单状态分叉
+
+**现象**：在设置页取消勾选某个模板类型，例如 Word 文档，设置页显示已关闭，但 Finder 右键「新建文件」菜单里仍然能看到并创建该类型。
+
+**原因**：主 App 设置页曾经优先使用本地 `UserDefaults.standard` 中的 `localDisabledFileTypes`，而 FinderSync extension 依赖 App Group 共享状态和分布式通知。UI 状态、共享禁用列表、模板文件夹缓存三者没有固定为同一个事实来源，导致设置页变化没有稳定传给扩展。
+
+**最终模型**：
+- 模板文件夹决定“有哪些模板”，文件名采用 `template.xxx`。
+- App Group 里的 `disabledFileTypes` 决定“哪些模板显示在 Finder 右键菜单”。
+- 设置页开关只负责显示/隐藏，不负责删除模板文件。
+- 点击开关后写入 App Group 共享配置，并通知 FinderSync extension 重新加载。
+- 设置页打开、刷新、App 回到前台时同步模板文件夹到共享缓存和本地缓存。
+- Finder 右键菜单已经打开时不会中途刷新；下一次打开右键菜单必须使用新状态。
+
+不采用“删除模板文件即隐藏”的原因：默认模板初始化会补齐缺失的内置模板，删除文件作为隐藏方式容易让用户困惑；保留开关并修复同步链路，用户心智更稳定。
+
+布局上不再使用 macOS 默认 `TabView` 顶部标签，因为它会贴近标题栏。设置页改用内容区内的分段控件，保留顶部 Logo 和应用名称，下面再切换「模板 / 更新 / 高级」。
+
+---
+
+## 坑 20：Intel 首装后扩展已发现但未启用
+
+**现象**：Intel Mac 上安装 Universal DMG 后，`file` 显示主 App 和 FinderSync extension 都包含 `x86_64`，`pluginkit -m -p com.apple.FinderSync -A -D -v` 也能看到 `com.LimeBits.RightHere.Extension`，但行首没有 `+`，Finder 右键菜单不出现。手动执行下面命令后菜单立即恢复：
+
+```bash
+pluginkit -e use -i com.LimeBits.RightHere.Extension
+killall Finder
+```
+
+**原因**：不是架构适配问题，而是首次安装时 LaunchServices / PKD 对新 extension 的登记存在延迟。App 或安装脚本太早执行 `pluginkit -e use` 时，系统还没稳定发现扩展，后续列表里虽然出现了 extension，但没有进入 `+` 启用状态。
+
+**解法**：安装脚本和 App 启动侧都要先注册 App，再轮询等待 FinderSync extension 出现在 `pluginkit -m -p com.apple.FinderSync -A -D` 列表里，然后执行 `pluginkit -e use`，再确认行首变成 `+`。只有从未启用变为已启用时才重启 Finder，避免每次启动都打断用户当前 Finder 会话。
+
+正式分发包还需要注意：拖拽安装后用户只会打开 App，不会运行安装脚本。主 App 如果保持 App Sandbox，内部执行 `pluginkit` / `killall Finder` 这类系统工具可能被沙盒限制，导致只有安装脚本路径能成功。RightHere 公开分发不走 App Store，因此主 App 取消 App Sandbox，保留 Developer ID 签名、hardened runtime、公证和 App Group；FinderSync extension 仍保持沙盒和最小文件权限。
+
+---
+
 ## 快速调试流程
 
 ```bash

@@ -49,15 +49,32 @@ killall Dock 2>/dev/null || true
 # ── 启动 app ──────────────────────────────────────────────────
 echo "→ 启动 RightHere..."
 open "${APP_DEST}"
-sleep 3
+sleep 1
 
 # ── 激活 Finder 扩展 ──────────────────────────────────────────
 echo "→ 激活 Finder 扩展..."
 for old_bundle_id in "${OLD_BUNDLE_IDS[@]}"; do
     pluginkit -e ignore -i "${old_bundle_id}" 2>/dev/null || true
 done
+
+STATUS=""
+for i in {1..10}; do
+    STATUS=$(pluginkit -m -p com.apple.FinderSync -A -D 2>/dev/null | grep "${BUNDLE_ID}" || true)
+    if [[ -n "${STATUS}" ]]; then
+        break
+    fi
+    sleep 0.5
+done
+
 pluginkit -e use -i "${BUNDLE_ID}" 2>/dev/null || true
-sleep 1
+
+for i in {1..8}; do
+    STATUS=$(pluginkit -m -p com.apple.FinderSync -A -D 2>/dev/null | grep "${BUNDLE_ID}" || true)
+    if echo "${STATUS}" | grep -q "^+"; then
+        break
+    fi
+    sleep 0.5
+done
 
 echo "→ 等待扩展进程启动..."
 for i in 1 2 3 4 5; do
@@ -73,7 +90,7 @@ killall Finder 2>/dev/null || true
 sleep 1
 
 # ── 验证结果 ──────────────────────────────────────────────────
-STATUS=$(pluginkit -m -p com.apple.FinderSync 2>/dev/null | grep "${BUNDLE_ID}" || true)
+STATUS=$(pluginkit -m -p com.apple.FinderSync -A -D 2>/dev/null | grep "${BUNDLE_ID}" || true)
 
 echo ""
 if echo "${STATUS}" | grep -q "^+"; then

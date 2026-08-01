@@ -473,6 +473,7 @@ final class RightHereUpdater {
 
 enum FinderExtensionBootstrap {
     private static let extensionBundleIdentifier = "com.LimeBits.RightHere.Extension"
+    private static let finderSyncPointIdentifier = "com.apple.FinderSync"
     private static let oldBundleIdentifiers = [
         "com.b-vibe.RightHere.Extension",
         "com.b-vibe.RightHere.FinderSync"
@@ -482,16 +483,17 @@ enum FinderExtensionBootstrap {
         DispatchQueue.global(qos: .utility).async {
             registerAppWithLaunchServices()
             oldBundleIdentifiers.forEach { runPlugInKit(arguments: ["-e", "ignore", "-i", $0]) }
-            runPlugInKit(arguments: ["-e", "use", "-i", extensionBundleIdentifier])
-        }
-    }
 
-    static func disableExtensionAndRestartFinder(completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .utility).async {
-            let result = runPlugInKit(arguments: ["-e", "ignore", "-i", extensionBundleIdentifier])
-            restartFinder()
-            DispatchQueue.main.async {
-                completion(result == 0)
+            let initialStatus = waitForRegistration()
+            runPlugInKit(arguments: ["-e", "use", "-i", extensionBundleIdentifier])
+
+            guard let enabledStatus = waitForEnabledStatus() else {
+                NSLog("RightHere: Finder extension bootstrap did not verify enabled status. initial=%@", initialStatus ?? "<none>")
+                return
+            }
+
+            if initialStatus?.hasPrefix("+") != true && enabledStatus.hasPrefix("+") {
+                restartFinder()
             }
         }
     }
@@ -517,6 +519,53 @@ enum FinderExtensionBootstrap {
             return process.terminationStatus
         } catch {
             return 1
+        }
+    }
+
+    private static func waitForRegistration() -> String? {
+        for _ in 0..<10 {
+            if let status = extensionStatusLine() {
+                return status
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        return nil
+    }
+
+    private static func waitForEnabledStatus() -> String? {
+        for _ in 0..<8 {
+            if let status = extensionStatusLine(), status.hasPrefix("+") {
+                return status
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        return extensionStatusLine()
+    }
+
+    private static func extensionStatusLine() -> String? {
+        let output = runPlugInKitWithOutput(arguments: ["-m", "-p", finderSyncPointIdentifier, "-A", "-D"])
+        return output
+            .split(whereSeparator: \.isNewline)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { $0.contains(extensionBundleIdentifier) }
+    }
+
+    private static func runPlugInKitWithOutput(arguments: [String]) -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
+        process.arguments = arguments
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            return String(data: data, encoding: .utf8) ?? ""
+        } catch {
+            return ""
         }
     }
 

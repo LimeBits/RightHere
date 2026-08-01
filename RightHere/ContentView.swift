@@ -2,90 +2,35 @@ import AppKit
 import SwiftUI
 
 struct ContentView: View {
+    private enum SettingsTab: String, CaseIterable, Identifiable {
+        case templates
+        case updates
+        case advanced
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .templates: return "模板"
+            case .updates: return "更新"
+            case .advanced: return "高级"
+            }
+        }
+    }
+
     @State private var availableTemplates: [FileTemplate] = []
     @State private var enabledTemplates: Set<FileTemplate> = []
+    @State private var selectedTab: SettingsTab = .templates
     @State private var lastFinderCall: Date? = nil
     @State private var extensionRegistrationState: FinderExtensionRegistrationState = .checking
     @State private var automaticallyChecksForUpdates = true
-    @State private var isDisablingFinderExtension = false
+    @State private var isFinderMenuDisabled = false
     @State private var now = Date()
     @State private var timer: Timer? = nil
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "doc.badge.plus")
-                    .font(.system(size: 28))
-                    .foregroundColor(.blue)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("RightHere")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                    Text("Finder 右键“新建文件”")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 22)
-            .padding(.bottom, 14)
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 12) {
-                finderExtensionStatusView
-                updateSettingsView
-                extensionControlView
-
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("自定义模板")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("勾选要显示在 Finder 右键菜单中的模板。使用 template.rtf 这样的命名添加模板。")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    Button(action: openTemplatesDirectory) {
-                        Label("打开模板文件夹", systemImage: "folder")
-                    }
-                    .font(.system(size: 12))
-
-                    Button(action: refreshTemplates) {
-                        Label("刷新", systemImage: "arrow.clockwise")
-                    }
-                    .font(.system(size: 12))
-                }
-
-                Divider()
-
-                if availableTemplates.isEmpty {
-                    emptyTemplatesView
-                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 260)
-                } else {
-                    VStack(spacing: 10) {
-                        if enabledTemplates.isEmpty {
-                            disabledTemplatesWarning
-                        }
-
-                        TemplateListScrollView {
-                            VStack(spacing: 0) {
-                                ForEach(availableTemplates) { template in
-                                    templateRow(template)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.trailing, 28)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 152, maxHeight: 230)
-                    }
-                }
-            }
-            .padding(18)
+            settingsTabs
 
             Divider()
 
@@ -129,9 +74,203 @@ struct ContentView: View {
             timer?.invalidate()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshTemplatesFromDiskIfNeeded()
             checkFinderResponseStatus()
             refreshFinderExtensionRegistration(silently: true)
         }
+    }
+
+    private var settingsTabs: some View {
+        VStack(spacing: 14) {
+            Picker("", selection: $selectedTab) {
+                ForEach(SettingsTab.allCases) { tab in
+                    Text(tab.title).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 170)
+            .padding(.top, 20)
+
+            Group {
+                switch selectedTab {
+                case .templates:
+                    templateSettingsTab
+                case .updates:
+                    updateSettingsTab
+                case .advanced:
+                    advancedSettingsTab
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.horizontal, 18)
+        .padding(.bottom, 18)
+        .frame(maxWidth: .infinity, minHeight: 356)
+    }
+
+    private var templateSettingsTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("自定义模板")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("勾选要显示在 Finder 右键菜单中的模板。使用 template.rtf 这样的命名添加模板。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Button(action: openTemplatesDirectory) {
+                    Label("打开模板文件夹", systemImage: "folder")
+                }
+                .font(.system(size: 12))
+
+                Button(action: refreshTemplates) {
+                    Label("刷新", systemImage: "arrow.clockwise")
+                }
+                .font(.system(size: 12))
+            }
+
+            Divider()
+
+            if availableTemplates.isEmpty {
+                emptyTemplatesView
+                    .frame(maxWidth: .infinity, minHeight: 220)
+            } else {
+                VStack(spacing: 10) {
+                    if enabledTemplates.isEmpty {
+                        disabledTemplatesWarning
+                    }
+
+                    TemplateListScrollView {
+                        VStack(spacing: 0) {
+                            ForEach(availableTemplates) { template in
+                                templateRow(template)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.trailing, 28)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 220)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 10)
+    }
+
+    private var updateSettingsTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            updateSettingsView
+
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: "arrow.down.circle")
+                    .foregroundColor(.blue)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("手动检查")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("立即检查 GitHub Release 上的最新正式版本。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Button(action: checkForUpdates) {
+                    Label("检查更新", systemImage: "magnifyingglass")
+                }
+                .font(.system(size: 11))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+            .cornerRadius(6)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("当前版本")
+                    .font(.system(size: 12, weight: .semibold))
+                Text(appVersionText)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                Text("旧版 0.1.10 / 0.1.11 可能无法完成首次自我替换；手动安装 0.1.12 后，后续更新会使用新的 Sparkle 安装权限。")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.24))
+            .cornerRadius(6)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 10)
+    }
+
+    private var advancedSettingsTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            finderExtensionStatusView
+            extensionControlView
+
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: "gearshape")
+                    .foregroundColor(.secondary)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("系统扩展设置")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("用于排查 Finder 扩展启用状态；不同 macOS 版本可能只打开系统设置主页。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Button(action: openSystemExtensionSettings) {
+                    Label("打开扩展设置", systemImage: "gearshape")
+                }
+                .font(.system(size: 11))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+            .cornerRadius(6)
+
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: "doc.on.clipboard")
+                    .foregroundColor(.secondary)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("诊断信息")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("复制版本、模板目录和最近 Finder 调用状态，方便排查。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Button(action: copyDiagnostics) {
+                    Label("复制诊断", systemImage: "doc.on.doc")
+                }
+                .font(.system(size: 11))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+            .cornerRadius(6)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 10)
     }
 
     private func templateRow(_ template: FileTemplate) -> some View {
@@ -281,25 +420,29 @@ struct ContentView: View {
 
     private var extensionControlView: some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(systemName: "puzzlepiece.extension")
+            Image(systemName: isFinderMenuDisabled ? "power.circle" : "puzzlepiece.extension")
                 .foregroundColor(.secondary)
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Finder 扩展")
+                Text("右键菜单")
                     .font(.system(size: 12, weight: .semibold))
-                Text("退出 App 后扩展仍可能继续工作；可在卸载前停用。")
+                Text(isFinderMenuDisabled ? "RightHere 暂时不会在 Finder 右键菜单中显示。" : "关闭后 Finder 右键菜单里的“新建文件”会消失。")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
 
             Spacer(minLength: 8)
 
-            Button(action: disableFinderExtension) {
-                Label("停用扩展", systemImage: "power")
-            }
-            .font(.system(size: 11))
-            .disabled(isDisablingFinderExtension)
+            Toggle("", isOn: Binding(
+                get: { !isFinderMenuDisabled },
+                set: { isEnabled in
+                    isFinderMenuDisabled = !isEnabled
+                    SharedDefaults.setFinderMenuDisabled(!isEnabled)
+                }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -336,49 +479,55 @@ struct ContentView: View {
     }
     
     private func loadSettings() {
-        let available = SharedDefaults.getLocalAvailableFileTemplates()
-        let enabled = SharedDefaults.getLocalEnabledFileTemplates()
+        let available = SharedDefaults.getAvailableFileTemplates()
+        let enabled = SharedDefaults.getEnabledFileTemplates()
         self.availableTemplates = available
         self.enabledTemplates = Set(enabled)
+        self.isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
     }
 
     private func loadUpdateSettings() {
         automaticallyChecksForUpdates = RightHereUpdater.shared.automaticallyChecksForUpdates
     }
 
-    private func disableFinderExtension() {
+    private func checkForUpdates() {
+        NSRunningApplication.current.activate(options: [.activateAllWindows])
+        NSApp.activate(ignoringOtherApps: true)
+        RightHereUpdater.shared.controller.checkForUpdates(nil)
+    }
+
+    private func copyDiagnostics() {
+        let enabled = SharedDefaults.getEnabledFileTemplates()
+            .map { $0.fileExtension }
+            .sorted()
+            .joined(separator: ", ")
+        let diagnostics = """
+        App: \(appVersionText)
+        Finder call: \(finderCallStatusText)
+        Finder extension: \(extensionRegistrationState.title)
+        Templates directory: \(SharedDefaults.templatesDirectoryURL?.path ?? "unavailable")
+        Enabled templates: \(enabled.isEmpty ? "none" : enabled)
+        Finder menu: \(SharedDefaults.isFinderMenuDisabled() ? "disabled" : "enabled")
+        """
+
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(diagnostics, forType: .string)
+
         let alert = NSAlert()
-        alert.messageText = "停用 Finder 扩展？"
-        alert.informativeText = "停用后，Finder 右键菜单里的“新建文件”会消失。重新打开 RightHere 会再次启用扩展。"
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "停用")
-        alert.addButton(withTitle: "取消")
-
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-
-        isDisablingFinderExtension = true
-        FinderExtensionBootstrap.disableExtensionAndRestartFinder { succeeded in
-            isDisablingFinderExtension = false
-            refreshFinderExtensionRegistration(silently: true)
-
-            let resultAlert = NSAlert()
-            resultAlert.messageText = succeeded ? "Finder 扩展已停用" : "停用 Finder 扩展失败"
-            resultAlert.informativeText = succeeded
-                ? "Finder 已重启。重新打开 RightHere 时会自动启用扩展。"
-                : "系统没有接受停用请求。可以稍后再试，或在系统设置的扩展中手动停用 RightHere。"
-            resultAlert.alertStyle = succeeded ? .informational : .warning
-            resultAlert.addButton(withTitle: "好的")
-            resultAlert.runModal()
-        }
+        alert.messageText = "诊断信息已复制"
+        alert.informativeText = "诊断信息不包含模板正文或用户文件内容。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "好的")
+        alert.runModal()
     }
 
     private func refreshExistingTemplatesOnFirstOpen() {
-        SharedDefaults.refreshLocalTemplateCacheFromDiskIfNeeded()
+        SharedDefaults.refreshTemplateCacheFromDisk()
         loadSettings()
     }
     
     private func saveSettings() {
-        SharedDefaults.setLocalEnabledFileTemplates(Array(enabledTemplates))
+        SharedDefaults.setEnabledFileTemplates(Array(enabledTemplates))
     }
     
     private func openSystemExtensionSettings() {
@@ -396,6 +545,11 @@ struct ContentView: View {
 
     private func refreshTemplates() {
         SharedDefaults.refreshTemplateCacheFromDisk()
+        loadSettings()
+    }
+
+    private func refreshTemplatesFromDiskIfNeeded() {
+        SharedDefaults.refreshTemplateCacheFromDiskIfNeeded()
         loadSettings()
     }
 
