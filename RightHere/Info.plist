@@ -27,6 +27,17 @@
 		<string>zh_CN</string>
 		<string>en</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.LimeBits.RightHere</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>righthere</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>

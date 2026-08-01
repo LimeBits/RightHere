@@ -10,6 +10,17 @@ class FinderSync: FIFinderSync {
         let createdAt: Date
     }
 
+    private struct PendingTerminalAction {
+        let directory: URL
+        let allowsNonFinderFrontmost: Bool
+        let createdAt: Date
+    }
+
+    private struct PendingShortcutAction {
+        let location: ShortcutLocation
+        let createdAt: Date
+    }
+
     private var enabledTemplates: [FileTemplate] = SharedDefaults.getEnabledFileTemplates()
     private var templateRecordsByExtension: [String: TemplateRecord] = Dictionary(
         uniqueKeysWithValues: SharedDefaults.getAvailableFileTemplates().compactMap { template in
@@ -17,7 +28,12 @@ class FinderSync: FIFinderSync {
         }
     )
     private var isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
+    private var isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
+    private var areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+    private var shortcutLocations = SharedDefaults.getShortcutLocations()
     private var pendingMenuActions: [Int: PendingMenuAction] = [:]
+    private var pendingTerminalActions: [Int: PendingTerminalAction] = [:]
+    private var pendingShortcutActions: [Int: PendingShortcutAction] = [:]
     private var nextMenuActionTag = 1
 
     override init() {
@@ -69,6 +85,14 @@ class FinderSync: FIFinderSync {
         }
 
         isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
+        isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
+        areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+        if let data = notification.userInfo?["shortcutLocations"] as? Data,
+           let locations = try? JSONDecoder().decode([ShortcutLocation].self, from: data) {
+            shortcutLocations = locations.map { $0.normalized() }.sorted()
+        } else {
+            shortcutLocations = SharedDefaults.getShortcutLocations()
+        }
     }
 
     @objc private func diagnosticSnapshotRequested(_ notification: Notification) {
@@ -83,6 +107,9 @@ class FinderSync: FIFinderSync {
         )
         enabledTemplates = SharedDefaults.getEnabledFileTemplates()
         isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
+        isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
+        areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+        shortcutLocations = SharedDefaults.getShortcutLocations()
     }
 
     private func configureWatchedDirectories() {
@@ -153,6 +180,8 @@ class FinderSync: FIFinderSync {
     private func removeExpiredMenuActions() {
         let expirationDate = Date().addingTimeInterval(-300)
         pendingMenuActions = pendingMenuActions.filter { $0.value.createdAt >= expirationDate }
+        pendingTerminalActions = pendingTerminalActions.filter { $0.value.createdAt >= expirationDate }
+        pendingShortcutActions = pendingShortcutActions.filter { $0.value.createdAt >= expirationDate }
     }
 
     // MARK: - Finder Sync Menu
@@ -212,44 +241,142 @@ class FinderSync: FIFinderSync {
         }
 
         let activeTemplates = enabledTemplates
-        guard !activeTemplates.isEmpty else {
-            recordDiagnostic("menu rejected kind=\(kindDescription) reason=no-enabled-templates")
-            return nil
-        }
+        let terminalDirectory = openInTerminalDirectory(
+            for: menuKind,
+            targetedURL: targetedURL,
+            selectedURLs: selectedURLs
+        )
+        let activeShortcutLocations = areShortcutLocationsEnabled
+            ? shortcutLocations.filter { $0.isEnabled && !$0.expandedPath.isEmpty }
+            : []
 
         let mode = isDesktopException ? "desktop-exception" : "finder-frontmost"
         recordDiagnostic(
             "menu accepted kind=\(kindDescription) mode=\(mode) "
-                + "target=\(diagnosticPath(targetDir)) templates=\(activeTemplates.count)"
+                + "target=\(diagnosticPath(targetDir)) templates=\(activeTemplates.count) "
+                + "terminal=\(terminalDirectory == nil ? "no" : "yes") shortcuts=\(activeShortcutLocations.count)"
         )
         removeExpiredMenuActions()
 
         let mainMenu = NSMenu(title: "")
         mainMenu.autoenablesItems = false
 
-        let newFileItem = NSMenuItem(title: "新建文件", action: nil, keyEquivalent: "")
-        newFileItem.isEnabled = true
+        if !activeTemplates.isEmpty {
+            let newFileItem = NSMenuItem(title: "新建文件", action: nil, keyEquivalent: "")
+            newFileItem.isEnabled = true
 
-        let submenu = NSMenu(title: "新建文件")
-        submenu.autoenablesItems = false
+            let submenu = NSMenu(title: "新建文件")
+            submenu.autoenablesItems = false
 
-        for template in activeTemplates {
-            let item = NSMenuItem(title: template.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
-            item.target = self
-            item.isEnabled = true
-            item.tag = nextActionTag()
-            pendingMenuActions[item.tag] = PendingMenuAction(
-                template: template,
-                targetDirectory: targetDir,
+            for template in activeTemplates {
+                let item = NSMenuItem(title: template.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
+                item.target = self
+                item.isEnabled = true
+                item.tag = nextActionTag()
+                pendingMenuActions[item.tag] = PendingMenuAction(
+                    template: template,
+                    targetDirectory: targetDir,
+                    allowsNonFinderFrontmost: isDesktopException,
+                    createdAt: Date()
+                )
+                submenu.addItem(item)
+            }
+
+            newFileItem.submenu = submenu
+            mainMenu.addItem(newFileItem)
+        }
+
+        if isOpenInTerminalEnabled, let terminalDirectory {
+            let openHereItem = NSMenuItem(title: "在此处打开", action: nil, keyEquivalent: "")
+            openHereItem.isEnabled = true
+
+            let submenu = NSMenu(title: "在此处打开")
+            submenu.autoenablesItems = false
+
+            let terminalItem = NSMenuItem(title: "终端", action: #selector(openTerminalHere(_:)), keyEquivalent: "")
+            terminalItem.target = self
+            terminalItem.isEnabled = true
+            terminalItem.tag = nextActionTag()
+            pendingTerminalActions[terminalItem.tag] = PendingTerminalAction(
+                directory: terminalDirectory,
                 allowsNonFinderFrontmost: isDesktopException,
                 createdAt: Date()
             )
-            submenu.addItem(item)
+            submenu.addItem(terminalItem)
+
+            openHereItem.submenu = submenu
+            mainMenu.addItem(openHereItem)
         }
 
-        newFileItem.submenu = submenu
-        mainMenu.addItem(newFileItem)
+        if !activeShortcutLocations.isEmpty {
+            let shortcutItem = NSMenuItem(title: "快捷打开", action: nil, keyEquivalent: "")
+            shortcutItem.isEnabled = true
+
+            let submenu = NSMenu(title: "快捷打开")
+            submenu.autoenablesItems = false
+
+            for location in activeShortcutLocations {
+                let item = NSMenuItem(title: location.displayName, action: #selector(openShortcutLocation(_:)), keyEquivalent: "")
+                item.target = self
+                item.isEnabled = true
+                item.tag = nextActionTag()
+                pendingShortcutActions[item.tag] = PendingShortcutAction(
+                    location: location,
+                    createdAt: Date()
+                )
+                submenu.addItem(item)
+            }
+
+            shortcutItem.submenu = submenu
+            mainMenu.addItem(shortcutItem)
+        }
+
+        guard mainMenu.items.isEmpty == false else {
+            recordDiagnostic("menu rejected kind=\(kindDescription) reason=no-enabled-actions")
+            return nil
+        }
+
         return mainMenu
+    }
+
+    @objc func openTerminalHere(_ sender: NSMenuItem) {
+        let frontmostIdentifier = frontmostApplicationIdentifier
+        let finderFrontmost = frontmostIdentifier == "com.apple.finder"
+
+        guard let action = pendingTerminalActions.removeValue(forKey: sender.tag) else {
+            recordDiagnostic("open-terminal rejected reason=missing-menu-context tag=\(sender.tag)")
+            return
+        }
+
+        guard finderFrontmost || action.allowsNonFinderFrontmost else {
+            recordDiagnostic("open-terminal rejected reason=finder-not-frontmost")
+            return
+        }
+
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: action.directory.path, isDirectory: &isDirectory),
+              isDirectory.boolValue else {
+            recordDiagnostic("open-terminal rejected reason=directory-unavailable target=\(diagnosticPath(action.directory))")
+            return
+        }
+
+        recordDiagnostic("open-terminal accepted target=\(diagnosticPath(action.directory))")
+        openTerminal(at: action.directory)
+    }
+
+    @objc func openShortcutLocation(_ sender: NSMenuItem) {
+        guard let action = pendingShortcutActions.removeValue(forKey: sender.tag) else {
+            recordDiagnostic("shortcut rejected reason=missing-menu-context tag=\(sender.tag)")
+            return
+        }
+
+        let location = action.location.normalized()
+        SharedDefaults.requestShortcutOpen(location)
+        launchContainingAppForShortcutRequest()
+        recordDiagnostic(
+            "shortcut requested app-open name=\(location.displayName) "
+                + "path=\(location.expandedPath)"
+        )
     }
 
     @objc func createNewFile(_ sender: NSMenuItem) {
@@ -359,6 +486,62 @@ class FinderSync: FIFinderSync {
         return url.deletingLastPathComponent()
     }
 
+    private func openInTerminalDirectory(
+        for menuKind: FIMenuKind,
+        targetedURL: URL?,
+        selectedURLs: [URL]?
+    ) -> URL? {
+        if menuKind == .contextualMenuForContainer {
+            guard let targetedURL else { return nil }
+            return directoryURL(for: targetedURL)
+        }
+
+        guard menuKind == .contextualMenuForItems,
+              let selectedURLs,
+              selectedURLs.count == 1,
+              let selectedURL = selectedURLs.first,
+              isDirectoryURL(selectedURL) else {
+            return nil
+        }
+
+        return selectedURL
+    }
+
+    private func isDirectoryURL(_ url: URL) -> Bool {
+        if url.hasDirectoryPath {
+            return true
+        }
+
+        do {
+            return try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true
+        } catch {
+            return false
+        }
+    }
+
+    private func openTerminal(at directory: URL) {
+        let terminalURL = URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app")
+        guard FileManager.default.fileExists(atPath: terminalURL.path) else {
+            recordDiagnostic("open-terminal failed reason=terminal-app-missing")
+            return
+        }
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.open(
+            [directory],
+            withApplicationAt: terminalURL,
+            configuration: configuration
+        ) { _, error in
+            if let error {
+                self.recordDiagnostic(
+                    "open-terminal failed target=\(self.diagnosticPath(directory)) error=\(error.localizedDescription)"
+                )
+            } else {
+                self.recordDiagnostic("open-terminal succeeded target=\(self.diagnosticPath(directory))")
+            }
+        }
+    }
+
     private func isAllowedMenuDirectory(_ directory: URL) -> Bool {
         let path = directory.standardizedFileURL.path
 
@@ -375,5 +558,39 @@ class FinderSync: FIFinderSync {
         ]
 
         return !sensitiveHomePaths.contains { path == $0 || path.hasPrefix("\($0)/") }
+    }
+
+    private func launchContainingAppForShortcutRequest() {
+        if let url = URL(string: "righthere://open-shortcut") {
+            let didOpenURL = NSWorkspace.shared.open(url)
+            recordDiagnostic("shortcut app-url requested opened=\(didOpenURL)")
+            if didOpenURL {
+                return
+            }
+        }
+
+        guard let appURL = containingAppURL() else {
+            recordDiagnostic("shortcut app-launch failed reason=missing-containing-app")
+            return
+        }
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { [weak self] _, error in
+            if let error {
+                self?.recordDiagnostic("shortcut app-launch failed error=\(error.localizedDescription)")
+            } else {
+                self?.recordDiagnostic("shortcut app-launch requested app=\(appURL.path)")
+            }
+        }
+    }
+
+    private func containingAppURL() -> URL? {
+        var url = Bundle.main.bundleURL
+        for _ in 0..<3 {
+            url.deleteLastPathComponent()
+        }
+
+        return url.pathExtension == "app" ? url : nil
     }
 }

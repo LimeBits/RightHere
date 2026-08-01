@@ -4,6 +4,7 @@ import SwiftUI
 struct ContentView: View {
     private enum SettingsTab: String, CaseIterable, Identifiable {
         case templates
+        case tools
         case updates
         case advanced
 
@@ -12,6 +13,7 @@ struct ContentView: View {
         var title: String {
             switch self {
             case .templates: return "模板"
+            case .tools: return "工具"
             case .updates: return "更新"
             case .advanced: return "高级"
             }
@@ -25,6 +27,9 @@ struct ContentView: View {
     @State private var extensionRegistrationState: FinderExtensionRegistrationState = .checking
     @State private var automaticallyChecksForUpdates = true
     @State private var isFinderMenuDisabled = false
+    @State private var isOpenInTerminalEnabled = true
+    @State private var areShortcutLocationsEnabled = true
+    @State private var shortcutLocations: [ShortcutLocation] = []
     @State private var now = Date()
     @State private var timer: Timer? = nil
     
@@ -89,13 +94,15 @@ struct ContentView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(width: 170)
+            .frame(width: 230)
             .padding(.top, 20)
 
             Group {
                 switch selectedTab {
                 case .templates:
                     templateSettingsTab
+                case .tools:
+                    toolsSettingsTab
                 case .updates:
                     updateSettingsTab
                 case .advanced:
@@ -107,6 +114,115 @@ struct ContentView: View {
         .padding(.horizontal, 18)
         .padding(.bottom, 18)
         .frame(maxWidth: .infinity, minHeight: 356)
+    }
+
+    private var toolsSettingsTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            terminalToolCard
+            shortcutLocationsCard
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 10)
+    }
+
+    private var terminalToolCard: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "terminal")
+                .foregroundColor(.secondary)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("在此处打开终端")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("右键文件夹或文件夹空白处时，快速在该目录打开终端。")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            Toggle("", isOn: Binding(
+                get: { isOpenInTerminalEnabled },
+                set: { isEnabled in
+                    isOpenInTerminalEnabled = isEnabled
+                    SharedDefaults.setOpenInTerminalEnabled(isEnabled)
+                }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+        .cornerRadius(6)
+    }
+
+    private var shortcutLocationsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "bookmark")
+                    .foregroundColor(.secondary)
+                    .frame(width: 18)
+                    .padding(.top, 1)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("快捷打开")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("添加常用文件、文件夹或隐藏路径，之后可从 Finder 右键菜单快速打开。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { areShortcutLocationsEnabled },
+                    set: { isEnabled in
+                        areShortcutLocationsEnabled = isEnabled
+                        SharedDefaults.setShortcutLocationsEnabled(isEnabled)
+                    }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+            }
+
+            Divider().opacity(0.7)
+
+            if shortcutLocations.isEmpty {
+                emptyShortcutLocationsView
+                    .frame(maxWidth: .infinity, minHeight: 160)
+            } else {
+                TemplateListScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(shortcutLocations) { location in
+                            shortcutLocationRow(location)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 28)
+                }
+                .frame(maxWidth: .infinity, minHeight: 176)
+            }
+
+            Divider().opacity(0.7)
+
+            HStack(spacing: 8) {
+                Button(action: addShortcutItem) {
+                    Label("添加文件或文件夹", systemImage: "folder.badge.plus")
+                }
+
+                Button(action: addShortcutPathManually) {
+                    Label("输入路径", systemImage: "text.cursor")
+                }
+
+                Spacer(minLength: 0)
+            }
+            .font(.system(size: 11))
+        }
+        .padding(10)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.24))
+        .cornerRadius(6)
     }
 
     private var templateSettingsTab: some View {
@@ -307,6 +423,84 @@ struct ContentView: View {
         .padding(.vertical, 8)
     }
 
+    private func shortcutLocationRow(_ location: ShortcutLocation) -> some View {
+        HStack(spacing: 0) {
+            Toggle("", isOn: Binding(
+                get: { location.isEnabled },
+                set: { isChecked in
+                    updateShortcutLocation(location.id) { item in
+                        item.isEnabled = isChecked
+                    }
+                }
+            ))
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+            .frame(width: 28, alignment: .leading)
+
+            Image(systemName: shortcutIcon(for: location))
+                .font(.system(size: 15))
+                .foregroundColor(location.exists ? .blue : .secondary)
+                .frame(width: 22, height: 22)
+                .padding(.leading, 10)
+                .padding(.trailing, 10)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(location.displayName)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+
+                Text(location.path)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            if !location.exists {
+                Text("未验证")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
+                    .cornerRadius(4)
+                    .padding(.trailing, 8)
+            }
+
+            Button(action: { renameShortcutLocation(location) }) {
+                Image(systemName: "pencil")
+            }
+            .buttonStyle(.plain)
+            .help("重命名")
+            .frame(width: 24, height: 24)
+
+            Button(action: { openShortcutLocation(location) }) {
+                Image(systemName: "arrow.up.forward.app")
+            }
+            .buttonStyle(.plain)
+            .help("打开")
+            .frame(width: 24, height: 24)
+
+            Button(action: { revealShortcutLocation(location) }) {
+                Image(systemName: "magnifyingglass")
+            }
+            .buttonStyle(.plain)
+            .help("在 Finder 中显示")
+            .frame(width: 24, height: 24)
+            .disabled(!location.exists)
+
+            Button(action: { deleteShortcutLocation(location) }) {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.plain)
+            .help("删除")
+            .frame(width: 24, height: 24)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 7)
+    }
+
     private var emptyTemplatesView: some View {
         VStack(spacing: 8) {
             Image(systemName: "tray")
@@ -317,6 +511,23 @@ struct ContentView: View {
                 .font(.system(size: 13, weight: .semibold))
 
             Text("请打开模板文件夹，添加 template.txt、template.md 或 template.rtf。")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var emptyShortcutLocationsView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "bookmark")
+                .font(.system(size: 24))
+                .foregroundColor(.secondary)
+
+            Text("还没有快捷打开项")
+                .font(.system(size: 13, weight: .semibold))
+
+            Text("添加文件、文件夹或手动输入隐藏路径，之后可从 Finder 右键菜单快速打开。")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -477,6 +688,17 @@ struct ContentView: View {
         default: return .secondary
         }
     }
+
+    private func shortcutIcon(for location: ShortcutLocation) -> String {
+        switch location.kind {
+        case .directory:
+            return "folder"
+        case .file:
+            return "doc"
+        case .unknown:
+            return "questionmark.square"
+        }
+    }
     
     private func loadSettings() {
         let available = SharedDefaults.getAvailableFileTemplates()
@@ -484,6 +706,9 @@ struct ContentView: View {
         self.availableTemplates = available
         self.enabledTemplates = Set(enabled)
         self.isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
+        self.isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
+        self.areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+        self.shortcutLocations = SharedDefaults.getLocalShortcutLocations()
     }
 
     private func loadUpdateSettings() {
@@ -507,6 +732,8 @@ struct ContentView: View {
         Finder extension: \(extensionRegistrationState.title)
         Templates directory: \(SharedDefaults.templatesDirectoryURL?.path ?? "unavailable")
         Enabled templates: \(enabled.isEmpty ? "none" : enabled)
+        Open in Terminal: \(SharedDefaults.isOpenInTerminalEnabled() ? "enabled" : "disabled")
+        Shortcut locations: \(SharedDefaults.areShortcutLocationsEnabled() ? "enabled" : "disabled") (\(SharedDefaults.getShortcutLocations().filter(\.isEnabled).count) enabled)
         Finder menu: \(SharedDefaults.isFinderMenuDisabled() ? "disabled" : "enabled")
         """
 
@@ -528,6 +755,118 @@ struct ContentView: View {
     
     private func saveSettings() {
         SharedDefaults.setEnabledFileTemplates(Array(enabledTemplates))
+    }
+
+    private func saveShortcutLocations() {
+        shortcutLocations = shortcutLocations
+            .enumerated()
+            .map { index, location in
+                var updated = location
+                updated.sortOrder = index
+                return updated.normalized()
+            }
+            .sorted()
+        SharedDefaults.setShortcutLocations(shortcutLocations)
+    }
+
+    private func updateShortcutLocation(_ id: UUID, update: (inout ShortcutLocation) -> Void) {
+        guard let index = shortcutLocations.firstIndex(where: { $0.id == id }) else { return }
+        update(&shortcutLocations[index])
+        saveShortcutLocations()
+    }
+
+    private func appendShortcutLocation(path: String, displayName: String? = nil) {
+        let expandedPath = ShortcutLocation.expandPath(path)
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: expandedPath, isDirectory: &isDirectory)
+        let kind: ShortcutLocation.Kind = exists ? (isDirectory.boolValue ? .directory : .file) : .unknown
+        let inferredName = URL(fileURLWithPath: expandedPath).lastPathComponent
+        let location = ShortcutLocation(
+            displayName: displayName ?? (inferredName.isEmpty ? expandedPath : inferredName),
+            path: path,
+            kind: kind,
+            isEnabled: true,
+            sortOrder: shortcutLocations.count
+        )
+
+        shortcutLocations.append(location.normalized())
+        saveShortcutLocations()
+    }
+
+    private func addShortcutItem() {
+        let panel = NSOpenPanel()
+        panel.title = "添加文件或文件夹"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.showsHiddenFiles = true
+
+        guard panel.runModal() == .OK else { return }
+        for url in panel.urls {
+            appendShortcutLocation(path: url.path)
+        }
+    }
+
+    private func addShortcutPathManually() {
+        promptForText(
+            title: "输入快捷打开路径",
+            message: "支持隐藏路径和 ~，例如 ~/.zshrc、/etc/hosts、~/.codex。",
+            placeholder: "~/.zshrc"
+        ) { path in
+            appendShortcutLocation(path: path)
+        }
+    }
+
+    private func renameShortcutLocation(_ location: ShortcutLocation) {
+        promptForText(
+            title: "重命名快捷打开项",
+            message: location.path,
+            placeholder: location.displayName,
+            initialValue: location.displayName
+        ) { name in
+            updateShortcutLocation(location.id) { item in
+                item.displayName = name
+            }
+        }
+    }
+
+    private func deleteShortcutLocation(_ location: ShortcutLocation) {
+        shortcutLocations.removeAll { $0.id == location.id }
+        saveShortcutLocations()
+    }
+
+    private func openShortcutLocation(_ location: ShortcutLocation) {
+        NSWorkspace.shared.open(location.url)
+    }
+
+    private func revealShortcutLocation(_ location: ShortcutLocation) {
+        guard location.exists else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([location.url])
+    }
+
+    private func promptForText(
+        title: String,
+        message: String,
+        placeholder: String,
+        initialValue: String = "",
+        completion: (String) -> Void
+    ) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "确定")
+        alert.addButton(withTitle: "取消")
+
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        textField.placeholderString = placeholder
+        textField.stringValue = initialValue
+        alert.accessoryView = textField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let value = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        completion(value)
     }
     
     private func openSystemExtensionSettings() {

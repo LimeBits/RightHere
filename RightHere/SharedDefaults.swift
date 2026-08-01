@@ -15,13 +15,22 @@ public struct SharedDefaults {
     public static let extensionDiagnosticNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnostic")
     public static let extensionDiagnosticSnapshotRequestName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshotRequest")
     public static let extensionDiagnosticSnapshotNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshot")
+    public static let shortcutOpenRequestNotificationName = Notification.Name("com.LimeBits.RightHere.ShortcutOpenRequest")
     public static let templateCacheKey = "templateCache"
     public static let localTemplateCacheKey = "localTemplateCache"
     public static let localDisabledTypesKey = "localDisabledFileTypes"
     public static let finderMenuDisabledKey = "finderMenuDisabled"
+    public static let shortcutLocationsKey = "shortcutLocations"
+    public static let localShortcutLocationsKey = "localShortcutLocations"
+    public static let shortcutLocationsInitializedKey = "shortcutLocationsInitialized"
+    public static let localShortcutLocationsInitializedKey = "localShortcutLocationsInitialized"
+    public static let openInTerminalEnabledKey = "openInTerminalEnabled"
+    public static let shortcutLocationsEnabledKey = "shortcutLocationsEnabled"
     private static let extensionDiagnosticBufferKey = "extensionDiagnosticBuffer"
     private static let extensionDiagnosticRecordUserInfoKey = "record"
     private static let extensionDiagnosticRecordsUserInfoKey = "records"
+    private static let shortcutOpenRequestUserInfoKey = "request"
+    private static let pendingShortcutOpenRequestKey = "pendingShortcutOpenRequest"
     private static let maximumDiagnosticRecordCount = 100
     private static let diagnosticLock = NSLock()
     
@@ -152,6 +161,73 @@ public struct SharedDefaults {
         notifySettingsChanged()
     }
 
+    public static func isOpenInTerminalEnabled() -> Bool {
+        if let sharedSuite, sharedSuite.object(forKey: openInTerminalEnabledKey) != nil {
+            return sharedSuite.bool(forKey: openInTerminalEnabledKey)
+        }
+
+        if UserDefaults.standard.object(forKey: openInTerminalEnabledKey) != nil {
+            return UserDefaults.standard.bool(forKey: openInTerminalEnabledKey)
+        }
+
+        return true
+    }
+
+    public static func setOpenInTerminalEnabled(_ isEnabled: Bool) {
+        sharedSuite?.set(isEnabled, forKey: openInTerminalEnabledKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(isEnabled, forKey: openInTerminalEnabledKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
+    public static func areShortcutLocationsEnabled() -> Bool {
+        if let sharedSuite, sharedSuite.object(forKey: shortcutLocationsEnabledKey) != nil {
+            return sharedSuite.bool(forKey: shortcutLocationsEnabledKey)
+        }
+
+        if UserDefaults.standard.object(forKey: shortcutLocationsEnabledKey) != nil {
+            return UserDefaults.standard.bool(forKey: shortcutLocationsEnabledKey)
+        }
+
+        return true
+    }
+
+    public static func setShortcutLocationsEnabled(_ isEnabled: Bool) {
+        sharedSuite?.set(isEnabled, forKey: shortcutLocationsEnabledKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(isEnabled, forKey: shortcutLocationsEnabledKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
+    public static func getShortcutLocations() -> [ShortcutLocation] {
+        if sharedSuite?.bool(forKey: shortcutLocationsInitializedKey) == true {
+            return loadShortcutLocations(from: sharedSuite, key: shortcutLocationsKey)
+        }
+
+        return defaultShortcutLocations
+    }
+
+    public static func getLocalShortcutLocations() -> [ShortcutLocation] {
+        if UserDefaults.standard.bool(forKey: localShortcutLocationsInitializedKey) {
+            return loadShortcutLocations(from: UserDefaults.standard, key: localShortcutLocationsKey)
+        }
+
+        return getShortcutLocations()
+    }
+
+    public static func setShortcutLocations(_ locations: [ShortcutLocation]) {
+        let normalizedLocations = locations.map { $0.normalized() }.sorted()
+        saveShortcutLocations(normalizedLocations, defaults: sharedSuite, key: shortcutLocationsKey)
+        saveShortcutLocations(normalizedLocations, defaults: UserDefaults.standard, key: localShortcutLocationsKey)
+        sharedSuite?.set(true, forKey: shortcutLocationsInitializedKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(true, forKey: localShortcutLocationsInitializedKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
     public static func getEnabledFileTypes() -> [FileType] {
         guard let defaults = sharedSuite,
               let saved = defaults.stringArray(forKey: enabledTypesKey) else {
@@ -228,6 +304,55 @@ public struct SharedDefaults {
             userInfo: [extensionDiagnosticRecordsUserInfoKey: data],
             deliverImmediately: true
         )
+    }
+
+    public static func requestShortcutOpen(_ location: ShortcutLocation) {
+        let request = ShortcutOpenRequest(location: location.normalized())
+        guard let data = try? JSONEncoder().encode(request) else { return }
+
+        sharedSuite?.set(data, forKey: pendingShortcutOpenRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(data, forKey: pendingShortcutOpenRequestKey)
+
+        DistributedNotificationCenter.default().postNotificationName(
+            shortcutOpenRequestNotificationName,
+            object: nil,
+            userInfo: [shortcutOpenRequestUserInfoKey: data],
+            deliverImmediately: true
+        )
+    }
+
+    public static func shortcutOpenRequest(from notification: Notification) -> ShortcutOpenRequest? {
+        guard let data = notification.userInfo?[shortcutOpenRequestUserInfoKey] as? Data else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(ShortcutOpenRequest.self, from: data)
+    }
+
+    public static func consumePendingShortcutOpenRequest() -> ShortcutOpenRequest? {
+        let data = sharedSuite?.data(forKey: pendingShortcutOpenRequestKey)
+            ?? UserDefaults.standard.data(forKey: pendingShortcutOpenRequestKey)
+        sharedSuite?.removeObject(forKey: pendingShortcutOpenRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.removeObject(forKey: pendingShortcutOpenRequestKey)
+
+        guard let data else { return nil }
+        return try? JSONDecoder().decode(ShortcutOpenRequest.self, from: data)
+    }
+
+    public static func clearPendingShortcutOpenRequest(id: UUID) {
+        let data = sharedSuite?.data(forKey: pendingShortcutOpenRequestKey)
+            ?? UserDefaults.standard.data(forKey: pendingShortcutOpenRequestKey)
+        guard let data,
+              let existing = try? JSONDecoder().decode(ShortcutOpenRequest.self, from: data),
+              existing.id == id else {
+            return
+        }
+
+        sharedSuite?.removeObject(forKey: pendingShortcutOpenRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.removeObject(forKey: pendingShortcutOpenRequestKey)
     }
 
     public static func diagnosticRecord(from notification: Notification) -> ExtensionDiagnosticRecord? {
@@ -309,6 +434,10 @@ public struct SharedDefaults {
             userInfo["templateRecords"] = data
         }
 
+        if let data = sharedSuite?.data(forKey: shortcutLocationsKey) {
+            userInfo["shortcutLocations"] = data
+        }
+
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil,
@@ -323,6 +452,10 @@ public struct SharedDefaults {
 
         if let data = UserDefaults.standard.data(forKey: localTemplateCacheKey) {
             userInfo["templateRecords"] = data
+        }
+
+        if let data = UserDefaults.standard.data(forKey: localShortcutLocationsKey) {
+            userInfo["shortcutLocations"] = data
         }
 
         DistributedNotificationCenter.default().postNotificationName(
@@ -366,6 +499,21 @@ public struct SharedDefaults {
         }
 
         UserDefaults.standard.set(data, forKey: localTemplateCacheKey)
+    }
+
+    private static func loadShortcutLocations(from defaults: UserDefaults?, key: String) -> [ShortcutLocation] {
+        guard let data = defaults?.data(forKey: key),
+              let locations = try? JSONDecoder().decode([ShortcutLocation].self, from: data) else {
+            return []
+        }
+
+        return locations.map { $0.normalized() }.sorted()
+    }
+
+    private static func saveShortcutLocations(_ locations: [ShortcutLocation], defaults: UserDefaults?, key: String) {
+        guard let data = try? JSONEncoder().encode(locations.sorted()) else { return }
+        defaults?.set(data, forKey: key)
+        defaults?.synchronize()
     }
 
     private static func readTemplateRecordsFromDisk() -> [TemplateRecord] {
@@ -413,6 +561,126 @@ public struct SharedDefaults {
             TemplateRecord(template: FileTemplate(fileExtension: "xlsx"), data: Data(base64Encoded: TemplateAssets.xlsxBase64) ?? Data()),
             TemplateRecord(template: FileTemplate(fileExtension: "pptx"), data: Data(base64Encoded: TemplateAssets.pptxBase64) ?? Data())
         ]
+    }
+
+    private static var defaultShortcutLocations: [ShortcutLocation] {
+        guard let pw = getpwuid(getuid()) else { return [] }
+        let homePath = String(cString: pw.pointee.pw_dir)
+        let candidates: [(String, String)] = [
+            ("用户主目录", homePath),
+            ("下载", "\(homePath)/Downloads"),
+            ("文稿", "\(homePath)/Documents"),
+            ("桌面", "\(homePath)/Desktop")
+        ]
+
+        return candidates.enumerated().map { index, item in
+            ShortcutLocation(
+                displayName: item.0,
+                path: item.1,
+                kind: .directory,
+                isEnabled: true,
+                sortOrder: index
+            )
+        }
+    }
+}
+
+public struct ShortcutLocation: Codable, Hashable, Identifiable, Comparable {
+    public enum Kind: String, Codable, Hashable {
+        case file
+        case directory
+        case unknown
+    }
+
+    public let id: UUID
+    public var displayName: String
+    public var path: String
+    public var kind: Kind
+    public var isEnabled: Bool
+    public var sortOrder: Int
+
+    public init(
+        id: UUID = UUID(),
+        displayName: String,
+        path: String,
+        kind: Kind = .unknown,
+        isEnabled: Bool = true,
+        sortOrder: Int = 0
+    ) {
+        self.id = id
+        self.displayName = displayName
+        self.path = path
+        self.kind = kind
+        self.isEnabled = isEnabled
+        self.sortOrder = sortOrder
+    }
+
+    public var expandedPath: String {
+        Self.expandPath(path)
+    }
+
+    public var url: URL {
+        URL(fileURLWithPath: expandedPath, isDirectory: kind == .directory)
+    }
+
+    public var exists: Bool {
+        FileManager.default.fileExists(atPath: expandedPath)
+    }
+
+    public func normalized() -> ShortcutLocation {
+        let expandedPath = Self.expandPath(path)
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: expandedPath, isDirectory: &isDirectory)
+        let inferredKind: Kind
+        if exists {
+            inferredKind = isDirectory.boolValue ? .directory : .file
+        } else {
+            inferredKind = kind
+        }
+
+        let normalizedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallbackName = URL(fileURLWithPath: expandedPath).lastPathComponent
+        return ShortcutLocation(
+            id: id,
+            displayName: normalizedName.isEmpty ? (fallbackName.isEmpty ? expandedPath : fallbackName) : normalizedName,
+            path: path.trimmingCharacters(in: .whitespacesAndNewlines),
+            kind: inferredKind,
+            isEnabled: isEnabled,
+            sortOrder: sortOrder
+        )
+    }
+
+    public static func expandPath(_ path: String) -> String {
+        let trimmedPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedPath == "~" {
+            return NSHomeDirectory()
+        }
+
+        if trimmedPath.hasPrefix("~/") {
+            return NSHomeDirectory() + String(trimmedPath.dropFirst())
+        }
+
+        return (trimmedPath as NSString).expandingTildeInPath
+    }
+
+    public static func < (lhs: ShortcutLocation, rhs: ShortcutLocation) -> Bool {
+        if lhs.sortOrder != rhs.sortOrder {
+            return lhs.sortOrder < rhs.sortOrder
+        }
+
+        return lhs.displayName.localizedStandardCompare(rhs.displayName) == .orderedAscending
+    }
+}
+
+public struct ShortcutOpenRequest: Codable, Hashable, Identifiable {
+    public let id: UUID
+    public let location: ShortcutLocation
+    public let requestedAt: Date
+
+    public init(id: UUID = UUID(), location: ShortcutLocation, requestedAt: Date = Date()) {
+        self.id = id
+        self.location = location
+        self.requestedAt = requestedAt
     }
 }
 

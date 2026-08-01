@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import Sparkle
 import SwiftUI
 
@@ -9,6 +10,9 @@ struct RightHereApp: App {
     var body: some Scene {
         Settings {
             EmptyView()
+                .onOpenURL { url in
+                    appDelegate.handleIncomingURL(url)
+                }
         }
     }
 }
@@ -23,10 +27,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         FinderExtensionBootstrap.ensureRegisteredAndEnabled()
         observeExtensionActivity()
+        observeIncomingURLs()
+        consumePendingShortcutOpenRequest()
         configureStatusItem()
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        consumePendingShortcutOpenRequest()
+    }
+
     deinit {
+        NSAppleEventManager.shared().removeEventHandler(
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
         DistributedNotificationCenter.default().removeObserver(self)
     }
 
@@ -49,8 +63,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: SharedDefaults.extensionDiagnosticSnapshotNotificationName,
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(shortcutOpenRequested(_:)),
+            name: SharedDefaults.shortcutOpenRequestNotificationName,
+            object: nil
+        )
 
         SharedDefaults.requestExtensionDiagnosticSnapshot()
+    }
+
+    private func observeIncomingURLs() {
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
+    }
+
+    @objc private func handleGetURLEvent(
+        _ event: NSAppleEventDescriptor,
+        withReplyEvent replyEvent: NSAppleEventDescriptor
+    ) {
+        guard let urlString = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
+              let url = URL(string: urlString) else {
+            return
+        }
+
+        handleIncomingURL(url)
     }
 
     @objc private func extensionDidBecomeActive(_ notification: Notification) {
@@ -65,6 +106,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func extensionDiagnosticSnapshotReceived(_ notification: Notification) {
         SharedDefaults.mergeExtensionDiagnosticsLocally(
             SharedDefaults.diagnosticRecords(from: notification)
+        )
+    }
+
+    @objc private func shortcutOpenRequested(_ notification: Notification) {
+        guard let request = SharedDefaults.shortcutOpenRequest(from: notification) else { return }
+        openShortcutLocation(from: request)
+        SharedDefaults.clearPendingShortcutOpenRequest(id: request.id)
+    }
+
+    func handleIncomingURL(_ url: URL) {
+        guard url.scheme == "righthere" else { return }
+
+        switch url.host {
+        case "open-shortcut":
+            consumePendingShortcutOpenRequest()
+        default:
+            break
+        }
+    }
+
+    private func consumePendingShortcutOpenRequest() {
+        guard let request = SharedDefaults.consumePendingShortcutOpenRequest() else { return }
+        openShortcutLocation(from: request)
+    }
+
+    private func openShortcutLocation(from request: ShortcutOpenRequest) {
+        let location = request.location.normalized()
+        let didOpen = NSWorkspace.shared.open(location.url)
+        SharedDefaults.recordExtensionDiagnostic(
+            "app-open-shortcut name=\(location.displayName) path=\(location.expandedPath) opened=\(didOpen)"
         )
     }
 
