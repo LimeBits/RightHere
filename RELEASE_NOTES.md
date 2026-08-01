@@ -1,10 +1,12 @@
-# RightHere 0.1.12
+# RightHere 0.2.0
 
 发布时间：2026-08-01
 
 ## 这一版的定位
 
-RightHere 0.1.12 是修复 Sparkle 更新安装链路并优化更新提示体验的正式分发版本。用于普通用户安装验证的包必须是：
+RightHere 0.2.0 是右键工具增强版本，在原有 Finder 右键“新建文件”的基础上，加入更接近日常使用场景的快速操作。
+
+正式分发包仍要求：
 
 - Universal Binary：`arm64 + x86_64`
 - Developer ID Application 签名
@@ -12,61 +14,26 @@ RightHere 0.1.12 是修复 Sparkle 更新安装链路并优化更新提示体验
 - stapler 已绑定公证票据
 - Gatekeeper 验证通过
 
-Apple Development 签名包和 ad-hoc ZIP 只用于开发机快速验证，不再作为普通新用户安装验证依据。
+## 主要新功能
 
-如果已经安装 `0.1.10` / `0.1.11`，并且 App 内更新仍在安装阶段失败，请手动下载并安装本版 DMG。旧版本自身缺少 Sparkle sandbox installer entitlement，可能无法完成这一次自我替换；安装到 `0.1.12` 后，后续更新链路会使用新的权限配置。
+- 新增“工具”设置页，用于集中管理右键增强能力。
+- Finder 右键菜单新增“在此处打开 -> 终端”。
+- “在此处打开终端”仅在文件夹、文件夹空白处和桌面空白处显示，避免和 Finder 原生文件右键菜单冲突。
+- 新增“快捷打开”，可把常用文件、文件夹、隐藏路径或深层配置目录加入 Finder 右键菜单。
+- “快捷打开”支持 `~/.zshrc`、`/etc/hosts`、`~/.codex` 这类不容易从 Finder 直接找到的路径。
+- 设置页中“添加文件或文件夹”已合并为一个入口，同时保留“输入路径”用于隐藏路径和手动路径。
 
-## 主要变化
+## 修复与优化
 
-- 补齐 sandboxed App 使用 Sparkle installer 所需的 mach lookup entitlement，修复“发现更新后安装失败”的问题。
-- Sparkle feed 改为强制 signed appcast，并在更新前校验包签名和下载内容。
-- appcast 生成时嵌入 Markdown 更新说明，让更新窗口展示更完整的版本内容。
-- 将「打开扩展设置」移入「帮助与反馈」子菜单，减少正常使用时的菜单干扰。
-- App 和 FinderSync extension 声明中文本地化，改善 Sparkle 更新窗口在中文系统下显示英文的问题。
-- 设置页新增「停用 Finder 扩展」入口，用于卸载前清理右键菜单残留。
-- 增大设置窗口默认高度，并调整底部状态栏布局，避免「最近 Finder 调用」文字被遮挡。
-- 默认开启自动检查更新，不再在首次启动时弹出 Sparkle 的英文授权提示。
-- 设置页新增「版本更新」开关，用户可以关闭或重新开启自动检查更新。
-- 不默认启用后台自动下载和安装更新，保留菜单栏「检查更新...」手动入口。
-- 修复 0.1.8 包内缺少 Sparkle `SUFeedURL` / `SUPublicEDKey` 配置，导致「检查更新」弹出英文错误的问题。
-- 修复 appcast 生成时只有相对 DMG 文件名、缺少 EdDSA 签名校验的问题。
-- appcast 生成脚本现在会强制校验 `sparkle:edSignature` 和 HTTPS 下载地址，避免再次上传无效更新源。
-- RightHere 启动时会自动注册当前 App，并尝试启用 `com.LimeBits.RightHere.Extension`，改善普通用户拖拽安装后 Finder 右键菜单不出现的问题。
-- FinderSync extension 增加 Documents 写入权限，修复「下载」可新建文件但「文稿」有菜单却无反应的问题。
-- 安装脚本刷新 LaunchServices 与 Dock 图标缓存，改善 Launchpad 首次安装后图标短暂透明的问题。
-- 接入 Sparkle 2 更新框架，后续正式包可通过 App 内「检查更新」下载、验证并安装新版本。
-- 新增 `Scripts/package-developer-id.sh`，统一执行归档、Developer ID 导出、DMG 打包、DMG 签名、公证和 stapler 绑定。
-- 新增 `Scripts/notarize.sh`，复用 `righthere-notary` keychain profile 完成公证和 Gatekeeper 验证。
-- 正式分发脚本强制校验主 App 和 FinderSync extension 都包含 `arm64` 与 `x86_64`。
-- Bundle ID 切换为 `com.LimeBits.RightHere`，FinderSync extension 切换为 `com.LimeBits.RightHere.Extension`，App Group 切换为 `group.com.LimeBits.RightHere`。
-- 安装脚本会停用旧 bundle id 的 FinderSync 状态、启用新扩展并重启 Finder。
-- 设置页只在系统明确返回未启用或未注册时显示 Finder 扩展提示，不再展示容易误导的“暂时不可读”状态。
-- 启动时移除 Finder 扩展未就绪弹窗，降低首次安装干扰。
-- 补齐标准 macOS AppIcon 10 个槽位，改善 Launchpad 图标首次透明或延迟刷新的问题。
-- 菜单栏图标居中绘制并略微放大，改善视觉尺寸和垂直位置。
-
-## 正式打包命令
-
-```bash
-cd /Users/bruce/Desktop/b-vibe/RightHere
-RIGHTHERE_DEVELOPMENT_TEAM=WV6JA6UHLN \
-Scripts/package-developer-id.sh
-```
-
-脚本会从 `.dev.vars` 读取 `SPARKLE_PUBLIC_ED_KEY`。成功后会输出 `dist/RightHere-0.1.12-build9-*.dmg` 和对应 `.sha256`。这个 DMG 才用于 Intel / Apple Silicon 新电脑和普通新用户验证。
-
-生成 Sparkle appcast：
-
-```bash
-Scripts/generate-appcast.sh
-```
-
-脚本会从 `.dev.vars` 读取 `SPARKLE_GENERATE_APPCAST`，并要求 Sparkle 私钥可从钥匙串读取；生成结果必须包含 EdDSA 签名和 GitHub HTTPS 下载地址。
+- “快捷打开”改由主 App 执行打开，避免 FinderSync extension 因沙盒限制无法打开用户主目录或隐藏路径。
+- “快捷打开”请求会先写入 App Group，并通过 `righthere://open-shortcut` 唤起主 App；主 App 会在 URL 事件、启动和重新激活时检查并执行 pending request。
+- 去掉 Finder 右键菜单中可能显示为空白行的手动分隔线。
+- 将“快捷打开”的强失效样式改为“未验证”弱提示，避免隐藏路径被误判时造成误解。
+- 版本记录和 PRD 已补充右键增强的批次规划，后续会继续评估开发工具入口、复制路径、移动到/复制到等能力。
 
 ## 验证重点
 
-- 在 Intel Mac 上双击 DMG 安装后，RightHere 能正常打开。
-- Finder 右键菜单能出现「新建文件」。
-- 首次安装后不再出现误导性的 Finder 扩展授权弹窗。
-- Launchpad 图标能正常显示。
-- 菜单栏图标大小和位置接近系统菜单栏图标。
+- 在 Finder 文件夹空白处右键，可以看到“在此处打开 -> 终端”。
+- 在 Finder 右键菜单中点击“快捷打开”，可以打开已配置的文件或文件夹。
+- 添加 `~/.zshrc`、`/etc/hosts`、`~/.codex` 后，右键菜单能同步显示并打开。
+- 取消某个快捷打开项的勾选后，下一次打开 Finder 右键菜单时不再显示该项。
