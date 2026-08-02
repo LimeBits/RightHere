@@ -157,8 +157,13 @@ rm -rf "${APP_DIR}"
 cp -R "${EXPORTED_APP}" "${APP_DIR}"
 xattr -cr "${APP_DIR}"
 
-RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-1}" \
-    "${ROOT_DIR}/Scripts/package-dmg.sh" --with-installer-script
+PACKAGE_DMG_ARGS=()
+if [[ "${RIGHTHERE_INCLUDE_INSTALLER_SCRIPT:-0}" == "1" ]]; then
+    PACKAGE_DMG_ARGS+=(--with-installer-script)
+fi
+
+RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-0}" \
+    "${ROOT_DIR}/Scripts/package-dmg.sh" "${PACKAGE_DMG_ARGS[@]}"
 
 DMG_PATH="$(ls -t "${DIST_DIR}"/RightHere-*.dmg | head -1)"
 

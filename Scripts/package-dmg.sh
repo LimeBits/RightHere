@@ -144,12 +144,13 @@ fi
 # ── Finder 窗口布局（参考 LocalFlow 风格）────────────────────
 INSTALLER_POSITION_SCRIPT=""
 if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
-    INSTALLER_POSITION_SCRIPT='    set position of item "安装并启用 RightHere.command" of container window to {280, 300}'
+    INSTALLER_POSITION_SCRIPT='    set position of item "安装并启用 RightHere.command" of container window to {330, 310}'
 fi
 
 if [[ -n "${CI:-}" || "${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-}" == "1" ]]; then
     printf '→ 跳过 Finder 窗口布局。\n'
 else
+    printf '→ 设置 Finder 拖拽安装布局...\n'
     /usr/bin/osascript <<APPLESCRIPT
 tell application "Finder"
   tell folder POSIX file "${MOUNT_DIR}"
@@ -157,14 +158,14 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set bounds of container window to {200, 100, 760, 460}
+    set bounds of container window to {180, 90, 840, 530}
     set theViewOptions to the icon view options of container window
     set arrangement of theViewOptions to not arranged
-    set icon size of theViewOptions to 120
+    set icon size of theViewOptions to 128
     set text size of theViewOptions to 13
     set background color of theViewOptions to {56797, 56797, 61166}
-    set position of item "RightHere.app" of container window to {150, 155}
-    set position of item "Applications" of container window to {410, 155}
+    set position of item "RightHere.app" of container window to {205, 190}
+    set position of item "Applications" of container window to {455, 190}
 ${INSTALLER_POSITION_SCRIPT}
     close
     open
