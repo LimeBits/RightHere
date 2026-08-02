@@ -1,27 +1,129 @@
 # RightHere
 
-RightHere 是一个 macOS Finder 右键「新建文件」扩展。安装后可以在 Finder 的右键菜单里快速创建 txt、Markdown、Word、Excel、PowerPoint 或自定义模板文件。
+RightHere 是一个 macOS Finder 右键增强工具。它让你在 Finder 里更快完成三件事：新建文件、在当前目录打开终端、快速打开常用文件或隐藏路径。
 
-## 功能
+适合经常在 Finder、终端和配置文件之间来回切换的人。
 
-- Finder 右键菜单「新建文件」
-- 默认支持 txt / Markdown / Word / Excel / PowerPoint
-- 菜单栏设置入口，可勾选要显示的模板类型
-- 自定义模板：在模板目录中放置 `template.rtf`、`template.json` 等文件即可扩展类型
-- 自动文件名去重，例如 `新建文档`、`新建文档 (2)`
-- 本机开发部署脚本和基础诊断脚本
+## 功能亮点
 
-## 系统要求
+### 右键新建文件
+
+在 Finder 右键菜单中直接新建常用文件，不用先打开对应 App 再另存为。
+
+- 支持文本、Markdown、Word、Excel、PowerPoint 等常用文件类型
+- 支持自定义模板，把自己的模板文件加入右键菜单
+- 可在设置里管理显示哪些文件类型，保持右键菜单清爽
+- 自动处理重名文件，例如 `新建文档`、`新建文档 (2)`
+
+### 在此处打开终端
+
+在 Finder 当前目录快速打开终端，省去复制路径和手动 `cd`。
+
+- 支持文件夹空白处右键
+- 支持桌面空白处右键
+- 支持右键文件夹时打开该文件夹所在位置
+- 避免干扰文件右键菜单，减少和系统“打开方式”的冲突
+
+### 快捷打开
+
+把常用文件、文件夹或隐藏路径加入 Finder 右键菜单，一键直达。
+
+- 适合快速打开 `~/.zshrc`、`/etc/hosts`、`~/.codex` 等隐藏配置路径
+- 支持添加文件、文件夹和手动输入路径
+- 可单独启用、隐藏、重命名或删除每个快捷打开项
+- 由主 App 执行打开，减少 FinderSync extension 沙盒权限带来的限制
+
+### 轻量设置
+
+所有右键菜单能力都可以在设置里集中管理。
+
+- 管理新建文件模板
+- 管理右键工具入口
+- 控制哪些项目出现在 Finder 右键菜单中
+- 菜单栏常驻，不打断当前工作流
+
+## 安装
+
+从 [GitHub Releases](https://github.com/LimeBits/RightHere/releases) 下载最新 DMG。
+
+安装后把 `RightHere.app` 拖到“应用程序”，然后打开一次 RightHere。App 会尝试注册并启用 Finder 扩展；如果 Finder 右键菜单没有立刻出现，退出并重新打开 Finder，或重启 Finder 后再试。
+
+系统要求：
 
 - macOS 12.0 或更高版本
 - Intel Mac 和 Apple Silicon Mac
-- Xcode 15 或更高版本（本地开发）
 
-> 当前目标是 macOS 12+ Universal Binary（`arm64` + `x86_64`）。由于 FinderSync extension 依赖系统扩展机制，不同 macOS 版本仍建议实机验证。
+## 使用
+
+### 新建文件
+
+在 Finder 文件夹空白处或桌面空白处右键，选择：
+
+```text
+新建文件 -> 文本文件 / Markdown / Word 文档 / ...
+```
+
+### 管理模板
+
+打开 RightHere 设置，在“模板”页勾选要显示在右键菜单里的文件类型。
+
+首次打开模板文件夹时，RightHere 会初始化默认模板：
+
+```text
+template.txt
+template.md
+template.docx
+template.xlsx
+template.pptx
+```
+
+你可以直接编辑这些模板，也可以添加新的 `template.<扩展名>` 文件，例如：
+
+```text
+template.rtf
+template.csv
+template.json
+template.swift
+```
+
+刷新设置页后，新模板会出现在列表中，勾选后会显示在 Finder 右键菜单中。
+
+### 打开终端
+
+在 Finder 文件夹空白处或桌面空白处右键，选择：
+
+```text
+在此处打开 -> 终端
+```
+
+### 快捷打开
+
+打开 RightHere 设置，在“工具”页添加常用文件、文件夹或路径。之后可以在 Finder 右键菜单中选择：
+
+```text
+快捷打开 -> 你的文件或文件夹
+```
+
+适合加入：
+
+```text
+~/.zshrc
+/etc/hosts
+~/.codex
+~/Library/Application Support
+```
+
+## 更新与反馈
+
+菜单栏选择 **帮助与反馈 -> 检查更新...** 可检查新版本。
+
+菜单栏选择 **帮助与反馈 -> 反馈问题...** 可打开预填诊断信息的 GitHub Issue 页面。也可以选择 **复制诊断信息**，再手动粘贴到 Issue 中。
+
+RightHere 不收集 analytics，不会自动上传模板或文件内容。详见 [PRIVACY.md](PRIVACY.md)。
 
 ## 本地开发
 
-克隆仓库后，用 Xcode 打开 `RightHere.xcodeproj`。如果你要在自己的机器上长期调试，请在 Xcode 里把主 App 和 FinderSync extension 的 Team、Bundle ID、App Group 改成你自己的值。
+克隆仓库后，用 Xcode 打开 `RightHere.xcodeproj`。如果要在自己的机器上长期调试，请在 Xcode 里把主 App 和 FinderSync extension 的 Team、Bundle ID、App Group 改成你自己的值。
 
 常用命令：
 
@@ -39,7 +141,7 @@ RightHere 是一个 macOS Finder 右键「新建文件」扩展。安装后可�
 ./monitor.sh
 ```
 
-开源仓库不会提交个人 Team ID。由于 RightHere 使用 sandbox、App Group 和 FinderSync extension，本机安装调试仍然需要开发签名。你可以临时通过环境变量传入自己的 Team ID：
+开源仓库不会提交个人 Team ID。由于 RightHere 使用 App Group 和 FinderSync extension，本机安装调试需要开发签名。可以临时通过环境变量传入自己的 Team ID：
 
 ```bash
 DEVELOPMENT_TEAM=YOURTEAMID ./deploy.sh --build --force
@@ -48,76 +150,9 @@ DEVELOPMENT_TEAM=YOURTEAMID ./deploy.sh --build --universal --force
 
 也可以在 Xcode 的 Signing & Capabilities 中为两个 target 选择自己的 Team。这样会修改本地工程文件，提交前请确认没有把个人 Team ID 提交到开源仓库。
 
-当设置了 `DEVELOPMENT_TEAM` 时，脚本会自动给 `xcodebuild` 传入 `-allowProvisioningUpdates`，让 Xcode 尝试创建或更新本机调试需要的 provisioning profile。
+## 正式分发
 
-## 模板
-
-首次打开模板文件夹时，RightHere 会初始化默认模板：
-
-- `template.txt`
-- `template.md`
-- `template.docx`
-- `template.xlsx`
-- `template.pptx`
-
-你可以直接编辑这些文件。也可以添加新的 `template.<扩展名>` 文件，例如：
-
-```text
-template.rtf
-template.csv
-template.json
-template.swift
-```
-
-刷新设置页后，新模板会出现在列表里，勾选后会显示在 Finder 右键菜单中。
-
-## 更新与反馈
-
-菜单栏选择 **帮助与反馈 -> 检查更新...** 可读取 GitHub Releases 并提示是否存在新版本。RightHere 不会自动下载或自动安装更新。
-
-菜单栏选择 **帮助与反馈 -> 反馈问题...** 可打开预填诊断信息的 GitHub Issue 页面。也可以选择 **复制诊断信息**，再手动粘贴到 Issue 中。
-
-RightHere 不收集 analytics，不会自动上传模板或文件内容。详见 [PRIVACY.md](PRIVACY.md)。
-
-项目主页：
-
-```text
-https://github.com/LimeBits/RightHere
-```
-
-## 打包
-
-开发调试可以使用：
-
-```bash
-./Scripts/package-app.sh --build --universal
-./Scripts/package-dmg.sh --build
-```
-
-`package-app.sh` 默认保留 Xcode build 产物的签名，不写死任何个人证书。如果你确实需要重签，可以显式传入：
-
-```bash
-CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./Scripts/package-app.sh --build --universal
-```
-
-如果 Release build 也需要指定本地 Team：
-
-```bash
-DEVELOPMENT_TEAM=YOURTEAMID ./Scripts/package-app.sh --build --universal
-```
-
-## 公开分发状态
-
-RightHere 0.1.12 起，公开新用户验证只使用 Developer ID 分发链路：
-
-1. Apple Developer Program
-2. Developer ID Application 证书
-3. 主 App 和 FinderSync extension 正式签名
-4. Apple notarization
-5. stapler 绑定公证票据
-6. Gatekeeper 验证
-
-GitHub Actions 自动生成的 DMG 只适合 CI/打包流程验证，不适合新电脑直接安装验证 FinderSync。普通新用户验证请使用本机 Developer ID 签名、公证并 staple 后的 Universal DMG。
+普通用户安装包应使用 Developer ID 签名、公证并 staple 的 Universal DMG。GitHub Actions 自动生成的 DMG 只适合 CI/打包流程验证，不适合新电脑直接安装验证 FinderSync。
 
 正式分发包使用：
 
@@ -135,23 +170,31 @@ xcrun notarytool store-credentials "righthere-notary" \
   --password "app-specific-password"
 ```
 
-RightHere 使用 App Group 和 FinderSync extension，因此 Developer ID 导出还需要主 App 与 extension 都具备匹配的 Developer ID provisioning profile。正式分发脚本会校验主 App 和 FinderSync extension 均为 Universal Binary（`arm64 + x86_64`）。
-
-RightHere 使用 Sparkle 2 作为 App 内更新框架。首次正式接入前，需要用 Sparkle 的 `generate_keys` 生成 EdDSA key，把公钥写入本地 `.dev.vars` 的 `SPARKLE_PUBLIC_ED_KEY`；私钥保留在钥匙串。后续每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成并上传 `appcast.xml` 到同一个 GitHub Release。脚本会拒绝缺少 EdDSA 签名或 HTTPS 下载地址的 appcast。
+RightHere 使用 Sparkle 2 作为 App 内更新框架。每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成并上传 `appcast.xml` 到同一个 GitHub Release。
 
 ## 常见问题
 
-**Finder 右键菜单没有出现怎么办？**
+### Finder 右键菜单没有出现怎么办？
 
-先运行 `./Scripts/doctor.sh` 查看 extension 是否注册。然后确认 RightHere 已启动、Finder 已重启，并在系统设置的扩展/Finder 扩展里启用 RightHere。
+先确认 RightHere 已经打开过一次。然后可以运行：
 
-**为什么没有 Developer ID 证书也能本地调试？**
+```bash
+./Scripts/doctor.sh
+```
 
-Xcode 可以用本机开发签名运行和调试。Developer ID 主要用于把 App 稳定分发给其他机器，并通过 Gatekeeper。
+如果扩展已经注册但菜单没有出现，重启 Finder 后再试：
 
-**为什么要修改 Bundle ID 和 App Group？**
+```bash
+killall Finder
+```
 
-App Group 必须和你的开发者账号、签名配置匹配。多人开源协作时，不能共用原作者的个人 Team ID。
+### 为什么需要 FinderSync extension？
+
+macOS 的 Finder 右键菜单扩展需要通过 FinderSync extension 实现。RightHere 主 App 负责设置、模板和快捷打开请求，FinderSync extension 负责把菜单显示到 Finder 里。
+
+### 为什么快捷打开由主 App 执行？
+
+FinderSync extension 运行在沙盒里，直接打开用户主目录、隐藏路径或部分系统路径时容易受限。RightHere 会先把请求写入 App Group，再唤起主 App 执行打开，稳定性更好。
 
 ## 目录结构
 
