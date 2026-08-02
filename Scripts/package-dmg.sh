@@ -6,6 +6,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="${ROOT_DIR}/RightHere.app"
 DIST_DIR="${RIGHTHERE_DIST_DIR:-${ROOT_DIR}/dist}"
+DMG_BACKGROUND="${ROOT_DIR}/Assets/DMG/dmg-background.png"
 VOLUME_NAME="RightHere"
 BUNDLE_ID="com.LimeBits.RightHere"
 INCLUDE_INSTALLER_SCRIPT=false
@@ -126,6 +127,11 @@ trap cleanup EXIT
 printf '→ 填充 DMG 内容...\n'
 /bin/cp -R "${APP_DIR}" "${MOUNT_DIR}/"
 /bin/ln -s /Applications "${MOUNT_DIR}/Applications"
+if [[ -f "${DMG_BACKGROUND}" ]]; then
+    /bin/mkdir -p "${MOUNT_DIR}/.background"
+    /bin/cp "${DMG_BACKGROUND}" "${MOUNT_DIR}/.background/dmg-background.png"
+    /usr/bin/SetFile -a V "${MOUNT_DIR}/.background" 2>/dev/null || true
+fi
 if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
     # 可选的一键安装脚本：内部测试时可自动复制、启动、启用扩展并重启 Finder。
     # 用 .command 后缀，macOS 双击会用 Terminal 执行；.sh 双击只会打开文本编辑器。
@@ -144,7 +150,7 @@ fi
 # ── Finder 窗口布局（参考 LocalFlow 风格）────────────────────
 INSTALLER_POSITION_SCRIPT=""
 if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
-    INSTALLER_POSITION_SCRIPT='    set position of item "安装并启用 RightHere.command" of container window to {330, 310}'
+    INSTALLER_POSITION_SCRIPT='    set position of item "安装并启用 RightHere.command" of container window to {300, 330}'
 fi
 
 if [[ -n "${CI:-}" || "${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-}" == "1" ]]; then
@@ -158,14 +164,14 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set bounds of container window to {180, 90, 840, 530}
+    set bounds of container window to {200, 100, 800, 500}
     set theViewOptions to the icon view options of container window
     set arrangement of theViewOptions to not arranged
     set icon size of theViewOptions to 128
     set text size of theViewOptions to 13
-    set background color of theViewOptions to {56797, 56797, 61166}
-    set position of item "RightHere.app" of container window to {205, 190}
-    set position of item "Applications" of container window to {455, 190}
+    set background picture of theViewOptions to file ".background:dmg-background.png"
+    set position of item "RightHere.app" of container window to {170, 205}
+    set position of item "Applications" of container window to {430, 205}
 ${INSTALLER_POSITION_SCRIPT}
     close
     open
