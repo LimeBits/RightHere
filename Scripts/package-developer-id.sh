@@ -162,8 +162,13 @@ if [[ "${RIGHTHERE_INCLUDE_INSTALLER_SCRIPT:-0}" == "1" ]]; then
     PACKAGE_DMG_ARGS+=(--with-installer-script)
 fi
 
-RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-0}" \
-    "${ROOT_DIR}/Scripts/package-dmg.sh" "${PACKAGE_DMG_ARGS[@]}"
+if [[ "${#PACKAGE_DMG_ARGS[@]}" -gt 0 ]]; then
+    RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-0}" \
+        "${ROOT_DIR}/Scripts/package-dmg.sh" "${PACKAGE_DMG_ARGS[@]}"
+else
+    RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-0}" \
+        "${ROOT_DIR}/Scripts/package-dmg.sh"
+fi
 
 DMG_PATH="$(ls -t "${DIST_DIR}"/RightHere-*.dmg | head -1)"
 
