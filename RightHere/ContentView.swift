@@ -29,6 +29,8 @@ struct ContentView: View {
     @State private var isFinderMenuDisabled = false
     @State private var isOpenInTerminalEnabled = true
     @State private var areShortcutLocationsEnabled = true
+    @State private var areDevToolsEnabled = true
+    @State private var openHereAppSettings: [OpenHereAppSetting] = []
     @State private var shortcutLocations: [ShortcutLocation] = []
     @State private var now = Date()
     @State private var timer: Timer? = nil
@@ -79,6 +81,8 @@ struct ContentView: View {
             timer?.invalidate()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            // Picks up editors installed while the settings window was in the background.
+            openHereAppSettings = SharedDefaults.getLocalOpenHereAppSettings()
             refreshTemplatesFromDiskIfNeeded()
             checkFinderResponseStatus()
             refreshFinderExtensionRegistration(silently: true)
@@ -119,6 +123,7 @@ struct ContentView: View {
     private var toolsSettingsTab: some View {
         VStack(alignment: .leading, spacing: 12) {
             terminalToolCard
+            devToolsCard
             shortcutLocationsCard
 
             Spacer(minLength: 0)
@@ -126,27 +131,28 @@ struct ContentView: View {
         .padding(.top, 10)
     }
 
-    private var terminalToolCard: some View {
+    private var devToolsCard: some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(systemName: "terminal")
+            Image(systemName: "chevron.left.forwardslash.chevron.right")
                 .foregroundColor(.secondary)
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("在此处打开终端")
+                Text("开发工具")
                     .font(.system(size: 12, weight: .semibold))
-                Text("右键文件夹或文件夹空白处时，快速在该目录打开终端。")
+                Text("右键菜单中复制完整路径、文件名或 Markdown 链接；多选时每行一个结果。")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 8)
 
             Toggle("", isOn: Binding(
-                get: { isOpenInTerminalEnabled },
+                get: { areDevToolsEnabled },
                 set: { isEnabled in
-                    isOpenInTerminalEnabled = isEnabled
-                    SharedDefaults.setOpenInTerminalEnabled(isEnabled)
+                    areDevToolsEnabled = isEnabled
+                    SharedDefaults.setDevToolsEnabled(isEnabled)
                 }
             ))
             .toggleStyle(.switch)
@@ -156,6 +162,90 @@ struct ContentView: View {
         .padding(.vertical, 8)
         .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
         .cornerRadius(6)
+    }
+
+    private var terminalToolCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "terminal")
+                    .foregroundColor(.secondary)
+                    .frame(width: 18)
+                    .padding(.top, 1)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("在此处打开")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("右键文件夹或文件夹空白处时，在该目录打开终端或编辑器。只显示本机已安装的 App。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Toggle("", isOn: Binding(
+                    get: { isOpenInTerminalEnabled },
+                    set: { isEnabled in
+                        isOpenInTerminalEnabled = isEnabled
+                        SharedDefaults.setOpenInTerminalEnabled(isEnabled)
+                    }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+            }
+
+            if isOpenInTerminalEnabled {
+                Divider().opacity(0.7)
+
+                if installedOpenHereApps.isEmpty {
+                    Text("没有检测到可用的终端或编辑器。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 28)
+                } else {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(installedOpenHereApps) { setting in
+                            openHereAppRow(setting)
+                        }
+                    }
+                    .padding(.leading, 28)
+                }
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+        .cornerRadius(6)
+    }
+
+    private func openHereAppRow(_ setting: OpenHereAppSetting) -> some View {
+        HStack(spacing: 8) {
+            Toggle("", isOn: Binding(
+                get: { setting.isEnabled },
+                set: { isEnabled in
+                    setOpenHereApp(setting.app, isEnabled: isEnabled)
+                }
+            ))
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+
+            Text(setting.app.displayName)
+                .font(.system(size: 12))
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// Only apps present on this machine are worth showing a switch for.
+    private var installedOpenHereApps: [OpenHereAppSetting] {
+        openHereAppSettings.filter { $0.app.isInstalled }
+    }
+
+    private func setOpenHereApp(_ app: OpenHereApp, isEnabled: Bool) {
+        openHereAppSettings = openHereAppSettings.map { setting in
+            setting.app == app ? OpenHereAppSetting(app: app, isEnabled: isEnabled) : setting
+        }
+        SharedDefaults.setOpenHereAppSettings(openHereAppSettings)
     }
 
     private var shortcutLocationsCard: some View {
@@ -708,6 +798,8 @@ struct ContentView: View {
         self.isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
         self.isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         self.areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+        self.areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+        self.openHereAppSettings = SharedDefaults.getLocalOpenHereAppSettings()
         self.shortcutLocations = SharedDefaults.getLocalShortcutLocations()
     }
 
@@ -732,8 +824,9 @@ struct ContentView: View {
         Finder extension: \(extensionRegistrationState.title)
         Templates directory: \(SharedDefaults.templatesDirectoryURL?.path ?? "unavailable")
         Enabled templates: \(enabled.isEmpty ? "none" : enabled)
-        Open in Terminal: \(SharedDefaults.isOpenInTerminalEnabled() ? "enabled" : "disabled")
+        Open here: \(SharedDefaults.isOpenInTerminalEnabled() ? "enabled" : "disabled") (\(openHereDiagnosticsText))
         Shortcut locations: \(SharedDefaults.areShortcutLocationsEnabled() ? "enabled" : "disabled") (\(SharedDefaults.getShortcutLocations().filter(\.isEnabled).count) enabled)
+        Dev tools: \(SharedDefaults.areDevToolsEnabled() ? "enabled" : "disabled")
         Finder menu: \(SharedDefaults.isFinderMenuDisabled() ? "disabled" : "enabled")
         """
 
@@ -746,6 +839,14 @@ struct ContentView: View {
         alert.alertStyle = .informational
         alert.addButton(withTitle: "好的")
         alert.runModal()
+    }
+
+    private var openHereDiagnosticsText: String {
+        let states = SharedDefaults.getOpenHereAppSettings().map { setting -> String in
+            let installed = setting.app.isInstalled ? "installed" : "missing"
+            return "\(setting.app.rawValue):\(setting.isEnabled ? "on" : "off")/\(installed)"
+        }
+        return states.joined(separator: ", ")
     }
 
     private func refreshExistingTemplatesOnFirstOpen() {

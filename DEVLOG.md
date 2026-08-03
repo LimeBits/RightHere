@@ -369,6 +369,59 @@ killall Finder
 
 ---
 
+## 坑 21：Debug 构建的 Sparkle 公钥为空会弹「无法检查更新」
+
+**现象**：本机 `deploy.sh` 部署后重启 App，偶发弹出「无法检查更新 / 无法启动更新程序」。此时并没有改动线上 appcast 或 release。
+
+**原因**：`project.yml` 里 `SPARKLE_PUBLIC_ED_KEY: ""`，Info.plist 用 `$(SPARKLE_PUBLIC_ED_KEY)` 取值，所以 Debug 构建的 `SUPublicEDKey` 是空字符串。真实公钥只在 `Scripts/package-developer-id.sh` 正式打包时注入。同时 Info.plist 设了 `SURequireSignedFeed = true` 和 `SUVerifyUpdateBeforeExtraction = true`，公钥为空加上强制验签，Sparkle 启动更新器阶段就失败。
+
+弹窗是偶发的，因为 `SUEnableAutomaticChecks = true` 且 `SUScheduledCheckInterval = 86400`：只有距上次检查超过 24 小时时，重启 App 才会触发自动检查。
+
+**结论**：这是本机 Debug 构建的既有行为，和功能改动无关，正式 DMG 不受影响。判断方法：
+
+```bash
+/usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" /Applications/RightHere.app/Contents/Info.plist
+# Debug 构建输出空行；正式包输出 7Scn9pJ...
+```
+
+---
+
+## 坑 22：Markdown 里的 `file://` 链接在多数编辑器中点不开
+
+**现象**：「复制 Markdown 链接」产出的 `[名称](file:///Users/...)` 格式正确、渲染出蓝色链接，但点击没有反应。
+
+**原因**：不是格式问题，是编辑器出于安全考虑屏蔽本地文件协议。支持情况差异很大：Typora 可以；Obsidian 需要开启外部链接；VS Code 预览、GitHub、飞书、Notion 一律屏蔽。浏览器里的 `file://` 几乎全禁。
+
+**现状**：保留 `file://` 前缀。没有一种格式能通吃所有目标应用——绝对路径在 Obsidian/Typora 可用但在飞书同样无效，相对路径只在库内有效。如果未来要改，方向是在子菜单里同时给「Markdown 链接」和「Markdown 链接 (file://)」两项，让用户按目标应用选。
+
+---
+
+## 坑 23：检测第三方 App 用 bundle identifier，不要用路径
+
+**现象**：Cursor 这类用 Electron 打包的 App，bundle identifier 不是可猜的反域名格式。
+
+**实际值**（本机核对）：
+
+| App | bundle identifier |
+|---|---|
+| Terminal | `com.apple.Terminal` |
+| iTerm | `com.googlecode.iterm2` |
+| Warp | `dev.warp.Warp-Stable` |
+| VS Code | `com.microsoft.VSCode` |
+| Cursor | `com.todesktop.230313mzl4w4u92` |
+
+Cursor 的 id 带 ToDesktop 的构建号，靠猜是猜不出来的。核对方法：
+
+```bash
+/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' /Applications/Cursor.app/Contents/Info.plist
+```
+
+用 `NSWorkspace.shared.urlForApplication(withBundleIdentifier:)` 检测而不是硬编码 `/Applications/xxx.app`，这样用户装在其他位置也能找到。Terminal 需要额外的路径回退，因为它在 `/System/Applications/Utilities/` 且部分系统上 bundle id 查询不返回结果。
+
+App 开关状态要按 App 逐个持久化，并在读取时和 `OpenHereApp.allCases` 做一次合并：旧版本存的配置里没有新增的 App，缺失项必须回落到默认值，否则新加的 App 永远读不到状态。
+
+---
+
 ## 快速调试流程
 
 ```bash

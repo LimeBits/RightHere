@@ -10,7 +10,8 @@ class FinderSync: FIFinderSync {
         let createdAt: Date
     }
 
-    private struct PendingTerminalAction {
+    private struct PendingOpenHereAction {
+        let app: OpenHereApp
         let directory: URL
         let allowsNonFinderFrontmost: Bool
         let createdAt: Date
@@ -18,6 +19,13 @@ class FinderSync: FIFinderSync {
 
     private struct PendingShortcutAction {
         let location: ShortcutLocation
+        let createdAt: Date
+    }
+
+    private struct PendingDevToolAction {
+        let action: DevToolAction
+        let targets: [URL]
+        let allowsNonFinderFrontmost: Bool
         let createdAt: Date
     }
 
@@ -30,10 +38,13 @@ class FinderSync: FIFinderSync {
     private var isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
     private var isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
     private var areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+    private var areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+    private var openHereAppSettings = SharedDefaults.getOpenHereAppSettings()
     private var shortcutLocations = SharedDefaults.getShortcutLocations()
     private var pendingMenuActions: [Int: PendingMenuAction] = [:]
-    private var pendingTerminalActions: [Int: PendingTerminalAction] = [:]
+    private var pendingOpenHereActions: [Int: PendingOpenHereAction] = [:]
     private var pendingShortcutActions: [Int: PendingShortcutAction] = [:]
+    private var pendingDevToolActions: [Int: PendingDevToolAction] = [:]
     private var nextMenuActionTag = 1
 
     override init() {
@@ -87,11 +98,19 @@ class FinderSync: FIFinderSync {
         isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
         isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+        areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
         if let data = notification.userInfo?["shortcutLocations"] as? Data,
            let locations = try? JSONDecoder().decode([ShortcutLocation].self, from: data) {
             shortcutLocations = locations.map { $0.normalized() }.sorted()
         } else {
             shortcutLocations = SharedDefaults.getShortcutLocations()
+        }
+
+        if let data = notification.userInfo?["openHereApps"] as? Data,
+           let settings = try? JSONDecoder().decode([OpenHereAppSetting].self, from: data) {
+            openHereAppSettings = settings
+        } else {
+            openHereAppSettings = SharedDefaults.getOpenHereAppSettings()
         }
     }
 
@@ -109,6 +128,8 @@ class FinderSync: FIFinderSync {
         isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
         isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
+        areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+        openHereAppSettings = SharedDefaults.getOpenHereAppSettings()
         shortcutLocations = SharedDefaults.getShortcutLocations()
     }
 
@@ -180,8 +201,9 @@ class FinderSync: FIFinderSync {
     private func removeExpiredMenuActions() {
         let expirationDate = Date().addingTimeInterval(-300)
         pendingMenuActions = pendingMenuActions.filter { $0.value.createdAt >= expirationDate }
-        pendingTerminalActions = pendingTerminalActions.filter { $0.value.createdAt >= expirationDate }
+        pendingOpenHereActions = pendingOpenHereActions.filter { $0.value.createdAt >= expirationDate }
         pendingShortcutActions = pendingShortcutActions.filter { $0.value.createdAt >= expirationDate }
+        pendingDevToolActions = pendingDevToolActions.filter { $0.value.createdAt >= expirationDate }
     }
 
     // MARK: - Finder Sync Menu
@@ -241,7 +263,7 @@ class FinderSync: FIFinderSync {
         }
 
         let activeTemplates = enabledTemplates
-        let terminalDirectory = openInTerminalDirectory(
+        let openHereDirectory = openHereTargetDirectory(
             for: menuKind,
             targetedURL: targetedURL,
             selectedURLs: selectedURLs
@@ -249,12 +271,24 @@ class FinderSync: FIFinderSync {
         let activeShortcutLocations = areShortcutLocationsEnabled
             ? shortcutLocations.filter { $0.isEnabled && !$0.expandedPath.isEmpty }
             : []
+        let activeOpenHereApps = isOpenInTerminalEnabled
+            ? openHereAppSettings.filter { $0.isEnabled && $0.app.isInstalled }.map { $0.app }
+            : []
+        let devToolTargets = areDevToolsEnabled
+            ? devToolTargets(
+                for: menuKind,
+                targetedURL: targetedURL,
+                selectedURLs: selectedURLs
+            )
+            : []
+        let activeDevToolActions = DevToolAction.allCases.filter { $0.isApplicable(to: devToolTargets) }
 
         let mode = isDesktopException ? "desktop-exception" : "finder-frontmost"
         recordDiagnostic(
             "menu accepted kind=\(kindDescription) mode=\(mode) "
                 + "target=\(diagnosticPath(targetDir)) templates=\(activeTemplates.count) "
-                + "terminal=\(terminalDirectory == nil ? "no" : "yes") shortcuts=\(activeShortcutLocations.count)"
+                + "openHere=\(openHereDirectory == nil ? "no-dir" : "\(activeOpenHereApps.count) apps") "
+                + "shortcuts=\(activeShortcutLocations.count) devTools=\(activeDevToolActions.count)"
         )
         removeExpiredMenuActions()
 
@@ -286,23 +320,26 @@ class FinderSync: FIFinderSync {
             mainMenu.addItem(newFileItem)
         }
 
-        if isOpenInTerminalEnabled, let terminalDirectory {
+        if let openHereDirectory, !activeOpenHereApps.isEmpty {
             let openHereItem = NSMenuItem(title: "在此处打开", action: nil, keyEquivalent: "")
             openHereItem.isEnabled = true
 
             let submenu = NSMenu(title: "在此处打开")
             submenu.autoenablesItems = false
 
-            let terminalItem = NSMenuItem(title: "终端", action: #selector(openTerminalHere(_:)), keyEquivalent: "")
-            terminalItem.target = self
-            terminalItem.isEnabled = true
-            terminalItem.tag = nextActionTag()
-            pendingTerminalActions[terminalItem.tag] = PendingTerminalAction(
-                directory: terminalDirectory,
-                allowsNonFinderFrontmost: isDesktopException,
-                createdAt: Date()
-            )
-            submenu.addItem(terminalItem)
+            for app in activeOpenHereApps {
+                let item = NSMenuItem(title: app.displayName, action: #selector(openHere(_:)), keyEquivalent: "")
+                item.target = self
+                item.isEnabled = true
+                item.tag = nextActionTag()
+                pendingOpenHereActions[item.tag] = PendingOpenHereAction(
+                    app: app,
+                    directory: openHereDirectory,
+                    allowsNonFinderFrontmost: isDesktopException,
+                    createdAt: Date()
+                )
+                submenu.addItem(item)
+            }
 
             openHereItem.submenu = submenu
             mainMenu.addItem(openHereItem)
@@ -331,6 +368,31 @@ class FinderSync: FIFinderSync {
             mainMenu.addItem(shortcutItem)
         }
 
+        if !activeDevToolActions.isEmpty {
+            let devToolsItem = NSMenuItem(title: "开发工具", action: nil, keyEquivalent: "")
+            devToolsItem.isEnabled = true
+
+            let submenu = NSMenu(title: "开发工具")
+            submenu.autoenablesItems = false
+
+            for action in activeDevToolActions {
+                let item = NSMenuItem(title: action.menuTitle, action: #selector(copyDevToolValue(_:)), keyEquivalent: "")
+                item.target = self
+                item.isEnabled = true
+                item.tag = nextActionTag()
+                pendingDevToolActions[item.tag] = PendingDevToolAction(
+                    action: action,
+                    targets: devToolTargets,
+                    allowsNonFinderFrontmost: isDesktopException,
+                    createdAt: Date()
+                )
+                submenu.addItem(item)
+            }
+
+            devToolsItem.submenu = submenu
+            mainMenu.addItem(devToolsItem)
+        }
+
         guard mainMenu.items.isEmpty == false else {
             recordDiagnostic("menu rejected kind=\(kindDescription) reason=no-enabled-actions")
             return nil
@@ -339,29 +401,34 @@ class FinderSync: FIFinderSync {
         return mainMenu
     }
 
-    @objc func openTerminalHere(_ sender: NSMenuItem) {
+    @objc func openHere(_ sender: NSMenuItem) {
         let frontmostIdentifier = frontmostApplicationIdentifier
         let finderFrontmost = frontmostIdentifier == "com.apple.finder"
 
-        guard let action = pendingTerminalActions.removeValue(forKey: sender.tag) else {
-            recordDiagnostic("open-terminal rejected reason=missing-menu-context tag=\(sender.tag)")
+        guard let action = pendingOpenHereActions.removeValue(forKey: sender.tag) else {
+            recordDiagnostic("open-here rejected reason=missing-menu-context tag=\(sender.tag)")
             return
         }
 
         guard finderFrontmost || action.allowsNonFinderFrontmost else {
-            recordDiagnostic("open-terminal rejected reason=finder-not-frontmost")
+            recordDiagnostic("open-here rejected reason=finder-not-frontmost app=\(action.app.rawValue)")
             return
         }
 
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: action.directory.path, isDirectory: &isDirectory),
               isDirectory.boolValue else {
-            recordDiagnostic("open-terminal rejected reason=directory-unavailable target=\(diagnosticPath(action.directory))")
+            recordDiagnostic(
+                "open-here rejected reason=directory-unavailable app=\(action.app.rawValue) "
+                    + "target=\(diagnosticPath(action.directory))"
+            )
             return
         }
 
-        recordDiagnostic("open-terminal accepted target=\(diagnosticPath(action.directory))")
-        openTerminal(at: action.directory)
+        recordDiagnostic(
+            "open-here accepted app=\(action.app.rawValue) target=\(diagnosticPath(action.directory))"
+        )
+        openApp(action.app, at: action.directory)
     }
 
     @objc func openShortcutLocation(_ sender: NSMenuItem) {
@@ -376,6 +443,36 @@ class FinderSync: FIFinderSync {
         recordDiagnostic(
             "shortcut requested app-open name=\(location.displayName) "
                 + "path=\(location.expandedPath)"
+        )
+    }
+
+    @objc func copyDevToolValue(_ sender: NSMenuItem) {
+        let frontmostIdentifier = frontmostApplicationIdentifier
+        let finderFrontmost = frontmostIdentifier == "com.apple.finder"
+
+        guard let pending = pendingDevToolActions.removeValue(forKey: sender.tag) else {
+            recordDiagnostic("dev-tool rejected reason=missing-menu-context tag=\(sender.tag)")
+            return
+        }
+
+        guard finderFrontmost || pending.allowsNonFinderFrontmost else {
+            recordDiagnostic("dev-tool rejected reason=finder-not-frontmost action=\(pending.action.rawValue)")
+            return
+        }
+
+        guard let text = DevToolAction.clipboardText(for: pending.action, targets: pending.targets) else {
+            recordDiagnostic(
+                "dev-tool rejected reason=empty-result action=\(pending.action.rawValue) "
+                    + "targets=\(pending.targets.count)"
+            )
+            return
+        }
+
+        NSPasteboard.general.clearContents()
+        let didCopy = NSPasteboard.general.setString(text, forType: .string)
+        recordDiagnostic(
+            "dev-tool \(didCopy ? "succeeded" : "failed") action=\(pending.action.rawValue) "
+                + "targets=\(pending.targets.count) lines=\(text.split(whereSeparator: \.isNewline).count)"
         )
     }
 
@@ -486,7 +583,7 @@ class FinderSync: FIFinderSync {
         return url.deletingLastPathComponent()
     }
 
-    private func openInTerminalDirectory(
+    private func openHereTargetDirectory(
         for menuKind: FIMenuKind,
         targetedURL: URL?,
         selectedURLs: [URL]?
@@ -507,6 +604,27 @@ class FinderSync: FIFinderSync {
         return selectedURL
     }
 
+    private func devToolTargets(
+        for menuKind: FIMenuKind,
+        targetedURL: URL?,
+        selectedURLs: [URL]?
+    ) -> [URL] {
+        // Right-clicking blank space describes the folder currently shown in Finder;
+        // right-clicking items describes the selection itself, not its enclosing folder.
+        if menuKind == .contextualMenuForContainer {
+            guard let targetedURL else { return [] }
+            return [targetedURL]
+        }
+
+        guard menuKind == .contextualMenuForItems,
+              let selectedURLs,
+              !selectedURLs.isEmpty else {
+            return []
+        }
+
+        return selectedURLs
+    }
+
     private func isDirectoryURL(_ url: URL) -> Bool {
         if url.hasDirectoryPath {
             return true
@@ -519,25 +637,27 @@ class FinderSync: FIFinderSync {
         }
     }
 
-    private func openTerminal(at directory: URL) {
-        let terminalURL = URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app")
-        guard FileManager.default.fileExists(atPath: terminalURL.path) else {
-            recordDiagnostic("open-terminal failed reason=terminal-app-missing")
+    private func openApp(_ app: OpenHereApp, at directory: URL) {
+        guard let applicationURL = app.installedApplicationURL() else {
+            recordDiagnostic("open-here failed reason=app-missing app=\(app.rawValue)")
             return
         }
 
         let configuration = NSWorkspace.OpenConfiguration()
         NSWorkspace.shared.open(
             [directory],
-            withApplicationAt: terminalURL,
+            withApplicationAt: applicationURL,
             configuration: configuration
         ) { _, error in
             if let error {
                 self.recordDiagnostic(
-                    "open-terminal failed target=\(self.diagnosticPath(directory)) error=\(error.localizedDescription)"
+                    "open-here failed app=\(app.rawValue) target=\(self.diagnosticPath(directory)) "
+                        + "error=\(error.localizedDescription)"
                 )
             } else {
-                self.recordDiagnostic("open-terminal succeeded target=\(self.diagnosticPath(directory))")
+                self.recordDiagnostic(
+                    "open-here succeeded app=\(app.rawValue) target=\(self.diagnosticPath(directory))"
+                )
             }
         }
     }

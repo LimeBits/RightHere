@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 public struct SharedDefaults {
@@ -24,8 +25,14 @@ public struct SharedDefaults {
     public static let localShortcutLocationsKey = "localShortcutLocations"
     public static let shortcutLocationsInitializedKey = "shortcutLocationsInitialized"
     public static let localShortcutLocationsInitializedKey = "localShortcutLocationsInitialized"
+    // Legacy key name; now gates the whole "在此处打开" submenu, not just Terminal.
     public static let openInTerminalEnabledKey = "openInTerminalEnabled"
     public static let shortcutLocationsEnabledKey = "shortcutLocationsEnabled"
+    public static let devToolsEnabledKey = "devToolsEnabled"
+    public static let openHereAppsKey = "openHereApps"
+    public static let localOpenHereAppsKey = "localOpenHereApps"
+    public static let openHereAppsInitializedKey = "openHereAppsInitialized"
+    public static let localOpenHereAppsInitializedKey = "localOpenHereAppsInitialized"
     private static let extensionDiagnosticBufferKey = "extensionDiagnosticBuffer"
     private static let extensionDiagnosticRecordUserInfoKey = "record"
     private static let extensionDiagnosticRecordsUserInfoKey = "records"
@@ -199,6 +206,98 @@ public struct SharedDefaults {
         UserDefaults.standard.set(isEnabled, forKey: shortcutLocationsEnabledKey)
         notifySettingsChanged()
         notifyLocalSettingsChanged()
+    }
+
+    public static func areDevToolsEnabled() -> Bool {
+        if let sharedSuite, sharedSuite.object(forKey: devToolsEnabledKey) != nil {
+            return sharedSuite.bool(forKey: devToolsEnabledKey)
+        }
+
+        if UserDefaults.standard.object(forKey: devToolsEnabledKey) != nil {
+            return UserDefaults.standard.bool(forKey: devToolsEnabledKey)
+        }
+
+        return true
+    }
+
+    public static func setDevToolsEnabled(_ isEnabled: Bool) {
+        sharedSuite?.set(isEnabled, forKey: devToolsEnabledKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(isEnabled, forKey: devToolsEnabledKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
+    /// Stored on/off state for every known app, whether installed or not, so a
+    /// user's choice survives uninstalling and reinstalling an editor.
+    public static func getOpenHereAppSettings() -> [OpenHereAppSetting] {
+        if sharedSuite?.bool(forKey: openHereAppsInitializedKey) == true {
+            return mergeWithKnownApps(loadOpenHereAppSettings(from: sharedSuite, key: openHereAppsKey))
+        }
+
+        return defaultOpenHereAppSettings
+    }
+
+    public static func getLocalOpenHereAppSettings() -> [OpenHereAppSetting] {
+        if UserDefaults.standard.bool(forKey: localOpenHereAppsInitializedKey) {
+            return mergeWithKnownApps(
+                loadOpenHereAppSettings(from: UserDefaults.standard, key: localOpenHereAppsKey)
+            )
+        }
+
+        return getOpenHereAppSettings()
+    }
+
+    public static func setOpenHereAppSettings(_ settings: [OpenHereAppSetting]) {
+        let merged = mergeWithKnownApps(settings)
+        saveOpenHereAppSettings(merged, defaults: sharedSuite, key: openHereAppsKey)
+        saveOpenHereAppSettings(merged, defaults: UserDefaults.standard, key: localOpenHereAppsKey)
+        sharedSuite?.set(true, forKey: openHereAppsInitializedKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(true, forKey: localOpenHereAppsInitializedKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
+    /// Apps that should appear in the Finder submenu: enabled by the user and
+    /// currently installed on this machine.
+    public static func getActiveOpenHereApps() -> [OpenHereApp] {
+        getOpenHereAppSettings()
+            .filter { $0.isEnabled && $0.app.isInstalled }
+            .map { $0.app }
+    }
+
+    private static func mergeWithKnownApps(_ settings: [OpenHereAppSetting]) -> [OpenHereAppSetting] {
+        let storedByApp = Dictionary(settings.map { ($0.app, $0.isEnabled) }, uniquingKeysWith: { _, last in last })
+        return OpenHereApp.allCases.map { app in
+            OpenHereAppSetting(app: app, isEnabled: storedByApp[app] ?? app.isEnabledByDefault)
+        }
+    }
+
+    private static var defaultOpenHereAppSettings: [OpenHereAppSetting] {
+        OpenHereApp.allCases.map { OpenHereAppSetting(app: $0, isEnabled: $0.isEnabledByDefault) }
+    }
+
+    private static func loadOpenHereAppSettings(
+        from defaults: UserDefaults?,
+        key: String
+    ) -> [OpenHereAppSetting] {
+        guard let data = defaults?.data(forKey: key),
+              let settings = try? JSONDecoder().decode([OpenHereAppSetting].self, from: data) else {
+            return []
+        }
+
+        return settings
+    }
+
+    private static func saveOpenHereAppSettings(
+        _ settings: [OpenHereAppSetting],
+        defaults: UserDefaults?,
+        key: String
+    ) {
+        guard let data = try? JSONEncoder().encode(settings) else { return }
+        defaults?.set(data, forKey: key)
+        defaults?.synchronize()
     }
 
     public static func getShortcutLocations() -> [ShortcutLocation] {
@@ -438,6 +537,10 @@ public struct SharedDefaults {
             userInfo["shortcutLocations"] = data
         }
 
+        if let data = sharedSuite?.data(forKey: openHereAppsKey) {
+            userInfo["openHereApps"] = data
+        }
+
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil,
@@ -456,6 +559,10 @@ public struct SharedDefaults {
 
         if let data = UserDefaults.standard.data(forKey: localShortcutLocationsKey) {
             userInfo["shortcutLocations"] = data
+        }
+
+        if let data = UserDefaults.standard.data(forKey: localOpenHereAppsKey) {
+            userInfo["openHereApps"] = data
         }
 
         DistributedNotificationCenter.default().postNotificationName(
@@ -669,6 +776,190 @@ public struct ShortcutLocation: Codable, Hashable, Identifiable, Comparable {
         }
 
         return lhs.displayName.localizedStandardCompare(rhs.displayName) == .orderedAscending
+    }
+}
+
+/// An app that can be launched with a directory as its working directory.
+public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
+    case terminal
+    case iTerm
+    case warp
+    case vscode
+    case cursor
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .terminal: return "终端"
+        case .iTerm: return "iTerm"
+        case .warp: return "Warp"
+        case .vscode: return "VS Code"
+        case .cursor: return "Cursor"
+        }
+    }
+
+    public var bundleIdentifier: String {
+        switch self {
+        case .terminal: return "com.apple.Terminal"
+        case .iTerm: return "com.googlecode.iterm2"
+        case .warp: return "dev.warp.Warp-Stable"
+        case .vscode: return "com.microsoft.VSCode"
+        case .cursor: return "com.todesktop.230313mzl4w4u92"
+        }
+    }
+
+    /// Terminal.app always ships with macOS, so it needs no install check and is
+    /// the one entry enabled by default.
+    public var isBuiltIn: Bool {
+        self == .terminal
+    }
+
+    public var isEnabledByDefault: Bool {
+        isBuiltIn
+    }
+
+    public var sortOrder: Int {
+        OpenHereApp.allCases.firstIndex(of: self) ?? 0
+    }
+
+    /// Resolves the installed app bundle, or nil when the app is not present.
+    public func installedApplicationURL() -> URL? {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) {
+            return url
+        }
+
+        // Terminal lives outside /Applications and older systems may not answer
+        // the bundle-identifier lookup for it.
+        if self == .terminal {
+            let fallback = URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app")
+            if FileManager.default.fileExists(atPath: fallback.path) {
+                return fallback
+            }
+        }
+
+        return nil
+    }
+
+    public var isInstalled: Bool {
+        installedApplicationURL() != nil
+    }
+}
+
+/// Per-app on/off state for the "在此处打开" submenu.
+public struct OpenHereAppSetting: Codable, Hashable, Identifiable {
+    public let app: OpenHereApp
+    public var isEnabled: Bool
+
+    public var id: String { app.rawValue }
+
+    public init(app: OpenHereApp, isEnabled: Bool) {
+        self.app = app
+        self.isEnabled = isEnabled
+    }
+}
+
+public enum DevToolAction: String, CaseIterable, Identifiable, Codable {
+    case fullPath
+    case fileName
+    case fileNameWithoutExtension
+    case containingDirectoryPath
+    case markdownLink
+
+    public var id: String { rawValue }
+
+    public var menuTitle: String {
+        switch self {
+        case .fullPath: return "复制完整路径"
+        case .fileName: return "复制文件名"
+        case .fileNameWithoutExtension: return "复制不带扩展名文件名"
+        case .containingDirectoryPath: return "复制所在文件夹路径"
+        case .markdownLink: return "复制 Markdown 链接"
+        }
+    }
+
+    /// Builds the clipboard string for the given targets, one result per line.
+    /// Returns nil when no target produces a usable value.
+    public static func clipboardText(for action: DevToolAction, targets: [URL]) -> String? {
+        var lines: [String] = []
+        var seenLines = Set<String>()
+
+        for url in targets {
+            guard let line = action.line(for: url), !line.isEmpty else { continue }
+            // Only the containing-directory action can legitimately repeat itself
+            // across a multi-selection inside the same folder.
+            if action == .containingDirectoryPath {
+                guard seenLines.insert(line).inserted else { continue }
+            }
+            lines.append(line)
+        }
+
+        return lines.isEmpty ? nil : lines.joined(separator: "\n")
+    }
+
+    private func line(for url: URL) -> String? {
+        let standardized = url.standardizedFileURL
+
+        switch self {
+        case .fullPath:
+            return standardized.path
+        case .fileName:
+            return standardized.lastPathComponent
+        case .fileNameWithoutExtension:
+            return standardized.deletingPathExtension().lastPathComponent
+        case .containingDirectoryPath:
+            // A folder is its own "location"; only files resolve to their parent.
+            if DevToolAction.isDirectory(standardized) {
+                return standardized.path
+            }
+            return standardized.deletingLastPathComponent().path
+        case .markdownLink:
+            let name = DevToolAction.escapeMarkdownText(standardized.lastPathComponent)
+            guard let encoded = DevToolAction.fileURLString(for: standardized) else { return nil }
+            return "[\(name)](\(encoded))"
+        }
+    }
+
+    /// Whether this action makes sense for the given selection. Keeps the submenu
+    /// free of entries that would duplicate another line for the same target.
+    public func isApplicable(to targets: [URL]) -> Bool {
+        guard !targets.isEmpty else { return false }
+
+        switch self {
+        case .containingDirectoryPath:
+            // Every target being a folder would just repeat 复制完整路径.
+            return targets.contains { !DevToolAction.isDirectory($0) }
+        case .fileNameWithoutExtension:
+            return targets.contains { !$0.standardizedFileURL.pathExtension.isEmpty }
+        case .fullPath, .fileName, .markdownLink:
+            return true
+        }
+    }
+
+    private static func isDirectory(_ url: URL) -> Bool {
+        if url.hasDirectoryPath {
+            return true
+        }
+
+        return (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+    }
+
+    private static func fileURLString(for url: URL) -> String? {
+        var allowed = CharacterSet.urlPathAllowed
+        // Percent-encode characters that terminate or nest a Markdown link target.
+        allowed.remove(charactersIn: "()#?")
+        guard let encodedPath = url.path.addingPercentEncoding(withAllowedCharacters: allowed) else {
+            return nil
+        }
+
+        return "file://\(encodedPath)"
+    }
+
+    private static func escapeMarkdownText(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "[", with: "\\[")
+            .replacingOccurrences(of: "]", with: "\\]")
     }
 }
 
