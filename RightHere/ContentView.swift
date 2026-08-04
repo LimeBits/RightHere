@@ -5,8 +5,8 @@ struct ContentView: View {
     private enum SettingsTab: String, CaseIterable, Identifiable {
         case templates
         case tools
-        case updates
         case advanced
+        case updates
 
         var id: String { rawValue }
 
@@ -14,8 +14,8 @@ struct ContentView: View {
             switch self {
             case .templates: return "模板"
             case .tools: return "工具"
-            case .updates: return "更新"
             case .advanced: return "高级"
+            case .updates: return "更新"
             }
         }
     }
