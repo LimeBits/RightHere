@@ -346,10 +346,10 @@ class FinderSync: FIFinderSync {
         }
 
         if !activeShortcutLocations.isEmpty {
-            let shortcutItem = NSMenuItem(title: "快捷打开", action: nil, keyEquivalent: "")
+            let shortcutItem = NSMenuItem(title: "快捷前往", action: nil, keyEquivalent: "")
             shortcutItem.isEnabled = true
 
-            let submenu = NSMenu(title: "快捷打开")
+            let submenu = NSMenu(title: "快捷前往")
             submenu.autoenablesItems = false
 
             for location in activeShortcutLocations {

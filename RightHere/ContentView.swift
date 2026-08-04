@@ -257,7 +257,7 @@ struct ContentView: View {
                     .padding(.top, 1)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("快捷打开")
+                    Text("快捷前往")
                         .font(.system(size: 12, weight: .semibold))
                     Text("添加常用文件、文件夹或隐藏路径，之后可从 Finder 右键菜单快速打开。")
                         .font(.system(size: 11))
@@ -614,10 +614,10 @@ struct ContentView: View {
                 .font(.system(size: 24))
                 .foregroundColor(.secondary)
 
-            Text("还没有快捷打开项")
+            Text("还没有快捷前往项")
                 .font(.system(size: 13, weight: .semibold))
 
-            Text("添加文件、文件夹或手动输入隐藏路径，之后可从 Finder 右键菜单快速打开。")
+            Text("添加文件、文件夹或手动输入隐藏路径，之后可从 Finder 右键菜单快速前往。")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -687,6 +687,22 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    private var isAutomaticUpdateToggleLocked: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+
+    private var automaticUpdateDescription: String {
+        #if DEBUG
+        return "Debug 构建没有 Sparkle 公钥，自动检查已停用，避免误报更新失败。仍可手动检查。"
+        #else
+        return "自动检查新版本。仍可从菜单栏手动检查更新。"
+        #endif
+    }
+
     private var updateSettingsView: some View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "arrow.triangle.2.circlepath")
@@ -696,9 +712,10 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("版本更新")
                     .font(.system(size: 12, weight: .semibold))
-                Text("自动检查新版本。仍可从菜单栏手动检查更新。")
+                Text(automaticUpdateDescription)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 8)
@@ -706,12 +723,14 @@ struct ContentView: View {
             Toggle("", isOn: Binding(
                 get: { automaticallyChecksForUpdates },
                 set: { isEnabled in
-                    automaticallyChecksForUpdates = isEnabled
                     RightHereUpdater.shared.automaticallyChecksForUpdates = isEnabled
+                    // Debug builds refuse the change, so mirror the real state back.
+                    automaticallyChecksForUpdates = RightHereUpdater.shared.automaticallyChecksForUpdates
                 }
             ))
             .toggleStyle(.switch)
             .labelsHidden()
+            .disabled(isAutomaticUpdateToggleLocked)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -910,7 +929,7 @@ struct ContentView: View {
 
     private func addShortcutPathManually() {
         promptForText(
-            title: "输入快捷打开路径",
+            title: "输入快捷前往路径",
             message: "支持隐藏路径和 ~，例如 ~/.zshrc、/etc/hosts、~/.codex。",
             placeholder: "~/.zshrc"
         ) { path in
@@ -920,7 +939,7 @@ struct ContentView: View {
 
     private func renameShortcutLocation(_ location: ShortcutLocation) {
         promptForText(
-            title: "重命名快捷打开项",
+            title: "重命名快捷前往项",
             message: location.path,
             placeholder: location.displayName,
             initialValue: location.displayName

@@ -530,6 +530,13 @@ final class RightHereUpdater {
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
+
+        #if DEBUG
+        // Debug builds get an empty SUPublicEDKey (the real key is injected only by
+        // Scripts/package-developer-id.sh), and SURequireSignedFeed is on, so any
+        // scheduled check fails with "无法启动更新程序". Manual checks still run.
+        controller.updater.automaticallyChecksForUpdates = false
+        #endif
     }
 
     var automaticallyChecksForUpdates: Bool {
@@ -537,7 +544,12 @@ final class RightHereUpdater {
             controller.updater.automaticallyChecksForUpdates
         }
         set {
+            #if DEBUG
+            // Keep scheduled checks off in Debug even if the settings toggle is flipped.
+            _ = newValue
+            #else
             controller.updater.automaticallyChecksForUpdates = newValue
+            #endif
         }
     }
 }

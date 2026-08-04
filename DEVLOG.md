@@ -377,12 +377,14 @@ killall Finder
 
 弹窗是偶发的，因为 `SUEnableAutomaticChecks = true` 且 `SUScheduledCheckInterval = 86400`：只有距上次检查超过 24 小时时，重启 App 才会触发自动检查。
 
-**结论**：这是本机 Debug 构建的既有行为，和功能改动无关，正式 DMG 不受影响。判断方法：
+判断方法：
 
 ```bash
 /usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" /Applications/RightHere.app/Contents/Info.plist
 # Debug 构建输出空行；正式包输出 7Scn9pJ...
 ```
+
+**解法**（0.3.1）：在 `RightHereUpdater` 里用 `#if DEBUG` 关掉自动检查。getter/setter 都要处理——只在 init 里关掉不够，设置页的开关会再把它打开。设置页对应把开关置灰并说明原因，避免 UI 状态和实际行为不一致。手动检查保留，正式构建行为不变。
 
 ---
 
