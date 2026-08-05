@@ -121,14 +121,19 @@ struct ContentView: View {
     }
 
     private var toolsSettingsTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            terminalToolCard
-            devToolsCard
-            shortcutLocationsCard
-
-            Spacer(minLength: 0)
+        // The three cards together are taller than the window, so this tab
+        // scrolls as a whole. The Go To list deliberately has no scroller of its
+        // own: a scroller inside a scroller forced this tab to absorb the full
+        // list height, which pushed the tab picker off-screen.
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 12) {
+                terminalToolCard
+                devToolsCard
+                shortcutLocationsCard
+            }
+            .padding(.top, 10)
+            .padding(.bottom, 4)
         }
-        .padding(.top, 10)
     }
 
     private var devToolsCard: some View {
@@ -281,18 +286,18 @@ struct ContentView: View {
 
             if shortcutLocations.isEmpty {
                 emptyShortcutLocationsView
-                    .frame(maxWidth: .infinity, minHeight: 160)
+                    .frame(height: 140)
+                    .frame(maxWidth: .infinity)
             } else {
-                TemplateListScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(shortcutLocations) { location in
-                            shortcutLocationRow(location)
-                        }
+                // No inner scroll view: the whole tab scrolls instead. Nesting a
+                // scroller here forced the outer layout to reserve a fixed slab of
+                // height, which is what pushed the tab picker off-screen.
+                VStack(spacing: 0) {
+                    ForEach(shortcutLocations) { location in
+                        shortcutLocationRow(location)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.trailing, 28)
                 }
-                .frame(maxWidth: .infinity, minHeight: 176)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Divider().opacity(0.7)
@@ -316,56 +321,59 @@ struct ContentView: View {
     }
 
     private var templateSettingsTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(L("Custom Templates"))
-                        .font(.system(size: 14, weight: .semibold))
-                    Text(L("Select the templates to show in the Finder context menu. Add templates using names like template.rtf."))
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Button(action: openTemplatesDirectory) {
-                    Label(L("Open Templates Folder"), systemImage: "folder")
-                }
-                .font(.system(size: 12))
-
-                Button(action: refreshTemplates) {
-                    Label(L("Refresh"), systemImage: "arrow.clockwise")
-                }
-                .font(.system(size: 12))
-            }
-
-            Divider()
-
-            if availableTemplates.isEmpty {
-                emptyTemplatesView
-                    .frame(maxWidth: .infinity, minHeight: 220)
-            } else {
-                VStack(spacing: 10) {
-                    if enabledTemplates.isEmpty {
-                        disabledTemplatesWarning
+        // Scrolls as a whole, like the tools tab: a long template list would
+        // otherwise grow this tab past the window and squeeze the tab picker out.
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(L("Custom Templates"))
+                            .font(.system(size: 14, weight: .semibold))
+                        Text(L("Select the templates to show in the Finder context menu. Add templates using names like template.rtf."))
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    TemplateListScrollView {
+                    Spacer()
+
+                    Button(action: openTemplatesDirectory) {
+                        Label(L("Open Templates Folder"), systemImage: "folder")
+                    }
+                    .font(.system(size: 12))
+
+                    Button(action: refreshTemplates) {
+                        Label(L("Refresh"), systemImage: "arrow.clockwise")
+                    }
+                    .font(.system(size: 12))
+                }
+
+                Divider()
+
+                if availableTemplates.isEmpty {
+                    emptyTemplatesView
+                        .frame(height: 200)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    VStack(spacing: 10) {
+                        if enabledTemplates.isEmpty {
+                            disabledTemplatesWarning
+                        }
+
+                        // No inner scroll view: the whole tab scrolls instead, so this
+                        // list just grows with its content.
                         VStack(spacing: 0) {
                             ForEach(availableTemplates) { template in
                                 templateRow(template)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.trailing, 28)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 220)
                 }
             }
-
-            Spacer(minLength: 0)
+            .padding(.top, 10)
+            .padding(.bottom, 4)
         }
-        .padding(.top, 10)
     }
 
     private var updateSettingsTab: some View {
@@ -1076,147 +1084,6 @@ struct ContentView: View {
         }
 
         return "RightHere \(version)"
-    }
-}
-
-private struct TemplateListScrollView<Content: View>: NSViewRepresentable {
-    @ViewBuilder var content: Content
-
-    func makeNSView(context: Context) -> NSScrollView {
-        TemplateListScrollContainer(rootView: content)
-    }
-
-    func updateNSView(_ container: NSScrollView, context: Context) {
-        guard let container = container as? TemplateListScrollContainer<Content> else { return }
-        container.update(rootView: content)
-    }
-}
-
-private final class TemplateListScrollContainer<Content: View>: NSScrollView {
-    private let thumbView = NSView()
-    private var hostingView: NSHostingView<Content>
-    private var trackingArea: NSTrackingArea?
-    private var isHovering = false
-
-    init(rootView: Content) {
-        self.hostingView = NSHostingView(rootView: rootView)
-        super.init(frame: .zero)
-
-        drawsBackground = false
-        hasVerticalScroller = false
-        hasHorizontalScroller = false
-        autohidesScrollers = true
-        borderType = .noBorder
-
-        contentView.postsBoundsChangedNotifications = true
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(scrollPositionChanged),
-            name: NSView.boundsDidChangeNotification,
-            object: contentView
-        )
-
-        hostingView.translatesAutoresizingMaskIntoConstraints = false
-        documentView = hostingView
-
-        NSLayoutConstraint.activate([
-            hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            hostingView.widthAnchor.constraint(equalTo: contentView.widthAnchor)
-        ])
-
-        thumbView.wantsLayer = true
-        thumbView.layer?.backgroundColor = NSColor.tertiaryLabelColor.withAlphaComponent(0.32).cgColor
-        thumbView.layer?.cornerRadius = 2.5
-        thumbView.alphaValue = 0
-        addSubview(thumbView)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    func update(rootView: Content) {
-        hostingView.rootView = rootView
-        needsLayout = true
-        updateThumb()
-    }
-
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-
-        if let trackingArea {
-            removeTrackingArea(trackingArea)
-        }
-
-        let area = NSTrackingArea(
-            rect: bounds,
-            options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
-            owner: self,
-            userInfo: nil
-        )
-        addTrackingArea(area)
-        trackingArea = area
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        isHovering = true
-        updateThumb()
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        isHovering = false
-        updateThumb()
-    }
-
-    override func layout() {
-        super.layout()
-        updateThumb()
-    }
-
-    @objc private func scrollPositionChanged() {
-        updateThumb()
-    }
-
-    private func updateThumb() {
-        guard let documentView else {
-            thumbView.alphaValue = 0
-            return
-        }
-
-        let visibleHeight = contentView.bounds.height
-        let documentHeight = documentView.bounds.height
-        guard documentHeight > visibleHeight + 1 else {
-            thumbView.alphaValue = 0
-            return
-        }
-
-        let trackInset: CGFloat = 6
-        let thumbWidth: CGFloat = 5
-        let trackHeight = max(0, bounds.height - trackInset * 2)
-        let thumbHeight = max(28, trackHeight * visibleHeight / documentHeight)
-        let maxOffset = max(1, documentHeight - visibleHeight)
-        let visibleY = contentView.documentVisibleRect.origin.y
-        let progress = min(max(visibleY / maxOffset, 0), 1)
-        let travel = max(0, trackHeight - thumbHeight)
-        let thumbY = trackInset + travel * progress
-
-        thumbView.frame = CGRect(
-            x: bounds.width - thumbWidth - 4,
-            y: thumbY,
-            width: thumbWidth,
-            height: thumbHeight
-        )
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.12
-            thumbView.animator().alphaValue = isHovering ? 1 : 0
-        }
     }
 }
 
