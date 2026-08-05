@@ -1,8 +1,19 @@
+<div align="center">
+
 # RightHere
+
+**Finder 右键菜单增强工具，让 Finder 做更多事**
+
+[![下载](https://img.shields.io/github/v/release/LimeBits/RightHere?label=%E4%B8%8B%E8%BD%BD&color=blue)](https://github.com/LimeBits/RightHere/releases/latest)
+[![macOS](https://img.shields.io/badge/macOS-12.0%2B-black)](https://github.com/LimeBits/RightHere/releases/latest)
+[![架构](https://img.shields.io/badge/%E6%9E%B6%E6%9E%84-Intel%20%7C%20Apple%20Silicon-lightgrey)](https://github.com/LimeBits/RightHere/releases/latest)
+[![许可](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF-MIT-green)](LICENSE)
 
 [English](README.md) | 简体中文
 
-RightHere 是一个 macOS Finder 右键增强工具。它让四件事变快：新建文件、在当前目录打开终端或编辑器、快速前往常用或隐藏路径、复制路径供别处使用。
+</div>
+
+RightHere 让 Finder 里的四件事变快：新建文件、在当前目录打开终端或编辑器、快速前往常用或隐藏路径、复制路径供别处使用。
 
 适合经常在 Finder、终端和配置文件之间来回切换的人。
 

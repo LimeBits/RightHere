@@ -1,8 +1,19 @@
+<div align="center">
+
 # RightHere
+
+**Do more from the Finder right-click menu**
+
+[![Download](https://img.shields.io/github/v/release/LimeBits/RightHere?label=download&color=blue)](https://github.com/LimeBits/RightHere/releases/latest)
+[![macOS](https://img.shields.io/badge/macOS-12.0%2B-black)](https://github.com/LimeBits/RightHere/releases/latest)
+[![Universal](https://img.shields.io/badge/arch-Intel%20%7C%20Apple%20Silicon-lightgrey)](https://github.com/LimeBits/RightHere/releases/latest)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 English | [简体中文](README.zh-CN.md)
 
-RightHere is a Finder context-menu enhancement for macOS. It makes four things faster: creating files, opening a terminal or editor at the current folder, jumping to frequently used or hidden paths, and copying paths for use elsewhere.
+</div>
+
+RightHere makes four things faster in Finder: creating files, opening a terminal or editor at the current folder, jumping to frequently used or hidden paths, and copying paths for use elsewhere.
 
 Built for people who move constantly between Finder, a terminal, and config files.
 

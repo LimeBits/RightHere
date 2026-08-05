@@ -1,6 +1,10 @@
+<div align="center">
+
 # Privacy Policy
 
 English | [简体中文](PRIVACY.zh-CN.md)
+
+</div>
 
 RightHere is a local macOS Finder extension. Its core behavior runs on your Mac and does not require an account or a custom backend service.
 

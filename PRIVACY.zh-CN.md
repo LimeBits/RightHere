@@ -1,6 +1,10 @@
+<div align="center">
+
 # 隐私政策
 
 [English](PRIVACY.md) | 简体中文
+
+</div>
 
 RightHere 是一个本地运行的 macOS Finder 扩展。核心功能都在你的 Mac 上完成，不需要账号，也没有自建后端服务。
 
