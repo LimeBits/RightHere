@@ -1,73 +1,91 @@
 # RightHere
 
-RightHere 是一个 macOS Finder 右键增强工具。它让你在 Finder 里更快完成三件事：新建文件、在当前目录打开终端、快速打开常用文件或隐藏路径。
+English | [简体中文](README.zh-CN.md)
 
-适合经常在 Finder、终端和配置文件之间来回切换的人。
+RightHere is a Finder context-menu enhancement for macOS. It makes four things faster: creating files, opening a terminal or editor at the current folder, jumping to frequently used or hidden paths, and copying paths for use elsewhere.
 
-## 功能亮点
+Built for people who move constantly between Finder, a terminal, and config files.
 
-### 右键新建文件
+## Highlights
 
-在 Finder 右键菜单中直接新建常用文件，不用先打开对应 App 再另存为。
+### New File
 
-- 支持文本、Markdown、Word、Excel、PowerPoint 等常用文件类型
-- 支持自定义模板，把自己的模板文件加入右键菜单
-- 可在设置里管理显示哪些文件类型，保持右键菜单清爽
-- 自动处理重名文件，例如 `新建文档`、`新建文档 (2)`
+Create common file types straight from the Finder context menu, instead of opening an app and using Save As.
 
-### 在此处打开终端
+- Text, Markdown, Word, Excel, PowerPoint, and more
+- Custom templates: drop your own template file in and it appears in the menu
+- Choose which types show up, so the menu stays short
+- Duplicate names are numbered automatically, e.g. `New Text Document (2)`
 
-在 Finder 当前目录快速打开终端，省去复制路径和手动 `cd`。
+### Open Here
 
-- 支持文件夹空白处右键
-- 支持桌面空白处右键
-- 支持右键文件夹时打开该文件夹所在位置
-- 避免干扰文件右键菜单，减少和系统“打开方式”的冲突
+Open a terminal or editor with the current folder as its working directory, with no path copying or manual `cd`.
 
-### 快捷打开
+- Terminal, plus iTerm, Warp, VS Code, and Cursor when installed
+- Only apps actually present on this Mac appear in the menu
+- Works on a folder, a folder's empty space, and the desktop background
+- Stays out of the file context menu to avoid competing with **Open With**
 
-把常用文件、文件夹或隐藏路径加入 Finder 右键菜单，一键直达。
+### Go To
 
-- 适合快速打开 `~/.zshrc`、`/etc/hosts`、`~/.codex` 等隐藏配置路径
-- 支持添加文件、文件夹和手动输入路径
-- 可单独启用、隐藏、重命名或删除每个快捷打开项
-- 由主 App 执行打开，减少 FinderSync extension 沙盒权限带来的限制
+Add frequently used files, folders, or hidden paths to the Finder context menu and reach them in one click.
 
-### 轻量设置
+- Ideal for hidden config paths like `~/.zshrc`, `/etc/hosts`, or `~/.codex`
+- Add files, add folders, or type a path by hand
+- Enable, hide, rename, or delete each entry individually
+- Opening is performed by the main app, which avoids the sandbox limits that apply to a FinderSync extension
 
-所有右键菜单能力都可以在设置里集中管理。
+### Dev Tools
 
-- 管理新建文件模板
-- 管理右键工具入口
-- 控制哪些项目出现在 Finder 右键菜单中
-- 菜单栏常驻，不打断当前工作流
+Copy path information for the selected items.
 
-## 安装
+- Full path, file name, name without extension, containing folder, and Markdown link
+- Multiple selections produce one result per line
+- The containing-folder action de-duplicates when several files share a parent
 
-从 [GitHub Releases](https://github.com/LimeBits/RightHere/releases) 下载最新 DMG。
+### Language
 
-安装后把 `RightHere.app` 拖到“应用程序”，然后打开一次 RightHere。App 会尝试注册并启用 Finder 扩展；如果 Finder 右键菜单没有立刻出现，退出并重新打开 Finder，或重启 Finder 后再试。
+The interface follows your system language, or you can pin it.
 
-系统要求：
+- English and Simplified Chinese
+- **Follow System** by default
+- Applies to the settings window, the Finder context menu, and the names of newly created files
 
-- macOS 12.0 或更高版本
-- Intel Mac 和 Apple Silicon Mac
+### Lightweight Settings
 
-## 使用
+Everything is managed from one small window.
 
-### 新建文件
+- Manage file templates
+- Toggle each context-menu tool
+- Control what appears in the Finder context menu
+- Lives in the menu bar and stays out of your way
 
-在 Finder 文件夹空白处或桌面空白处右键，选择：
+## Install
+
+Download the latest DMG from [GitHub Releases](https://github.com/LimeBits/RightHere/releases).
+
+Drag `RightHere.app` into Applications, then open it once. The app registers and enables its Finder extension. If the context menu does not appear right away, quit and reopen Finder, or restart Finder and try again.
+
+Requirements:
+
+- macOS 12.0 or later
+- Intel and Apple Silicon Macs
+
+## Usage
+
+### Creating a file
+
+Right-click a folder's empty space or the desktop background:
 
 ```text
-新建文件 -> 文本文件 / Markdown / Word 文档 / ...
+New File -> Plain Text / Markdown / Word Document / ...
 ```
 
-### 管理模板
+### Managing templates
 
-打开 RightHere 设置，在“模板”页勾选要显示在右键菜单里的文件类型。
+Open RightHere settings and use the **Templates** tab to choose which types appear in the context menu.
 
-首次打开模板文件夹时，RightHere 会初始化默认模板：
+The first time you open the templates folder, RightHere creates the defaults:
 
 ```text
 template.txt
@@ -77,7 +95,7 @@ template.xlsx
 template.pptx
 ```
 
-你可以直接编辑这些模板，也可以添加新的 `template.<扩展名>` 文件，例如：
+Edit those directly, or add your own `template.<extension>` files:
 
 ```text
 template.rtf
@@ -86,25 +104,27 @@ template.json
 template.swift
 ```
 
-刷新设置页后，新模板会出现在列表中，勾选后会显示在 Finder 右键菜单中。
+Refresh the settings page and the new templates appear in the list. Tick one and it shows up in Finder.
 
-### 打开终端
+### Opening a terminal or editor
 
-在 Finder 文件夹空白处或桌面空白处右键，选择：
-
-```text
-在此处打开 -> 终端
-```
-
-### 快捷打开
-
-打开 RightHere 设置，在“工具”页添加常用文件、文件夹或路径。之后可以在 Finder 右键菜单中选择：
+Right-click a folder, a folder's empty space, or the desktop background:
 
 ```text
-快捷打开 -> 你的文件或文件夹
+Open Here -> Terminal / Cursor / VS Code / ...
 ```
 
-适合加入：
+Only apps installed on this Mac are listed. Terminal is enabled by default; third-party apps are opt-in from the **Tools** tab.
+
+### Go To
+
+Open RightHere settings and add files, folders, or paths in the **Tools** tab. Then, from the Finder context menu:
+
+```text
+Go To -> your file or folder
+```
+
+Good candidates:
 
 ```text
 ~/.zshrc
@@ -113,55 +133,71 @@ template.swift
 ~/Library/Application Support
 ```
 
-## 更新与反馈
+### Copying paths
 
-菜单栏选择 **帮助与反馈 -> 检查更新...** 可检查新版本。
+Right-click one or more items:
 
-菜单栏选择 **帮助与反馈 -> 反馈问题...** 可打开预填诊断信息的 GitHub Issue 页面。也可以选择 **复制诊断信息**，再手动粘贴到 Issue 中。
+```text
+Dev Tools -> Copy Full Path / Copy File Name / Copy Markdown Link / ...
+```
 
-RightHere 不收集 analytics，不会自动上传模板或文件内容。详见 [PRIVACY.md](PRIVACY.md)。
+With several items selected you get one line per item.
 
-## 本地开发
+### Changing the language
 
-克隆仓库后，用 Xcode 打开 `RightHere.xcodeproj`。如果要在自己的机器上长期调试，请在 Xcode 里把主 App 和 FinderSync extension 的 Team、Bundle ID、App Group 改成你自己的值。
+Open RightHere settings and use the **Language** control at the top of the **Advanced** tab. Choose **Follow System**, **English**, or **简体中文**.
 
-常用命令：
+Switching also changes the names of files created afterwards: `New Text Document.txt` in English, `新建文本文档.txt` in Chinese. Names you have already customized in Go To are kept as-is.
+
+## Updates and Feedback
+
+Choose **Help & Feedback -> Check for Updates…** from the menu bar to check for a new version.
+
+Choose **Help & Feedback -> Report an Issue…** to open a GitHub Issue with diagnostic information prefilled. **Copy Diagnostic Info** puts the same text on the clipboard so you can paste it yourself.
+
+RightHere runs no analytics and never uploads template or file contents. See [PRIVACY.md](PRIVACY.md).
+
+## Local Development
+
+Clone the repository and open `RightHere.xcodeproj` in Xcode. For ongoing local debugging, change the Team, bundle IDs, and App Group of both the main app and the FinderSync extension to your own values.
+
+Common commands:
 
 ```bash
-# 本机架构 Debug build + 安装到 /Applications + 启用扩展
+# Debug build for this machine + install to /Applications + enable the extension
 ./deploy.sh --build --force
 
-# Universal Binary Debug build（arm64 + x86_64）
+# Universal Binary debug build (arm64 + x86_64)
 ./deploy.sh --build --universal --force
 
-# 查看本机开发环境、安装状态和 FinderSync 状态
+# Inspect the local toolchain, install state, and FinderSync status
 ./Scripts/doctor.sh
 
-# 实时查看 FinderSync extension 日志
+# Tail the FinderSync extension log
 ./monitor.sh
 ```
 
-开源仓库不会提交个人 Team ID。由于 RightHere 使用 App Group 和 FinderSync extension，本机安装调试需要开发签名。可以临时通过环境变量传入自己的 Team ID：
+No personal Team ID is committed to this repository. Because RightHere uses an App Group and a FinderSync extension, local installs need development signing. Pass your Team ID through the environment:
 
 ```bash
 DEVELOPMENT_TEAM=YOURTEAMID ./deploy.sh --build --force
 DEVELOPMENT_TEAM=YOURTEAMID ./deploy.sh --build --universal --force
 ```
 
-也可以在 Xcode 的 Signing & Capabilities 中为两个 target 选择自己的 Team。这样会修改本地工程文件，提交前请确认没有把个人 Team ID 提交到开源仓库。
+You can also pick your Team under Signing & Capabilities for both targets. That edits the local project file, so check before committing that your Team ID has not been included.
 
-## 正式分发
+## Distribution
 
-普通用户安装包应使用 Developer ID 签名、公证并 staple 的 Universal DMG。GitHub Actions 自动生成的 DMG 只适合 CI/打包流程验证，不适合新电脑直接安装验证 FinderSync。
+Builds for other people must be Universal DMGs signed with a Developer ID, notarized, and stapled. The DMG produced by GitHub Actions is only useful for verifying the CI and packaging flow — it is not suitable for validating FinderSync on a clean machine.
 
-正式分发包使用：
+To build a distributable package:
 
 ```bash
 RIGHTHERE_DEVELOPMENT_TEAM=YOURTEAMID \
 ./Scripts/package-developer-id.sh
 ```
 
-首次使用前需要在 Xcode 里登录有效 Apple Developer 账号，并准备 notarytool 凭据：
+Before the first run, sign in to a valid Apple Developer account in Xcode and store notarytool credentials:
 
 ```bash
 xcrun notarytool store-credentials "righthere-notary" \
@@ -170,39 +206,43 @@ xcrun notarytool store-credentials "righthere-notary" \
   --password "app-specific-password"
 ```
 
-RightHere 使用 Sparkle 2 作为 App 内更新框架。每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成并上传 `appcast.xml` 到同一个 GitHub Release。
+RightHere uses Sparkle 2 for in-app updates. Whenever you upload a DMG, generate `appcast.xml` with `Scripts/generate-appcast.sh` and upload it to the same GitHub Release.
 
-## 常见问题
+## FAQ
 
-### Finder 右键菜单没有出现怎么办？
+### The Finder context menu did not appear
 
-先确认 RightHere 已经打开过一次。然后可以运行：
+Make sure RightHere has been opened at least once, then run:
 
 ```bash
 ./Scripts/doctor.sh
 ```
 
-如果扩展已经注册但菜单没有出现，重启 Finder 后再试：
+If the extension is registered but the menu is missing, restart Finder:
 
 ```bash
 killall Finder
 ```
 
-### 为什么需要 FinderSync extension？
+### Why does this need a FinderSync extension?
 
-macOS 的 Finder 右键菜单扩展需要通过 FinderSync extension 实现。RightHere 主 App 负责设置、模板和快捷打开请求，FinderSync extension 负责把菜单显示到 Finder 里。
+On macOS, adding items to the Finder context menu requires a FinderSync extension. The main app owns settings, templates, and Go To requests; the extension is what renders the menu inside Finder.
 
-### 为什么快捷打开由主 App 执行？
+### Why does the main app perform Go To, rather than the extension?
 
-FinderSync extension 运行在沙盒里，直接打开用户主目录、隐藏路径或部分系统路径时容易受限。RightHere 会先把请求写入 App Group，再唤起主 App 执行打开，稳定性更好。
+A FinderSync extension runs sandboxed, which makes opening the home folder, hidden paths, and some system paths unreliable. RightHere writes the request to the App Group and wakes the main app to perform it instead.
 
-## 目录结构
+### Does switching languages lose my settings?
+
+No. Enabled templates are stored by file extension and their display names are computed at runtime, so switching languages never changes which templates are ticked. Go To entries you renamed keep your name; only the four built-in defaults follow the language.
+
+## Repository Layout
 
 ```text
-RightHere/              主 App（SwiftUI 设置界面）
-RightHereExtension/     FinderSync Extension
-Scripts/                打包、安装和诊断脚本
-deploy.sh               一键本机部署
-monitor.sh              实时日志监控
-DEVLOG.md               开发踩坑记录
+RightHere/              Main app (SwiftUI settings UI)
+RightHereExtension/     FinderSync extension
+Scripts/                Packaging, install, and diagnostic scripts
+deploy.sh               One-command local deploy
+monitor.sh              Live log monitor
+DEVLOG.md               Notes on problems hit during development (Chinese)
 ```

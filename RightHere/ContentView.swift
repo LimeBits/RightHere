@@ -428,10 +428,6 @@ struct ContentView: View {
                 Text(appVersionText)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
-                Text(L("Versions 0.1.10 and 0.1.11 may fail their first self-replacement. After installing 0.1.12 manually, later updates use the new Sparkle installer permissions."))
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 9)

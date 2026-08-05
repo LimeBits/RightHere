@@ -1268,16 +1268,6 @@
         }
       }
     },
-    "Versions 0.1.10 and 0.1.11 may fail their first self-replacement. After installing 0.1.12 manually, later updates use the new Sparkle installer permissions.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "旧版 0.1.10 / 0.1.11 可能无法完成首次自我替换；手动安装 0.1.12 后，后续更新会使用新的 Sparkle 安装权限。"
-          }
-        }
-      }
-    },
     "Word Document (.docx)": {
       "localizations": {
         "zh-Hans": {
