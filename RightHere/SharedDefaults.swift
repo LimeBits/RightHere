@@ -4,16 +4,150 @@ import Foundation
 /// Looks up a localized string from the shared catalog.
 ///
 /// This file is compiled into both the main app and the FinderSync extension,
-/// and `Localizable.xcstrings` is listed as a resource in both targets. Using
-/// `Bundle.main` therefore resolves to whichever bundle the caller runs in:
-/// the app bundle in the app, the .appex bundle in the extension.
+/// and `Localizable.xcstrings` is listed as a resource in both targets, so
+/// `Bundle.main` resolves to whichever bundle the caller runs in: the app
+/// bundle in the app, the .appex bundle in the extension.
+///
+/// When the user picks an explicit language, the lookup goes through that
+/// language's `.lproj` instead of the system one. `AppleLanguages` is not used
+/// because it only applies at process launch, and the FinderSync extension is a
+/// separate long-lived process that must follow the setting without a restart.
 func L(_ key: String, _ comment: String = "") -> String {
-    NSLocalizedString(key, bundle: .main, comment: comment)
+    guard let bundle = RightHereLanguage.preferredBundle else {
+        return NSLocalizedString(key, bundle: .main, comment: comment)
+    }
+
+    // A missing entry returns the key, which is the English source text.
+    return bundle.localizedString(forKey: key, value: key, table: nil)
 }
 
 /// Formatted variant of `L(_:_:)`.
 func L(_ key: String, _ arguments: CVarArg...) -> String {
-    String(format: NSLocalizedString(key, bundle: .main, comment: ""), arguments: arguments)
+    String(format: L(key), arguments: arguments)
+}
+
+/// The UI language: either whatever macOS reports, or one the user pinned.
+public enum RightHereLanguage: String, CaseIterable, Identifiable, Codable {
+    case system
+    case english = "en"
+    case simplifiedChinese = "zh-Hans"
+
+    public var id: String { rawValue }
+
+    /// Each option is shown in its own language, the way macOS does it, so a
+    /// user who cannot read the current UI can still find their language.
+    /// The two concrete languages are always written in their own language, the
+    /// way macOS does it, so a user who cannot read the current UI can still find
+    /// theirs. Only "Follow System" is translated.
+    ///
+    /// `activeLanguage` is passed in rather than read from defaults so SwiftUI can
+    /// see it as a dependency: without it the picker caches its option titles and
+    /// this label keeps the previous language until the view is rebuilt.
+    public func displayName(in activeLanguage: RightHereLanguage) -> String {
+        switch self {
+        case .system:
+            return RightHereLanguage.localizedFollowSystem(for: activeLanguage)
+        case .english:
+            return "English"
+        case .simplifiedChinese:
+            return "简体中文"
+        }
+    }
+
+    public var displayName: String {
+        displayName(in: SharedDefaults.getPreferredLanguage())
+    }
+
+    /// Resolved against `language` explicitly, because the shared `L()` reads a
+    /// cache that may not have been refreshed yet at the moment the picker
+    /// rebuilds its labels.
+    private static func localizedFollowSystem(for language: RightHereLanguage) -> String {
+        let key = "Follow System"
+        guard let identifier = language.localizationIdentifier else {
+            return L(key)
+        }
+
+        guard let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            return L(key)
+        }
+
+        return bundle.localizedString(forKey: key, value: key, table: nil)
+    }
+
+    /// The `.lproj` name to load, or nil when following the system.
+    public var localizationIdentifier: String? {
+        self == .system ? nil : rawValue
+    }
+
+    /// Always English, for pasting into an issue. For `.system` it also reports
+    /// which language macOS actually resolved to, since that is the part a
+    /// reader cannot infer from the setting alone.
+    public var diagnosticDescription: String {
+        switch self {
+        case .system:
+            let resolved = Bundle.main.preferredLocalizations.first ?? "unknown"
+            return "follow system (\(resolved))"
+        case .english:
+            return "en"
+        case .simplifiedChinese:
+            return "zh-Hans"
+        }
+    }
+
+    /// The resolved language is cached, not just the bundle. `L()` runs for every
+    /// menu item and label, and reading the App Group container on that path is
+    /// what used to trigger repeated tccd permission prompts on each right-click
+    /// (see DEVLOG 坑 13). With the language cached, defaults are read once per
+    /// process and then only after the setting actually changes.
+    private static var cachedLanguage: RightHereLanguage?
+    private static var cachedBundle: Bundle?
+    private static let cacheLock = NSLock()
+
+    /// The bundle to read strings from, or nil to fall back to the system language.
+    static var preferredBundle: Bundle? {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+
+        // A warm cache resolves without touching defaults. `cachedBundle` is
+        // legitimately nil for `.system`, so the language is the validity flag.
+        if cachedLanguage != nil {
+            return cachedBundle
+        }
+
+        let language = SharedDefaults.getPreferredLanguage()
+        cachedLanguage = language
+        cachedBundle = makeBundle(for: language)
+        return cachedBundle
+    }
+
+    private static func makeBundle(for language: RightHereLanguage) -> Bundle? {
+        guard let identifier = language.localizationIdentifier,
+              let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            return nil
+        }
+
+        return bundle
+    }
+
+    /// Seeds the cache from a value delivered over the distributed notification,
+    /// so the FinderSync extension never has to read the App Group container to
+    /// learn the language.
+    static func applyCachedLanguage(_ language: RightHereLanguage) {
+        cacheLock.lock()
+        cachedLanguage = language
+        cachedBundle = makeBundle(for: language)
+        cacheLock.unlock()
+    }
+
+    /// Called after the setting changes so the next `L()` reloads.
+    static func invalidateCache() {
+        cacheLock.lock()
+        cachedLanguage = nil
+        cachedBundle = nil
+        cacheLock.unlock()
+    }
 }
 
 public struct SharedDefaults {
@@ -32,6 +166,9 @@ public struct SharedDefaults {
     public static let extensionDiagnosticSnapshotRequestName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshotRequest")
     public static let extensionDiagnosticSnapshotNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshot")
     public static let shortcutOpenRequestNotificationName = Notification.Name("com.LimeBits.RightHere.ShortcutOpenRequest")
+    /// In-process only: tells the main app to rebuild UI that was built once and
+    /// therefore still holds strings in the previous language.
+    public static let preferredLanguageDidChangeNotificationName = Notification.Name("com.LimeBits.RightHere.PreferredLanguageDidChange")
     public static let templateCacheKey = "templateCache"
     public static let localTemplateCacheKey = "localTemplateCache"
     public static let localDisabledTypesKey = "localDisabledFileTypes"
@@ -48,6 +185,7 @@ public struct SharedDefaults {
     public static let localOpenHereAppsKey = "localOpenHereApps"
     public static let openHereAppsInitializedKey = "openHereAppsInitialized"
     public static let localOpenHereAppsInitializedKey = "localOpenHereAppsInitialized"
+    public static let preferredLanguageKey = "preferredLanguage"
     private static let extensionDiagnosticBufferKey = "extensionDiagnosticBuffer"
     private static let extensionDiagnosticRecordUserInfoKey = "record"
     private static let extensionDiagnosticRecordsUserInfoKey = "records"
@@ -239,6 +377,31 @@ public struct SharedDefaults {
         sharedSuite?.set(isEnabled, forKey: devToolsEnabledKey)
         sharedSuite?.synchronize()
         UserDefaults.standard.set(isEnabled, forKey: devToolsEnabledKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
+    /// Reads from `UserDefaults.standard` first: the extension keeps a local copy
+    /// so that `L()` never has to touch the App Group container on a menu lookup.
+    public static func getPreferredLanguage() -> RightHereLanguage {
+        if let raw = UserDefaults.standard.string(forKey: preferredLanguageKey),
+           let language = RightHereLanguage(rawValue: raw) {
+            return language
+        }
+
+        if let raw = sharedSuite?.string(forKey: preferredLanguageKey),
+           let language = RightHereLanguage(rawValue: raw) {
+            return language
+        }
+
+        return .system
+    }
+
+    public static func setPreferredLanguage(_ language: RightHereLanguage) {
+        sharedSuite?.set(language.rawValue, forKey: preferredLanguageKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(language.rawValue, forKey: preferredLanguageKey)
+        RightHereLanguage.invalidateCache()
         notifySettingsChanged()
         notifyLocalSettingsChanged()
     }
@@ -556,6 +719,8 @@ public struct SharedDefaults {
             userInfo["openHereApps"] = data
         }
 
+        userInfo["preferredLanguage"] = getPreferredLanguage().rawValue
+
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
             object: nil,
@@ -579,6 +744,8 @@ public struct SharedDefaults {
         if let data = UserDefaults.standard.data(forKey: localOpenHereAppsKey) {
             userInfo["openHereApps"] = data
         }
+
+        userInfo["preferredLanguage"] = getPreferredLanguage().rawValue
 
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name("com.LimeBits.RightHere.SettingsChanged"),
@@ -629,7 +796,39 @@ public struct SharedDefaults {
             return []
         }
 
-        return locations.map { $0.normalized() }.sorted()
+        return locations.map { backfillLocalizationKey($0).normalized() }.sorted()
+    }
+
+    /// Entries saved before `localizationKey` existed hold a name in whichever
+    /// language was active at first launch, so they would never follow the
+    /// language setting. Both the name and the path have to match a known default:
+    /// a user-added entry can point at the same path (for example a second entry
+    /// for the home folder), and its own name must not be rewritten.
+    private static func backfillLocalizationKey(_ location: ShortcutLocation) -> ShortcutLocation {
+        guard location.localizationKey == nil,
+              let pw = getpwuid(getuid()) else {
+            return location
+        }
+
+        let homePath = String(cString: pw.pointee.pw_dir)
+        let knownDefaults: [(key: String, path: String, names: Set<String>)] = [
+            ("Home", homePath, ["Home", "用户主目录"]),
+            ("Downloads", "\(homePath)/Downloads", ["Downloads", "下载"]),
+            ("Documents", "\(homePath)/Documents", ["Documents", "文稿"]),
+            ("Desktop", "\(homePath)/Desktop", ["Desktop", "桌面"])
+        ]
+
+        let currentPath = ShortcutLocation.expandPath(location.path)
+        let currentName = location.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let match = knownDefaults.first(where: {
+            $0.path == currentPath && $0.names.contains(currentName)
+        }) else {
+            return location
+        }
+
+        var migrated = location
+        migrated.localizationKey = match.key
+        return migrated
     }
 
     private static func saveShortcutLocations(_ locations: [ShortcutLocation], defaults: UserDefaults?, key: String) {
@@ -688,20 +887,23 @@ public struct SharedDefaults {
     private static var defaultShortcutLocations: [ShortcutLocation] {
         guard let pw = getpwuid(getuid()) else { return [] }
         let homePath = String(cString: pw.pointee.pw_dir)
+        // The key is stored, not the translated name, so these follow the
+        // language setting instead of freezing whatever was active at install.
         let candidates: [(String, String)] = [
-            (L("Home"), homePath),
-            (L("Downloads"), "\(homePath)/Downloads"),
-            (L("Documents"), "\(homePath)/Documents"),
-            (L("Desktop"), "\(homePath)/Desktop")
+            ("Home", homePath),
+            ("Downloads", "\(homePath)/Downloads"),
+            ("Documents", "\(homePath)/Documents"),
+            ("Desktop", "\(homePath)/Desktop")
         ]
 
         return candidates.enumerated().map { index, item in
             ShortcutLocation(
-                displayName: item.0,
+                displayName: L(item.0),
                 path: item.1,
                 kind: .directory,
                 isEnabled: true,
-                sortOrder: index
+                sortOrder: index,
+                localizationKey: item.0
             )
         }
     }
@@ -721,13 +923,20 @@ public struct ShortcutLocation: Codable, Hashable, Identifiable, Comparable {
     public var isEnabled: Bool
     public var sortOrder: Int
 
+    /// Set only on the built-in default entries. `displayName` is persisted, so
+    /// without this the names written at first launch would stay in whatever
+    /// language was active then. User-added entries keep a nil key so their own
+    /// names are never rewritten. Renaming a default clears the key.
+    public var localizationKey: String?
+
     public init(
         id: UUID = UUID(),
         displayName: String,
         path: String,
         kind: Kind = .unknown,
         isEnabled: Bool = true,
-        sortOrder: Int = 0
+        sortOrder: Int = 0,
+        localizationKey: String? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -735,6 +944,13 @@ public struct ShortcutLocation: Codable, Hashable, Identifiable, Comparable {
         self.kind = kind
         self.isEnabled = isEnabled
         self.sortOrder = sortOrder
+        self.localizationKey = localizationKey
+    }
+
+    /// The name to show: translated for built-ins, verbatim for user entries.
+    public var resolvedDisplayName: String {
+        guard let localizationKey else { return displayName }
+        return L(localizationKey)
     }
 
     public var expandedPath: String {
@@ -768,7 +984,8 @@ public struct ShortcutLocation: Codable, Hashable, Identifiable, Comparable {
             path: path.trimmingCharacters(in: .whitespacesAndNewlines),
             kind: inferredKind,
             isEnabled: isEnabled,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            localizationKey: localizationKey
         )
     }
 

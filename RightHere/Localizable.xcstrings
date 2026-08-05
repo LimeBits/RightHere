@@ -51,6 +51,17 @@
         }
       }
     },
+    "Applies to the settings window and the Finder context menu, including the names of newly created files.": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用于设置页和 Finder 右键菜单，也包括新建文件的名称。"
+          }
+        }
+      }
+    },
     "Automatic Updates": {
       "localizations": {
         "zh-Hans": {
@@ -471,6 +482,17 @@
         }
       }
     },
+    "Follow System": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随系统"
+          }
+        }
+      }
+    },
     "Go To": {
       "localizations": {
         "zh-Hans": {
@@ -517,6 +539,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "如果右键菜单仍未出现，请在 Finder 中打开用户目录后右键空白处。"
+          }
+        }
+      }
+    },
+    "Language": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
           }
         }
       }

@@ -30,6 +30,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeIncomingURLs()
         consumePendingShortcutOpenRequest()
         configureStatusItem()
+        observeLanguageChanges()
+    }
+
+    private func observeLanguageChanges() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(preferredLanguageChanged),
+            name: SharedDefaults.preferredLanguageDidChangeNotificationName,
+            object: nil
+        )
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
@@ -144,7 +154,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.image = makeStatusBarIcon()
         statusItem.button?.imagePosition = .imageOnly
         statusItem.button?.imageScaling = .scaleProportionallyDown
+        statusItem.menu = buildStatusMenu()
+        self.statusItem = statusItem
+    }
 
+    private func buildStatusMenu() -> NSMenu {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: L("Open Settings"), action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: L("Open Templates Folder"), action: #selector(openTemplatesDirectory), keyEquivalent: ""))
@@ -153,9 +167,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: L("Quit RightHere"), action: #selector(quit), keyEquivalent: "q"))
 
         assignTargets(in: menu)
+        return menu
+    }
 
-        statusItem.menu = menu
-        self.statusItem = statusItem
+    /// The status-bar menu and the window title are built once, so they keep the
+    /// previous language until they are rebuilt. The settings window itself is
+    /// SwiftUI and redraws on its own when the selection changes.
+    @objc private func preferredLanguageChanged() {
+        statusItem?.menu = buildStatusMenu()
+        settingsWindow?.title = L("RightHere Settings")
     }
 
     private func makeStatusBarIcon() -> NSImage? {
@@ -498,6 +518,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         RightHere version: \(version) (\(build))
         macOS: \(osVersion)
         Architecture: \(architecture)
+        Language: \(SharedDefaults.getPreferredLanguage().diagnosticDescription)
         Extension last response: \(lastActiveDescription)
         Templates: \(enabledTemplates.count) enabled / \(availableTemplates.count) available
         Enabled extensions: \(enabledTemplates.map { $0.fileExtension }.joined(separator: ", "))

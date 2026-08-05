@@ -32,6 +32,7 @@ struct ContentView: View {
     @State private var areDevToolsEnabled = true
     @State private var openHereAppSettings: [OpenHereAppSetting] = []
     @State private var shortcutLocations: [ShortcutLocation] = []
+    @State private var preferredLanguage: RightHereLanguage = .system
     @State private var now = Date()
     @State private var timer: Timer? = nil
     
@@ -100,6 +101,9 @@ struct ContentView: View {
             .labelsHidden()
             .frame(width: 230)
             .padding(.top, 20)
+            // The segmented control caches its item titles, so it keeps the old
+            // language until the view identity changes.
+            .id(preferredLanguage)
 
             Group {
                 switch selectedTab {
@@ -208,12 +212,23 @@ struct ContentView: View {
                         .foregroundColor(.secondary)
                         .padding(.leading, 28)
                 } else {
-                    VStack(alignment: .leading, spacing: 4) {
+                    // Two columns: the names are short, so a single column left a
+                    // lot of empty width and made the rows feel cramped.
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), alignment: .leading),
+                            GridItem(.flexible(), alignment: .leading)
+                        ],
+                        alignment: .leading,
+                        spacing: 10
+                    ) {
                         ForEach(installedOpenHereApps) { setting in
                             openHereAppRow(setting)
                         }
                     }
                     .padding(.leading, 28)
+                    .padding(.top, 2)
+                    .padding(.bottom, 2)
                 }
             }
         }
@@ -308,7 +323,9 @@ struct ContentView: View {
                 }
 
                 Button(action: addShortcutPathManually) {
-                    Label(L("Enter Path"), systemImage: "text.cursor")
+                    // Not text.cursor: it renders as a CJK glyph under a Chinese
+                    // UI. This one reads as "a path" in any language.
+                    Label(L("Enter Path"), systemImage: "arrow.turn.down.right")
                 }
 
                 Spacer(minLength: 0)
@@ -429,6 +446,7 @@ struct ContentView: View {
 
     private var advancedSettingsTab: some View {
         VStack(alignment: .leading, spacing: 12) {
+            languageCard
             finderExtensionStatusView
             extensionControlView
 
@@ -543,7 +561,7 @@ struct ContentView: View {
                 .padding(.trailing, 10)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(location.displayName)
+                Text(location.resolvedDisplayName)
                     .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
 
@@ -778,6 +796,51 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    private var languageCard: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "globe")
+                .foregroundColor(.secondary)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L("Language"))
+                    .font(.system(size: 12, weight: .semibold))
+                Text(L("Applies to the settings window and the Finder context menu, including the names of newly created files."))
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            Picker("", selection: Binding(
+                get: { preferredLanguage },
+                set: { language in
+                    preferredLanguage = language
+                    SharedDefaults.setPreferredLanguage(language)
+                    // The status-bar menu is built once at launch, so it keeps the
+                    // old language until it is rebuilt.
+                    NotificationCenter.default.post(
+                        name: SharedDefaults.preferredLanguageDidChangeNotificationName,
+                        object: nil
+                    )
+                }
+            )) {
+                ForEach(RightHereLanguage.allCases) { language in
+                    // Passing the current selection makes the dependency visible
+                    // to SwiftUI, so "Follow System" re-renders on switch.
+                    Text(language.displayName(in: preferredLanguage)).tag(language)
+                }
+            }
+            .labelsHidden()
+            .frame(width: 130)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+        .cornerRadius(6)
+    }
+
     private func getIcon(for template: FileTemplate) -> String {
         switch template.fileExtension {
         case "txt": return "doc.text"
@@ -828,6 +891,7 @@ struct ContentView: View {
         self.areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
         self.openHereAppSettings = SharedDefaults.getLocalOpenHereAppSettings()
         self.shortcutLocations = SharedDefaults.getLocalShortcutLocations()
+        self.preferredLanguage = SharedDefaults.getPreferredLanguage()
     }
 
     private func loadUpdateSettings() {
@@ -847,6 +911,7 @@ struct ContentView: View {
             .joined(separator: ", ")
         let diagnostics = """
         App: \(appVersionText)
+        Language: \(SharedDefaults.getPreferredLanguage().diagnosticDescription)
         Finder call: \(finderCallStatusText)
         Finder extension: \(extensionRegistrationState.title)
         Templates directory: \(SharedDefaults.templatesDirectoryURL?.path ?? "unavailable")
@@ -949,11 +1014,14 @@ struct ContentView: View {
         promptForText(
             title: L("Rename Go To Item"),
             message: location.path,
-            placeholder: location.displayName,
-            initialValue: location.displayName
+            placeholder: location.resolvedDisplayName,
+            initialValue: location.resolvedDisplayName
         ) { name in
             updateShortcutLocation(location.id) { item in
                 item.displayName = name
+                // A renamed default is now the user's own name, so it must stop
+                // following the language setting.
+                item.localizationKey = nil
             }
         }
     }

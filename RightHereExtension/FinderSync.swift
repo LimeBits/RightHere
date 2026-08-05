@@ -112,6 +112,17 @@ class FinderSync: FIFinderSync {
         } else {
             openHereAppSettings = SharedDefaults.getOpenHereAppSettings()
         }
+
+        // Seed the language straight from the payload when it is there, so this
+        // process never reads the App Group container just to learn the language
+        // (DEVLOG 坑 13). Falling back to invalidation still works, it just costs
+        // one defaults read on the next menu build.
+        if let raw = notification.userInfo?["preferredLanguage"] as? String,
+           let language = RightHereLanguage(rawValue: raw) {
+            RightHereLanguage.applyCachedLanguage(language)
+        } else {
+            RightHereLanguage.invalidateCache()
+        }
     }
 
     @objc private func diagnosticSnapshotRequested(_ notification: Notification) {
@@ -353,7 +364,7 @@ class FinderSync: FIFinderSync {
             submenu.autoenablesItems = false
 
             for location in activeShortcutLocations {
-                let item = NSMenuItem(title: location.displayName, action: #selector(openShortcutLocation(_:)), keyEquivalent: "")
+                let item = NSMenuItem(title: location.resolvedDisplayName, action: #selector(openShortcutLocation(_:)), keyEquivalent: "")
                 item.target = self
                 item.isEnabled = true
                 item.tag = nextActionTag()
