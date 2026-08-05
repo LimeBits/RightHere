@@ -12,10 +12,10 @@ struct ContentView: View {
 
         var title: String {
             switch self {
-            case .templates: return "模板"
-            case .tools: return "工具"
-            case .advanced: return "高级"
-            case .updates: return "更新"
+            case .templates: return L("Templates")
+            case .tools: return L("Tools")
+            case .advanced: return L("Advanced")
+            case .updates: return L("Updates")
             }
         }
     }
@@ -138,9 +138,9 @@ struct ContentView: View {
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("开发工具")
+                Text(L("Dev Tools"))
                     .font(.system(size: 12, weight: .semibold))
-                Text("右键菜单中复制完整路径、文件名或 Markdown 链接；多选时每行一个结果。")
+                Text(L("Copy full paths, file names, or Markdown links from the context menu. Multiple selections produce one result per line."))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -173,9 +173,9 @@ struct ContentView: View {
                     .padding(.top, 1)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("在此处打开")
+                    Text(L("Open Here"))
                         .font(.system(size: 12, weight: .semibold))
-                    Text("右键文件夹或文件夹空白处时，在该目录打开终端或编辑器。只显示本机已安装的 App。")
+                    Text(L("Open a terminal or editor at that folder when you right-click a folder or its background. Only apps installed on this Mac appear."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -198,7 +198,7 @@ struct ContentView: View {
                 Divider().opacity(0.7)
 
                 if installedOpenHereApps.isEmpty {
-                    Text("没有检测到可用的终端或编辑器。")
+                    Text(L("No supported terminal or editor detected."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                         .padding(.leading, 28)
@@ -257,9 +257,9 @@ struct ContentView: View {
                     .padding(.top, 1)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("快捷前往")
+                    Text(L("Go To"))
                         .font(.system(size: 12, weight: .semibold))
-                    Text("添加常用文件、文件夹或隐藏路径，之后可从 Finder 右键菜单快速打开。")
+                    Text(L("Add frequently used files, folders, or hidden paths to reach them from the Finder context menu."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -299,11 +299,11 @@ struct ContentView: View {
 
             HStack(spacing: 8) {
                 Button(action: addShortcutItem) {
-                    Label("添加文件或文件夹", systemImage: "folder.badge.plus")
+                    Label(L("Add File or Folder"), systemImage: "folder.badge.plus")
                 }
 
                 Button(action: addShortcutPathManually) {
-                    Label("输入路径", systemImage: "text.cursor")
+                    Label(L("Enter Path"), systemImage: "text.cursor")
                 }
 
                 Spacer(minLength: 0)
@@ -319,9 +319,9 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("自定义模板")
+                    Text(L("Custom Templates"))
                         .font(.system(size: 14, weight: .semibold))
-                    Text("勾选要显示在 Finder 右键菜单中的模板。使用 template.rtf 这样的命名添加模板。")
+                    Text(L("Select the templates to show in the Finder context menu. Add templates using names like template.rtf."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -329,12 +329,12 @@ struct ContentView: View {
                 Spacer()
 
                 Button(action: openTemplatesDirectory) {
-                    Label("打开模板文件夹", systemImage: "folder")
+                    Label(L("Open Templates Folder"), systemImage: "folder")
                 }
                 .font(.system(size: 12))
 
                 Button(action: refreshTemplates) {
-                    Label("刷新", systemImage: "arrow.clockwise")
+                    Label(L("Refresh"), systemImage: "arrow.clockwise")
                 }
                 .font(.system(size: 12))
             }
@@ -378,9 +378,9 @@ struct ContentView: View {
                     .frame(width: 18)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("手动检查")
+                    Text(L("Check Manually"))
                         .font(.system(size: 12, weight: .semibold))
-                    Text("立即检查 GitHub Release 上的最新正式版本。")
+                    Text(L("Check GitHub Releases for the latest stable version now."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -388,7 +388,7 @@ struct ContentView: View {
                 Spacer(minLength: 8)
 
                 Button(action: checkForUpdates) {
-                    Label("检查更新", systemImage: "magnifyingglass")
+                    Label(L("Check for Updates"), systemImage: "magnifyingglass")
                 }
                 .font(.system(size: 11))
             }
@@ -398,12 +398,12 @@ struct ContentView: View {
             .cornerRadius(6)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("当前版本")
+                Text(L("Current Version"))
                     .font(.system(size: 12, weight: .semibold))
                 Text(appVersionText)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
-                Text("旧版 0.1.10 / 0.1.11 可能无法完成首次自我替换；手动安装 0.1.12 后，后续更新会使用新的 Sparkle 安装权限。")
+                Text(L("Versions 0.1.10 and 0.1.11 may fail their first self-replacement. After installing 0.1.12 manually, later updates use the new Sparkle installer permissions."))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -430,9 +430,9 @@ struct ContentView: View {
                     .frame(width: 18)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("系统扩展设置")
+                    Text(L("System Extension Settings"))
                         .font(.system(size: 12, weight: .semibold))
-                    Text("用于排查 Finder 扩展启用状态；不同 macOS 版本可能只打开系统设置主页。")
+                    Text(L("Useful for checking whether the Finder extension is enabled. Some macOS versions only open the main System Settings page."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -440,7 +440,7 @@ struct ContentView: View {
                 Spacer(minLength: 8)
 
                 Button(action: openSystemExtensionSettings) {
-                    Label("打开扩展设置", systemImage: "gearshape")
+                    Label(L("Open Extension Settings"), systemImage: "gearshape")
                 }
                 .font(.system(size: 11))
             }
@@ -455,9 +455,9 @@ struct ContentView: View {
                     .frame(width: 18)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("诊断信息")
+                    Text(L("Diagnostics"))
                         .font(.system(size: 12, weight: .semibold))
-                    Text("复制版本、模板目录和最近 Finder 调用状态，方便排查。")
+                    Text(L("Copy the version, templates folder, and recent Finder call status for troubleshooting."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -465,7 +465,7 @@ struct ContentView: View {
                 Spacer(minLength: 8)
 
                 Button(action: copyDiagnostics) {
-                    Label("复制诊断", systemImage: "doc.on.doc")
+                    Label(L("Copy Diagnostics"), systemImage: "doc.on.doc")
                 }
                 .font(.system(size: 11))
             }
@@ -548,7 +548,7 @@ struct ContentView: View {
             Spacer(minLength: 8)
 
             if !location.exists {
-                Text("未验证")
+                Text(L("Unverified"))
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 6)
@@ -562,21 +562,21 @@ struct ContentView: View {
                 Image(systemName: "pencil")
             }
             .buttonStyle(.plain)
-            .help("重命名")
+            .help(L("Rename"))
             .frame(width: 24, height: 24)
 
             Button(action: { openShortcutLocation(location) }) {
                 Image(systemName: "arrow.up.forward.app")
             }
             .buttonStyle(.plain)
-            .help("打开")
+            .help(L("Open"))
             .frame(width: 24, height: 24)
 
             Button(action: { revealShortcutLocation(location) }) {
                 Image(systemName: "magnifyingglass")
             }
             .buttonStyle(.plain)
-            .help("在 Finder 中显示")
+            .help(L("Show in Finder"))
             .frame(width: 24, height: 24)
             .disabled(!location.exists)
 
@@ -584,7 +584,7 @@ struct ContentView: View {
                 Image(systemName: "trash")
             }
             .buttonStyle(.plain)
-            .help("删除")
+            .help(L("Delete"))
             .frame(width: 24, height: 24)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -597,10 +597,10 @@ struct ContentView: View {
                 .font(.system(size: 24))
                 .foregroundColor(.secondary)
 
-            Text("没有找到可用模板")
+            Text(L("No templates found"))
                 .font(.system(size: 13, weight: .semibold))
 
-            Text("请打开模板文件夹，添加 template.txt、template.md 或 template.rtf。")
+            Text(L("Open the templates folder and add template.txt, template.md, or template.rtf."))
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -614,10 +614,10 @@ struct ContentView: View {
                 .font(.system(size: 24))
                 .foregroundColor(.secondary)
 
-            Text("还没有快捷前往项")
+            Text(L("No Go To items yet"))
                 .font(.system(size: 13, weight: .semibold))
 
-            Text("添加文件、文件夹或手动输入隐藏路径，之后可从 Finder 右键菜单快速前往。")
+            Text(L("Add files, folders, or hidden paths to reach them from the Finder context menu."))
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -630,7 +630,7 @@ struct ContentView: View {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundColor(.orange)
 
-            Text("当前没有启用任何模板，Finder 右键菜单不会显示“新建文件”。")
+            Text(L("No templates are enabled, so New File will not appear in the Finder context menu."))
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
 
@@ -677,7 +677,7 @@ struct ContentView: View {
             .font(.system(size: 11))
 
             Button(action: { refreshFinderExtensionRegistration() }) {
-                Label("刷新", systemImage: "arrow.clockwise")
+                Label(L("Refresh"), systemImage: "arrow.clockwise")
             }
             .font(.system(size: 11))
         }
@@ -697,9 +697,9 @@ struct ContentView: View {
 
     private var automaticUpdateDescription: String {
         #if DEBUG
-        return "Debug 构建没有 Sparkle 公钥，自动检查已停用，避免误报更新失败。仍可手动检查。"
+        return L("Debug builds have no Sparkle public key, so automatic checks are disabled to avoid false update failures. Manual checks still work.")
         #else
-        return "自动检查新版本。仍可从菜单栏手动检查更新。"
+        return L("Check for new versions automatically. You can still check manually from the menu bar.")
         #endif
     }
 
@@ -710,7 +710,7 @@ struct ContentView: View {
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("版本更新")
+                Text(L("Automatic Updates"))
                     .font(.system(size: 12, weight: .semibold))
                 Text(automaticUpdateDescription)
                     .font(.system(size: 11))
@@ -745,9 +745,9 @@ struct ContentView: View {
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("右键菜单")
+                Text(L("Context Menu"))
                     .font(.system(size: 12, weight: .semibold))
-                Text(isFinderMenuDisabled ? "RightHere 暂时不会在 Finder 右键菜单中显示。" : "关闭后 Finder 右键菜单里的“新建文件”会消失。")
+                Text(isFinderMenuDisabled ? L("RightHere is temporarily hidden from the Finder context menu.") : L("Turning this off removes New File from the Finder context menu."))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
@@ -853,10 +853,10 @@ struct ContentView: View {
         NSPasteboard.general.setString(diagnostics, forType: .string)
 
         let alert = NSAlert()
-        alert.messageText = "诊断信息已复制"
-        alert.informativeText = "诊断信息不包含模板正文或用户文件内容。"
+        alert.messageText = L("Diagnostics Copied")
+        alert.informativeText = L("Diagnostics do not include template contents or your file contents.")
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "好的")
+        alert.addButton(withTitle: L("OK"))
         alert.runModal()
     }
 
@@ -915,7 +915,7 @@ struct ContentView: View {
 
     private func addShortcutItem() {
         let panel = NSOpenPanel()
-        panel.title = "添加文件或文件夹"
+        panel.title = L("Add File or Folder")
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
@@ -929,8 +929,8 @@ struct ContentView: View {
 
     private func addShortcutPathManually() {
         promptForText(
-            title: "输入快捷前往路径",
-            message: "支持隐藏路径和 ~，例如 ~/.zshrc、/etc/hosts、~/.codex。",
+            title: L("Enter Go To Path"),
+            message: L("Hidden paths and ~ are supported, for example ~/.zshrc, /etc/hosts, or ~/.codex."),
             placeholder: "~/.zshrc"
         ) { path in
             appendShortcutLocation(path: path)
@@ -939,7 +939,7 @@ struct ContentView: View {
 
     private func renameShortcutLocation(_ location: ShortcutLocation) {
         promptForText(
-            title: "重命名快捷前往项",
+            title: L("Rename Go To Item"),
             message: location.path,
             placeholder: location.displayName,
             initialValue: location.displayName
@@ -975,8 +975,8 @@ struct ContentView: View {
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "确定")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("OK"))
+        alert.addButton(withTitle: L("Cancel"))
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
         textField.placeholderString = placeholder
@@ -1045,30 +1045,30 @@ struct ContentView: View {
 
     private var finderCallStatusText: String {
         guard let lastFinderCall else {
-            return "最近 Finder 调用：尚未检测到"
+            return L("Last Finder call: not detected yet")
         }
 
         let elapsed = max(0, Int(now.timeIntervalSince(lastFinderCall)))
 
         if elapsed < 10 {
-            return "最近 Finder 调用：刚刚"
+            return L("Last Finder call: just now")
         }
 
         if elapsed < 60 {
-            return "最近 Finder 调用：\(elapsed) 秒前"
+            return L("Last Finder call: %lld seconds ago", elapsed)
         }
 
         let minutes = elapsed / 60
         if minutes < 60 {
-            return "最近 Finder 调用：\(minutes) 分钟前"
+            return L("Last Finder call: %lld minutes ago", minutes)
         }
 
         let hours = minutes / 60
-        return "最近 Finder 调用：\(hours) 小时前"
+        return L("Last Finder call: %lld hours ago", hours)
     }
 
     private var appVersionText: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "未知版本"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? L("Unknown Version")
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
 
         if let build, !build.isEmpty {
@@ -1230,28 +1230,28 @@ enum FinderExtensionRegistrationState: Equatable {
     var title: String {
         switch self {
         case .checking:
-            return "Finder 扩展状态：正在检查"
+            return L("Finder extension: checking")
         case .enabled:
-            return "Finder 扩展状态：已启用"
+            return L("Finder extension: enabled")
         case .disabled:
-            return "Finder 扩展状态：未启用"
+            return L("Finder extension: not enabled")
         case .notRegistered:
-            return "Finder 扩展状态：系统未发现 RightHere"
+            return L("Finder extension: not found by the system")
         case .unavailable:
-            return "Finder 扩展状态：暂时不可读"
+            return L("Finder extension: status unavailable")
         }
     }
 
     var message: String {
         switch self {
         case .checking:
-            return "正在读取系统扩展注册状态。"
+            return L("Reading the system extension registration state.")
         case .enabled:
-            return "如果右键菜单仍未出现，请在 Finder 中打开用户目录后右键空白处。"
+            return L("If the context menu still does not appear, open your home folder in Finder and right-click the background.")
         case .disabled:
-            return "请在系统设置中启用 RightHere 的 Finder 扩展。"
+            return L("Enable the RightHere Finder extension in System Settings.")
         case .notRegistered:
-            return "当前安装包可能未正确签名，或系统尚未注册内嵌扩展。"
+            return L("This build may not be signed correctly, or the system has not registered the embedded extension yet.")
         case .unavailable(let detail):
             return detail
         }
@@ -1260,11 +1260,11 @@ enum FinderExtensionRegistrationState: Equatable {
     var launchAlertMessage: String {
         switch self {
         case .disabled:
-            return "RightHere 已安装，但 Finder 扩展还没有启用。请在系统设置中启用 RightHere，然后重启 Finder。"
+            return L("RightHere is installed, but its Finder extension is not enabled yet. Enable RightHere in System Settings, then restart Finder.")
         case .notRegistered:
-            return "RightHere 已安装，但系统没有发现它的 Finder 扩展。常见原因是安装了未签名/跳过签名的测试包。请换用已签名安装包，或用自己的 Apple Developer 账号重新构建。"
+            return L("RightHere is installed, but the system did not find its Finder extension. This usually means an unsigned or signature-skipped test build was installed. Use a signed installer, or rebuild with your own Apple Developer account.")
         case .unavailable(let detail):
-            return "RightHere 暂时无法读取 Finder 扩展状态。\n\n\(detail)"
+            return L("RightHere cannot read the Finder extension status right now.\n\n%@", detail)
         case .checking, .enabled:
             return ""
         }
@@ -1291,9 +1291,9 @@ enum FinderExtensionRegistrationState: Equatable {
     var settingsButtonTitle: String {
         switch self {
         case .disabled, .notRegistered:
-            return "扩展设置"
+            return L("Extension Settings")
         case .checking, .enabled, .unavailable:
-            return "打开扩展"
+            return L("Open Extensions")
         }
     }
 
@@ -1424,10 +1424,10 @@ enum FinderExtensionInspector {
     private static func unavailableMessage(for output: String) -> String {
         let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedOutput.localizedCaseInsensitiveContains("unauthorized discovery flag") {
-            return "系统暂时不允许 RightHere 读取 Finder 扩展列表。这不代表扩展不可用；请在系统偏好设置的“扩展”中确认 RightHere。"
+            return L("The system is not allowing RightHere to read the Finder extension list right now. This does not mean the extension is unavailable; confirm RightHere under Extensions in System Settings.")
         }
 
-        return trimmedOutput.isEmpty ? "系统暂时没有返回 Finder 扩展状态。" : trimmedOutput
+        return trimmedOutput.isEmpty ? L("The system did not return a Finder extension status.") : trimmedOutput
     }
 
     private static func runPlugInKit(arguments: [String]) -> (exitCode: Int32, output: String) {

@@ -146,11 +146,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.imageScaling = .scaleProportionallyDown
 
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "打开设置", action: #selector(openSettings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "打开模板文件夹", action: #selector(openTemplatesDirectory), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: L("Open Settings"), action: #selector(openSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: L("Open Templates Folder"), action: #selector(openTemplatesDirectory), keyEquivalent: ""))
         menu.addItem(buildHelpMenuItem())
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "退出 RightHere", action: #selector(quit), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L("Quit RightHere"), action: #selector(quit), keyEquivalent: "q"))
 
         assignTargets(in: menu)
 
@@ -182,17 +182,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func buildHelpMenuItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "帮助与反馈", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: L("Help & Feedback"), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
 
-        submenu.addItem(NSMenuItem(title: "检查更新...", action: #selector(checkForUpdatesFromMenu), keyEquivalent: "u"))
+        submenu.addItem(NSMenuItem(title: L("Check for Updates…"), action: #selector(checkForUpdatesFromMenu), keyEquivalent: "u"))
         submenu.addItem(.separator())
-        submenu.addItem(NSMenuItem(title: "反馈问题...", action: #selector(openFeedbackIssue), keyEquivalent: ""))
-        submenu.addItem(NSMenuItem(title: "打开项目主页", action: #selector(openProjectHome), keyEquivalent: ""))
-        submenu.addItem(NSMenuItem(title: "打开 GitHub Issues", action: #selector(openGitHubIssues), keyEquivalent: ""))
-        submenu.addItem(NSMenuItem(title: "复制诊断信息", action: #selector(copyDiagnosticInfo), keyEquivalent: ""))
+        submenu.addItem(NSMenuItem(title: L("Report an Issue…"), action: #selector(openFeedbackIssue), keyEquivalent: ""))
+        submenu.addItem(NSMenuItem(title: L("Open Project Home"), action: #selector(openProjectHome), keyEquivalent: ""))
+        submenu.addItem(NSMenuItem(title: L("Open GitHub Issues"), action: #selector(openGitHubIssues), keyEquivalent: ""))
+        submenu.addItem(NSMenuItem(title: L("Copy Diagnostic Info"), action: #selector(copyDiagnosticInfo), keyEquivalent: ""))
         submenu.addItem(.separator())
-        submenu.addItem(NSMenuItem(title: "打开扩展设置", action: #selector(openExtensionSettings), keyEquivalent: ""))
+        submenu.addItem(NSMenuItem(title: L("Open Extension Settings"), action: #selector(openExtensionSettings), keyEquivalent: ""))
 
         item.submenu = submenu
         return item
@@ -221,7 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "RightHere 设置"
+            window.title = L("RightHere Settings")
             window.contentViewController = NSHostingController(rootView: contentView)
             window.isReleasedWhenClosed = false
             settingsWindow = window
@@ -256,7 +256,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openFeedbackIssue() {
         openGitHubIssue(
-            title: "反馈：",
+            title: L("Feedback: "),
             body: """
             ## 问题描述
 
@@ -291,10 +291,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSPasteboard.general.setString(diagnosticSummary(), forType: .string)
 
         let alert = NSAlert()
-        alert.messageText = "诊断信息已复制"
-        alert.informativeText = "可以直接粘贴到 GitHub Issue 中。诊断信息不包含模板正文或用户文件内容。"
+        alert.messageText = L("Diagnostics Copied")
+        alert.informativeText = L("You can paste this straight into a GitHub issue. Diagnostics do not include template contents or your file contents.")
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "好的")
+        alert.addButton(withTitle: L("OK"))
         alert.runModal()
     }
 
@@ -315,7 +315,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if error != nil {
                 if isManual {
                     DispatchQueue.main.async {
-                        self.showUpdateErrorAlert(message: "无法连接到 GitHub Releases。请稍后再试，或直接打开项目页面查看。")
+                        self.showUpdateErrorAlert(message: L("Could not reach GitHub Releases. Try again later, or open the project page directly."))
                     }
                 }
                 return
@@ -324,7 +324,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let httpResponse = response as? HTTPURLResponse else {
                 if isManual {
                     DispatchQueue.main.async {
-                        self.showUpdateErrorAlert(message: "暂时没有读取到有效的 GitHub Release 信息。")
+                        self.showUpdateErrorAlert(message: L("No valid GitHub Release information was returned."))
                     }
                 }
                 return
@@ -342,7 +342,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard httpResponse.statusCode == 200, let data else {
                 if isManual {
                     DispatchQueue.main.async {
-                        self.showUpdateErrorAlert(message: "暂时没有读取到有效的 GitHub Release 信息。")
+                        self.showUpdateErrorAlert(message: L("No valid GitHub Release information was returned."))
                     }
                 }
                 return
@@ -370,7 +370,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } catch {
                 if isManual {
                     DispatchQueue.main.async {
-                        self.showUpdateErrorAlert(message: "更新信息解析失败，请稍后再试。")
+                        self.showUpdateErrorAlert(message: L("Could not parse the update information. Try again later."))
                     }
                 }
             }
@@ -379,13 +379,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showUpdateAvailableAlert(tagName: String, releaseName: String, releaseBody: String, htmlURLString: String) {
         let alert = NSAlert()
-        alert.messageText = "发现新版本 \(tagName)"
+        alert.messageText = L("New version available: %@", tagName)
         let summary = releaseBody.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedSummary = summary.count > 600 ? String(summary.prefix(600)) + "..." : summary
-        alert.informativeText = "当前版本：\(currentAppVersion())\n最新版本：\(releaseName)\n\n\(trimmedSummary)"
+        alert.informativeText = L("Current version: %1$@\nLatest version: %2$@\n\n%3$@", currentAppVersion(), releaseName, trimmedSummary)
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "打开下载页面")
-        alert.addButton(withTitle: "稍后")
+        alert.addButton(withTitle: L("Open Download Page"))
+        alert.addButton(withTitle: L("Later"))
 
         if alert.runModal() == .alertFirstButtonReturn {
             openURL(htmlURLString)
@@ -394,20 +394,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showNoUpdateAlert() {
         let alert = NSAlert()
-        alert.messageText = "当前已是最新版本"
-        alert.informativeText = "RightHere \(currentAppVersion()) 已经是 GitHub Releases 上的最新版本。"
+        alert.messageText = L("You are up to date")
+        alert.informativeText = L("RightHere %@ is the latest version on GitHub Releases.", currentAppVersion())
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "好的")
+        alert.addButton(withTitle: L("OK"))
         alert.runModal()
     }
 
     private func showNoReleaseAlert() {
         let alert = NSAlert()
-        alert.messageText = "暂时没有可用更新"
-        alert.informativeText = "还没有读取到 RightHere 的正式 GitHub Release。首次发布后，检查更新会根据 Releases 里的版本号判断是否有新版本。"
+        alert.messageText = L("No updates available yet")
+        alert.informativeText = L("No stable GitHub Release has been published for RightHere yet. After the first release, update checks compare version numbers from Releases.")
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "打开项目发布页")
-        alert.addButton(withTitle: "好的")
+        alert.addButton(withTitle: L("Open Releases Page"))
+        alert.addButton(withTitle: L("OK"))
 
         if alert.runModal() == .alertFirstButtonReturn {
             openURL("https://github.com/\(githubOwner)/\(githubRepo)/releases")
@@ -416,11 +416,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showUpdateErrorAlert(message: String) {
         let alert = NSAlert()
-        alert.messageText = "检查更新失败"
+        alert.messageText = L("Update check failed")
         alert.informativeText = message
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "打开项目发布页")
-        alert.addButton(withTitle: "好的")
+        alert.addButton(withTitle: L("Open Releases Page"))
+        alert.addButton(withTitle: L("OK"))
 
         if alert.runModal() == .alertFirstButtonReturn {
             openURL("https://github.com/\(githubOwner)/\(githubRepo)/releases")

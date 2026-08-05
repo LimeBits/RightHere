@@ -424,6 +424,69 @@ App 开关状态要按 App 逐个持久化，并在读取时和 `OpenHereApp.all
 
 ---
 
+## 坑 24：主 App 和扩展是两个 bundle，本地化必须共用同一份 catalog
+
+**背景**：`project.yml` 把 `RightHere/SharedDefaults.swift` 同时编进了主 App 和 extension 两个 target。模板显示名、新建文件名、快捷前往默认项、开发工具菜单项都定义在这个文件里。
+
+**风险**：`NSLocalizedString` 解析的是**调用方所在的 bundle**。如果给两个 target 各建一份 `.xcstrings`，同一个 key 在两处的翻译可能不一致，表现是设置页显示 `Word Document` 而右键菜单显示「Word 文档」，而且只在特定语言下暴露，极容易漏测。
+
+**解法**：只建一份 `RightHere/Localizable.xcstrings`，在 `project.yml` 里把**同一个文件路径**同时列进两个 target 的 sources：
+
+```yaml
+  RightHereExtension:
+    sources:
+      - path: RightHereExtension
+      - path: RightHere/SharedDefaults.swift
+      - path: RightHere/Localizable.xcstrings   # 与主 App 同一个文件
+```
+
+同一份源文件编进两个 bundle，key 分叉在结构上不可能发生，也不需要额外写校验脚本。
+
+验证方法（构建后两个 bundle 都要有两种语言）：
+
+```bash
+APP=/Applications/RightHere.app
+ls "$APP/Contents/Resources" | grep lproj
+ls "$APP/Contents/PlugIns/RightHereExtension.appex/Contents/Resources" | grep lproj
+```
+
+**共用 catalog 时的辅助函数**：不要用 `Bundle(for:)`，那会绑定到定义类所在的 framework。用 `Bundle.main`——它在主 App 里解析到 .app，在 extension 里解析到 .appex，正是需要的行为：
+
+```swift
+func L(_ key: String, _ comment: String = "") -> String {
+    NSLocalizedString(key, bundle: .main, comment: comment)
+}
+```
+
+---
+
+## 坑 25：English 用 key 兜底，en.lproj 里不会生成 Localizable.strings
+
+**现象**：把 `sourceLanguage` 设成 `en` 后，构建产物里 `en.lproj/` 只有 `Localizable.stringsdict`（复数规则），没有 `Localizable.strings`。第一次看会以为英文没打进去。
+
+**原因**：这是 String Catalog 的正常行为。source language 的字符串不需要单独存一份——`NSLocalizedString` 找不到条目时**返回 key 本身**，而 key 就是英文原文。
+
+**验证时要注意**：用 `localizedString(forKey:value:table:)` 测试时，`value` 传 `nil` 才是 `NSLocalizedString` 的真实语义（找不到就返回 key）。如果传 `"<MISSING>"`，英文全部会显示 MISSING，看起来像 bug 其实不是。
+
+只有复数形式必须在 `en.lproj` 里真实存在，因为英文有 one/other 两种形态，中文只有一种：
+
+```
+en:      Last Finder call: 1 second ago  /  5 seconds ago
+zh-Hans: 最近 Finder 调用：1 秒前        /  5 秒前
+```
+
+---
+
+## 坑 26：本地化模板名不会破坏老用户设置，但要确认持久化字段
+
+**结论**：`FileTemplate` 的 `CodingKeys` 只有 `fileExtension`，`displayName` 和 `defaultFileName` 都是计算属性；`disabledFileTypes` 存的也是扩展名数组。所以把这些名字改成本地化字符串**不需要数据迁移**，切换语言不会让模板勾选状态丢失。
+
+`ShortcutLocation` 不同——它**会**持久化 `displayName`。但 `getShortcutLocations()` 只在 `shortcutLocationsInitialized` 为 false 时才返回本地化的默认列表，已经保存过的记录原样从磁盘读回。因此已自定义名称的用户升级后保持原样，只有全新安装才看到本地化默认名。
+
+**教训**：给面向用户的字符串做本地化前，先确认它有没有被写进 UserDefaults。写进去的字段改成本地化值会导致「同一份数据在不同语言下语义不同」，那才需要迁移。
+
+---
+
 ## 快速调试流程
 
 ```bash

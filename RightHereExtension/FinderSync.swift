@@ -296,10 +296,10 @@ class FinderSync: FIFinderSync {
         mainMenu.autoenablesItems = false
 
         if !activeTemplates.isEmpty {
-            let newFileItem = NSMenuItem(title: "新建文件", action: nil, keyEquivalent: "")
+            let newFileItem = NSMenuItem(title: L("New File"), action: nil, keyEquivalent: "")
             newFileItem.isEnabled = true
 
-            let submenu = NSMenu(title: "新建文件")
+            let submenu = NSMenu(title: L("New File"))
             submenu.autoenablesItems = false
 
             for template in activeTemplates {
@@ -321,10 +321,10 @@ class FinderSync: FIFinderSync {
         }
 
         if let openHereDirectory, !activeOpenHereApps.isEmpty {
-            let openHereItem = NSMenuItem(title: "在此处打开", action: nil, keyEquivalent: "")
+            let openHereItem = NSMenuItem(title: L("Open Here"), action: nil, keyEquivalent: "")
             openHereItem.isEnabled = true
 
-            let submenu = NSMenu(title: "在此处打开")
+            let submenu = NSMenu(title: L("Open Here"))
             submenu.autoenablesItems = false
 
             for app in activeOpenHereApps {
@@ -346,10 +346,10 @@ class FinderSync: FIFinderSync {
         }
 
         if !activeShortcutLocations.isEmpty {
-            let shortcutItem = NSMenuItem(title: "快捷前往", action: nil, keyEquivalent: "")
+            let shortcutItem = NSMenuItem(title: L("Go To"), action: nil, keyEquivalent: "")
             shortcutItem.isEnabled = true
 
-            let submenu = NSMenu(title: "快捷前往")
+            let submenu = NSMenu(title: L("Go To"))
             submenu.autoenablesItems = false
 
             for location in activeShortcutLocations {
@@ -369,10 +369,10 @@ class FinderSync: FIFinderSync {
         }
 
         if !activeDevToolActions.isEmpty {
-            let devToolsItem = NSMenuItem(title: "开发工具", action: nil, keyEquivalent: "")
+            let devToolsItem = NSMenuItem(title: L("Dev Tools"), action: nil, keyEquivalent: "")
             devToolsItem.isEnabled = true
 
-            let submenu = NSMenu(title: "开发工具")
+            let submenu = NSMenu(title: L("Dev Tools"))
             submenu.autoenablesItems = false
 
             for action in activeDevToolActions {

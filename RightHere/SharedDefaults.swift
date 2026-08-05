@@ -1,6 +1,21 @@
 import AppKit
 import Foundation
 
+/// Looks up a localized string from the shared catalog.
+///
+/// This file is compiled into both the main app and the FinderSync extension,
+/// and `Localizable.xcstrings` is listed as a resource in both targets. Using
+/// `Bundle.main` therefore resolves to whichever bundle the caller runs in:
+/// the app bundle in the app, the .appex bundle in the extension.
+func L(_ key: String, _ comment: String = "") -> String {
+    NSLocalizedString(key, bundle: .main, comment: comment)
+}
+
+/// Formatted variant of `L(_:_:)`.
+func L(_ key: String, _ arguments: CVarArg...) -> String {
+    String(format: NSLocalizedString(key, bundle: .main, comment: ""), arguments: arguments)
+}
+
 public struct SharedDefaults {
     public static let groupIdentifier = "group.com.LimeBits.RightHere"
     
@@ -25,7 +40,7 @@ public struct SharedDefaults {
     public static let localShortcutLocationsKey = "localShortcutLocations"
     public static let shortcutLocationsInitializedKey = "shortcutLocationsInitialized"
     public static let localShortcutLocationsInitializedKey = "localShortcutLocationsInitialized"
-    // Legacy key name; now gates the whole "在此处打开" submenu, not just Terminal.
+    // Legacy key name; now gates the whole "Open Here" submenu, not just Terminal.
     public static let openInTerminalEnabledKey = "openInTerminalEnabled"
     public static let shortcutLocationsEnabledKey = "shortcutLocationsEnabled"
     public static let devToolsEnabledKey = "devToolsEnabled"
@@ -674,10 +689,10 @@ public struct SharedDefaults {
         guard let pw = getpwuid(getuid()) else { return [] }
         let homePath = String(cString: pw.pointee.pw_dir)
         let candidates: [(String, String)] = [
-            ("用户主目录", homePath),
-            ("下载", "\(homePath)/Downloads"),
-            ("文稿", "\(homePath)/Documents"),
-            ("桌面", "\(homePath)/Desktop")
+            (L("Home"), homePath),
+            (L("Downloads"), "\(homePath)/Downloads"),
+            (L("Documents"), "\(homePath)/Documents"),
+            (L("Desktop"), "\(homePath)/Desktop")
         ]
 
         return candidates.enumerated().map { index, item in
@@ -791,7 +806,8 @@ public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
 
     public var displayName: String {
         switch self {
-        case .terminal: return "终端"
+        // Only Terminal has a translatable name; the others are product names.
+        case .terminal: return L("Terminal")
         case .iTerm: return "iTerm"
         case .warp: return "Warp"
         case .vscode: return "VS Code"
@@ -846,7 +862,7 @@ public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-/// Per-app on/off state for the "在此处打开" submenu.
+/// Per-app on/off state for the "Open Here" submenu.
 public struct OpenHereAppSetting: Codable, Hashable, Identifiable {
     public let app: OpenHereApp
     public var isEnabled: Bool
@@ -870,11 +886,11 @@ public enum DevToolAction: String, CaseIterable, Identifiable, Codable {
 
     public var menuTitle: String {
         switch self {
-        case .fullPath: return "复制完整路径"
-        case .fileName: return "复制文件名"
-        case .fileNameWithoutExtension: return "复制不带扩展名文件名"
-        case .containingDirectoryPath: return "复制所在文件夹路径"
-        case .markdownLink: return "复制 Markdown 链接"
+        case .fullPath: return L("Copy Full Path")
+        case .fileName: return L("Copy File Name")
+        case .fileNameWithoutExtension: return L("Copy File Name Without Extension")
+        case .containingDirectoryPath: return L("Copy Containing Folder Path")
+        case .markdownLink: return L("Copy Markdown Link")
         }
     }
 
@@ -927,7 +943,7 @@ public enum DevToolAction: String, CaseIterable, Identifiable, Codable {
 
         switch self {
         case .containingDirectoryPath:
-            // Every target being a folder would just repeat 复制完整路径.
+            // Every target being a folder would just repeat Copy Full Path.
             return targets.contains { !DevToolAction.isDirectory($0) }
         case .fileNameWithoutExtension:
             return targets.contains { !$0.standardizedFileURL.pathExtension.isEmpty }
@@ -1017,25 +1033,25 @@ public struct FileTemplate: Identifiable, Hashable, Comparable, Codable {
 
     public var displayName: String {
         switch fileExtension {
-        case "txt": return "文本文件 (.txt)"
-        case "md": return "Markdown (.md)"
-        case "docx": return "Word 文档 (.docx)"
-        case "xlsx": return "Excel 工作表 (.xlsx)"
-        case "pptx": return "PowerPoint 演示文稿 (.pptx)"
-        case "rtf": return "富文本文件 (.rtf)"
-        default: return "\(fileExtension.uppercased()) 文件 (.\(fileExtension))"
+        case "txt": return L("Plain Text (.txt)")
+        case "md": return L("Markdown (.md)")
+        case "docx": return L("Word Document (.docx)")
+        case "xlsx": return L("Excel Worksheet (.xlsx)")
+        case "pptx": return L("PowerPoint Presentation (.pptx)")
+        case "rtf": return L("Rich Text (.rtf)")
+        default: return L("%1$@ File (.%2$@)", fileExtension.uppercased(), fileExtension)
         }
     }
 
     public var defaultFileName: String {
         switch fileExtension {
-        case "txt": return "新建文本文档"
-        case "md": return "新建 Markdown 文档"
-        case "docx": return "新建 Word 文档"
-        case "xlsx": return "新建 Excel 工作表"
-        case "pptx": return "新建 PowerPoint 演示文稿"
-        case "rtf": return "新建富文本文件"
-        default: return "新建 \(fileExtension.uppercased()) 文件"
+        case "txt": return L("New Text Document")
+        case "md": return L("New Markdown Document")
+        case "docx": return L("New Word Document")
+        case "xlsx": return L("New Excel Worksheet")
+        case "pptx": return L("New PowerPoint Presentation")
+        case "rtf": return L("New Rich Text Document")
+        default: return L("New %@ File", fileExtension.uppercased())
         }
     }
 
@@ -1069,27 +1085,7 @@ public enum FileType: String, CaseIterable, Identifiable {
     case pptx
     
     public var id: String { self.rawValue }
-    
-    public var displayName: String {
-        switch self {
-        case .txt: return "文本文件 (.txt)"
-        case .md: return "Markdown (.md)"
-        case .docx: return "Word 文档 (.docx)"
-        case .xlsx: return "Excel 工作表 (.xlsx)"
-        case .pptx: return "PowerPoint 演示文稿 (.pptx)"
-        }
-    }
-    
-    public var defaultFileName: String {
-        switch self {
-        case .txt: return "新建文本文档"
-        case .md: return "新建 Markdown 文档"
-        case .docx: return "新建 Word 文档"
-        case .xlsx: return "新建 Excel 工作表"
-        case .pptx: return "新建 PowerPoint 演示文稿"
-        }
-    }
-    
+
     public var fileExtension: String {
         return self.rawValue
     }

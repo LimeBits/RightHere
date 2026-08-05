@@ -1,0 +1,1280 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%1$@ File (.%2$@)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 文件 (.%2$@)"
+          }
+        }
+      }
+    },
+    "Add File or Folder": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加文件或文件夹"
+          }
+        }
+      }
+    },
+    "Add files, folders, or hidden paths to reach them from the Finder context menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加文件、文件夹或手动输入隐藏路径，之后可从 Finder 右键菜单快速前往。"
+          }
+        }
+      }
+    },
+    "Add frequently used files, folders, or hidden paths to reach them from the Finder context menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加常用文件、文件夹或隐藏路径，之后可从 Finder 右键菜单快速前往。"
+          }
+        }
+      }
+    },
+    "Advanced": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高级"
+          }
+        }
+      }
+    },
+    "Automatic Updates": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本更新"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        }
+      }
+    },
+    "Check GitHub Releases for the latest stable version now.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即检查 GitHub Release 上的最新正式版本。"
+          }
+        }
+      }
+    },
+    "Check Manually": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手动检查"
+          }
+        }
+      }
+    },
+    "Check for Updates": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检查更新"
+          }
+        }
+      }
+    },
+    "Check for Updates…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检查更新…"
+          }
+        }
+      }
+    },
+    "Check for new versions automatically. You can still check manually from the menu bar.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动检查新版本。仍可从菜单栏手动检查更新。"
+          }
+        }
+      }
+    },
+    "Context Menu": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右键菜单"
+          }
+        }
+      }
+    },
+    "Copy Containing Folder Path": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制所在文件夹路径"
+          }
+        }
+      }
+    },
+    "Copy Diagnostic Info": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制诊断信息"
+          }
+        }
+      }
+    },
+    "Copy Diagnostics": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制诊断"
+          }
+        }
+      }
+    },
+    "Copy File Name": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制文件名"
+          }
+        }
+      }
+    },
+    "Copy File Name Without Extension": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制不带扩展名文件名"
+          }
+        }
+      }
+    },
+    "Copy Full Path": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制完整路径"
+          }
+        }
+      }
+    },
+    "Copy Markdown Link": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制 Markdown 链接"
+          }
+        }
+      }
+    },
+    "Copy full paths, file names, or Markdown links from the context menu. Multiple selections produce one result per line.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右键菜单中复制完整路径、文件名或 Markdown 链接；多选时每行一个结果。"
+          }
+        }
+      }
+    },
+    "Copy the version, templates folder, and recent Finder call status for troubleshooting.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制版本、模板目录和最近 Finder 调用状态，方便排查。"
+          }
+        }
+      }
+    },
+    "Could not parse the update information. Try again later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新信息解析失败，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Could not reach GitHub Releases. Try again later, or open the project page directly.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法连接到 GitHub Releases。请稍后再试，或直接打开项目页面查看。"
+          }
+        }
+      }
+    },
+    "Current Version": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前版本"
+          }
+        }
+      }
+    },
+    "Current version: %1$@\nLatest version: %2$@\n\n%3$@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前版本：%1$@\n最新版本：%2$@\n\n%3$@"
+          }
+        }
+      }
+    },
+    "Custom Templates": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义模板"
+          }
+        }
+      }
+    },
+    "Debug builds have no Sparkle public key, so automatic checks are disabled to avoid false update failures. Manual checks still work.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debug 构建没有 Sparkle 公钥，自动检查已停用，避免误报更新失败。仍可手动检查。"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除"
+          }
+        }
+      }
+    },
+    "Desktop": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面"
+          }
+        }
+      }
+    },
+    "Dev Tools": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开发工具"
+          }
+        }
+      }
+    },
+    "Diagnostics": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断信息"
+          }
+        }
+      }
+    },
+    "Diagnostics Copied": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断信息已复制"
+          }
+        }
+      }
+    },
+    "Diagnostics do not include template contents or your file contents.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断信息不包含模板正文或用户文件内容。"
+          }
+        }
+      }
+    },
+    "Documents": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文稿"
+          }
+        }
+      }
+    },
+    "Downloads": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载"
+          }
+        }
+      }
+    },
+    "Enable the RightHere Finder extension in System Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在系统设置中启用 RightHere 的 Finder 扩展。"
+          }
+        }
+      }
+    },
+    "Enter Go To Path": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入快捷前往路径"
+          }
+        }
+      }
+    },
+    "Enter Path": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入路径"
+          }
+        }
+      }
+    },
+    "Excel Worksheet (.xlsx)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excel 工作表 (.xlsx)"
+          }
+        }
+      }
+    },
+    "Extension Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扩展设置"
+          }
+        }
+      }
+    },
+    "Feedback: ": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "反馈："
+          }
+        }
+      }
+    },
+    "Finder extension: checking": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder 扩展状态：正在检查"
+          }
+        }
+      }
+    },
+    "Finder extension: enabled": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder 扩展状态：已启用"
+          }
+        }
+      }
+    },
+    "Finder extension: not enabled": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder 扩展状态：未启用"
+          }
+        }
+      }
+    },
+    "Finder extension: not found by the system": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder 扩展状态：系统未发现 RightHere"
+          }
+        }
+      }
+    },
+    "Finder extension: status unavailable": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder 扩展状态：暂时不可读"
+          }
+        }
+      }
+    },
+    "Go To": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷前往"
+          }
+        }
+      }
+    },
+    "Help & Feedback": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帮助与反馈"
+          }
+        }
+      }
+    },
+    "Hidden paths and ~ are supported, for example ~/.zshrc, /etc/hosts, or ~/.codex.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持隐藏路径和 ~，例如 ~/.zshrc、/etc/hosts、~/.codex。"
+          }
+        }
+      }
+    },
+    "Home": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用户主目录"
+          }
+        }
+      }
+    },
+    "If the context menu still does not appear, open your home folder in Finder and right-click the background.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果右键菜单仍未出现，请在 Finder 中打开用户目录后右键空白处。"
+          }
+        }
+      }
+    },
+    "Last Finder call: %lld hours ago": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last Finder call: %lld hour ago"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last Finder call: %lld hours ago"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 Finder 调用：%lld 小时前"
+          }
+        }
+      }
+    },
+    "Last Finder call: %lld minutes ago": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last Finder call: %lld minute ago"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last Finder call: %lld minutes ago"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 Finder 调用：%lld 分钟前"
+          }
+        }
+      }
+    },
+    "Last Finder call: %lld seconds ago": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last Finder call: %lld second ago"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last Finder call: %lld seconds ago"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 Finder 调用：%lld 秒前"
+          }
+        }
+      }
+    },
+    "Last Finder call: just now": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 Finder 调用：刚刚"
+          }
+        }
+      }
+    },
+    "Last Finder call: not detected yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 Finder 调用：尚未检测到"
+          }
+        }
+      }
+    },
+    "Later": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍后"
+          }
+        }
+      }
+    },
+    "Markdown (.md)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Markdown (.md)"
+          }
+        }
+      }
+    },
+    "New %@ File": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建 %@ 文件"
+          }
+        }
+      }
+    },
+    "New Excel Worksheet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建 Excel 工作表"
+          }
+        }
+      }
+    },
+    "New File": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建文件"
+          }
+        }
+      }
+    },
+    "New Markdown Document": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建 Markdown 文档"
+          }
+        }
+      }
+    },
+    "New PowerPoint Presentation": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建 PowerPoint 演示文稿"
+          }
+        }
+      }
+    },
+    "New Rich Text Document": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建富文本文件"
+          }
+        }
+      }
+    },
+    "New Text Document": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建文本文档"
+          }
+        }
+      }
+    },
+    "New Word Document": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建 Word 文档"
+          }
+        }
+      }
+    },
+    "New version available: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发现新版本 %@"
+          }
+        }
+      }
+    },
+    "No Go To items yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有快捷前往项"
+          }
+        }
+      }
+    },
+    "No stable GitHub Release has been published for RightHere yet. After the first release, update checks compare version numbers from Releases.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有读取到 RightHere 的正式 GitHub Release。首次发布后，检查更新会根据 Releases 里的版本号判断是否有新版本。"
+          }
+        }
+      }
+    },
+    "No supported terminal or editor detected.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有检测到可用的终端或编辑器。"
+          }
+        }
+      }
+    },
+    "No templates are enabled, so New File will not appear in the Finder context menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前没有启用任何模板，Finder 右键菜单不会显示“新建文件”。"
+          }
+        }
+      }
+    },
+    "No templates found": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有找到可用模板"
+          }
+        }
+      }
+    },
+    "No updates available yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时没有可用更新"
+          }
+        }
+      }
+    },
+    "No valid GitHub Release information was returned.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时没有读取到有效的 GitHub Release 信息。"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确定"
+          }
+        }
+      }
+    },
+    "Open": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开"
+          }
+        }
+      }
+    },
+    "Open Download Page": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开下载页面"
+          }
+        }
+      }
+    },
+    "Open Extension Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开扩展设置"
+          }
+        }
+      }
+    },
+    "Open Extensions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开扩展"
+          }
+        }
+      }
+    },
+    "Open GitHub Issues": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开 GitHub Issues"
+          }
+        }
+      }
+    },
+    "Open Here": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在此处打开"
+          }
+        }
+      }
+    },
+    "Open Project Home": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开项目主页"
+          }
+        }
+      }
+    },
+    "Open Releases Page": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开项目发布页"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置"
+          }
+        }
+      }
+    },
+    "Open Templates Folder": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开模板文件夹"
+          }
+        }
+      }
+    },
+    "Open a terminal or editor at that folder when you right-click a folder or its background. Only apps installed on this Mac appear.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右键文件夹或文件夹空白处时，在该目录打开终端或编辑器。只显示本机已安装的 App。"
+          }
+        }
+      }
+    },
+    "Open the templates folder and add template.txt, template.md, or template.rtf.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请打开模板文件夹，添加 template.txt、template.md 或 template.rtf。"
+          }
+        }
+      }
+    },
+    "Plain Text (.txt)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文本文件 (.txt)"
+          }
+        }
+      }
+    },
+    "PowerPoint Presentation (.pptx)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PowerPoint 演示文稿 (.pptx)"
+          }
+        }
+      }
+    },
+    "Quit RightHere": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出 RightHere"
+          }
+        }
+      }
+    },
+    "Reading the system extension registration state.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在读取系统扩展注册状态。"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新"
+          }
+        }
+      }
+    },
+    "Rename": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重命名"
+          }
+        }
+      }
+    },
+    "Rename Go To Item": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重命名快捷前往项"
+          }
+        }
+      }
+    },
+    "Report an Issue…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "反馈问题…"
+          }
+        }
+      }
+    },
+    "Rich Text (.rtf)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "富文本文件 (.rtf)"
+          }
+        }
+      }
+    },
+    "RightHere %@ is the latest version on GitHub Releases.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RightHere %@ 已经是 GitHub Releases 上的最新版本。"
+          }
+        }
+      }
+    },
+    "RightHere Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RightHere 设置"
+          }
+        }
+      }
+    },
+    "RightHere cannot read the Finder extension status right now.\n\n%@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RightHere 暂时无法读取 Finder 扩展状态。\n\n%@"
+          }
+        }
+      }
+    },
+    "RightHere is installed, but its Finder extension is not enabled yet. Enable RightHere in System Settings, then restart Finder.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RightHere 已安装，但 Finder 扩展还没有启用。请在系统设置中启用 RightHere，然后重启 Finder。"
+          }
+        }
+      }
+    },
+    "RightHere is installed, but the system did not find its Finder extension. This usually means an unsigned or signature-skipped test build was installed. Use a signed installer, or rebuild with your own Apple Developer account.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RightHere 已安装，但系统没有发现它的 Finder 扩展。常见原因是安装了未签名/跳过签名的测试包。请换用已签名安装包，或用自己的 Apple Developer 账号重新构建。"
+          }
+        }
+      }
+    },
+    "RightHere is temporarily hidden from the Finder context menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RightHere 暂时不会在 Finder 右键菜单中显示。"
+          }
+        }
+      }
+    },
+    "Select the templates to show in the Finder context menu. Add templates using names like template.rtf.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "勾选要显示在 Finder 右键菜单中的模板。使用 template.rtf 这样的命名添加模板。"
+          }
+        }
+      }
+    },
+    "Show in Finder": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Finder 中显示"
+          }
+        }
+      }
+    },
+    "System Extension Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统扩展设置"
+          }
+        }
+      }
+    },
+    "Templates": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模板"
+          }
+        }
+      }
+    },
+    "Terminal": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "终端"
+          }
+        }
+      }
+    },
+    "The system did not return a Finder extension status.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统暂时没有返回 Finder 扩展状态。"
+          }
+        }
+      }
+    },
+    "The system is not allowing RightHere to read the Finder extension list right now. This does not mean the extension is unavailable; confirm RightHere under Extensions in System Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统暂时不允许 RightHere 读取 Finder 扩展列表。这不代表扩展不可用；请在系统偏好设置的“扩展”中确认 RightHere。"
+          }
+        }
+      }
+    },
+    "This build may not be signed correctly, or the system has not registered the embedded extension yet.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前安装包可能未正确签名，或系统尚未注册内嵌扩展。"
+          }
+        }
+      }
+    },
+    "Tools": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工具"
+          }
+        }
+      }
+    },
+    "Turning this off removes New File from the Finder context menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭后 Finder 右键菜单里的“新建文件”会消失。"
+          }
+        }
+      }
+    },
+    "Unknown Version": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知版本"
+          }
+        }
+      }
+    },
+    "Unverified": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未验证"
+          }
+        }
+      }
+    },
+    "Update check failed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检查更新失败"
+          }
+        }
+      }
+    },
+    "Updates": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新"
+          }
+        }
+      }
+    },
+    "Useful for checking whether the Finder extension is enabled. Some macOS versions only open the main System Settings page.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用于排查 Finder 扩展启用状态；不同 macOS 版本可能只打开系统设置主页。"
+          }
+        }
+      }
+    },
+    "Versions 0.1.10 and 0.1.11 may fail their first self-replacement. After installing 0.1.12 manually, later updates use the new Sparkle installer permissions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "旧版 0.1.10 / 0.1.11 可能无法完成首次自我替换；手动安装 0.1.12 后，后续更新会使用新的 Sparkle 安装权限。"
+          }
+        }
+      }
+    },
+    "Word Document (.docx)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Word 文档 (.docx)"
+          }
+        }
+      }
+    },
+    "You are up to date": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前已是最新版本"
+          }
+        }
+      }
+    },
+    "You can paste this straight into a GitHub issue. Diagnostics do not include template contents or your file contents.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以直接粘贴到 GitHub Issue 中。诊断信息不包含模板正文或用户文件内容。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

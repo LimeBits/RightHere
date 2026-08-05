@@ -3,6 +3,10 @@ options:
   bundleIdPrefix: com.LimeBits
   deploymentTarget:
     macOS: "12.0"
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_EMIT_LOC_STRINGS: YES
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
@@ -23,8 +27,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHere/Info.plist
         SPARKLE_PUBLIC_ED_KEY: ""
-        CURRENT_PROJECT_VERSION: "18"
-        MARKETING_VERSION: "0.3.1"
+        CURRENT_PROJECT_VERSION: "19"
+        MARKETING_VERSION: "0.4.0"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -59,6 +63,10 @@ targets:
       - path: RightHereExtension
       - path: RightHere/SharedDefaults.swift
       - path: RightHere/TemplateAssets.swift
+      # Same catalog file as the main app: SharedDefaults.swift is compiled into
+      # both targets, so both bundles need the identical strings. Sharing one
+      # source file makes key drift between them impossible.
+      - path: RightHere/Localizable.xcstrings
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.LimeBits.RightHere.Extension
@@ -69,8 +77,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "18"
-        MARKETING_VERSION: "0.3.1"
+        CURRENT_PROJECT_VERSION: "19"
+        MARKETING_VERSION: "0.4.0"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:
