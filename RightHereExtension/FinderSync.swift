@@ -39,6 +39,7 @@ class FinderSync: FIFinderSync {
     private var isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
     private var areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
     private var areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+    private var areMenuIconsEnabled = SharedDefaults.areMenuIconsEnabled()
     private var openHereAppSettings = SharedDefaults.getOpenHereAppSettings()
     private var shortcutLocations = SharedDefaults.getShortcutLocations()
     private var pendingMenuActions: [Int: PendingMenuAction] = [:]
@@ -74,6 +75,9 @@ class FinderSync: FIFinderSync {
     }
 
     @objc private func settingsChanged(_ notification: Notification) {
+        // 同 reloadTemplatesFromSharedState：先落盘同步，再读开关值。
+        SharedDefaults.sharedSuite?.synchronize()
+
         if let data = notification.userInfo?["templateRecords"] as? Data,
            let records = try? JSONDecoder().decode([TemplateRecord].self, from: data) {
             templateRecordsByExtension = Dictionary(
@@ -99,6 +103,7 @@ class FinderSync: FIFinderSync {
         isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
         areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+        areMenuIconsEnabled = SharedDefaults.areMenuIconsEnabled()
         if let data = notification.userInfo?["shortcutLocations"] as? Data,
            let locations = try? JSONDecoder().decode([ShortcutLocation].self, from: data) {
             shortcutLocations = locations.map { $0.normalized() }.sorted()
@@ -130,6 +135,9 @@ class FinderSync: FIFinderSync {
     }
 
     private func reloadTemplatesFromSharedState() {
+        // 扩展是独立进程，UserDefaults 跨进程写入后内存缓存不会自动更新；
+        // synchronize() 强制从磁盘重新读取，确保拿到主 app 最新写入的值。
+        SharedDefaults.sharedSuite?.synchronize()
         templateRecordsByExtension = Dictionary(
             uniqueKeysWithValues: SharedDefaults.getAvailableFileTemplates().compactMap { template in
                 SharedDefaults.getTemplateRecord(for: template).map { (template.fileExtension, $0) }
@@ -140,6 +148,7 @@ class FinderSync: FIFinderSync {
         isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
         areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+        areMenuIconsEnabled = SharedDefaults.areMenuIconsEnabled()
         openHereAppSettings = SharedDefaults.getOpenHereAppSettings()
         shortcutLocations = SharedDefaults.getShortcutLocations()
     }
@@ -218,6 +227,154 @@ class FinderSync: FIFinderSync {
     }
 
     // MARK: - Finder Sync Menu
+
+    /// 菜单图标的统一边长（点）。SF Symbols 的自然宽高比各不相同，
+    /// 直接交给菜单渲染会被非等比拉伸（folder 变方、play.rectangle 变长条）。
+    private static let menuIconSide: CGFloat = 16
+
+    /// 把 symbol 按原比例缩放并居中绘制到正方形画布上。
+    /// 外框统一为正方形，菜单就没有非等比拉伸的余地；
+    /// glyph 自身保留自然比例（扇形图标依旧是扇的，只是上下多了透明留白）。
+    private func squaredIconImage(_ symbol: NSImage) -> NSImage {
+        let side = Self.menuIconSide
+        let natural = symbol.size
+        guard natural.width > 0, natural.height > 0 else { return symbol }
+
+        let scale = min(side / natural.width, side / natural.height)
+        let drawSize = NSSize(width: natural.width * scale, height: natural.height * scale)
+        let origin = NSPoint(x: (side - drawSize.width) / 2, y: (side - drawSize.height) / 2)
+
+        // 两种基于 AppKit 绘图上下文的方案（lockFocus 和 NSGraphicsContext(bitmapImageRep:)）
+        // 在 Finder 扩展进程里都静默失败了，图层都是空的。改用完全不走 AppKit 绘图
+        // 路径的纯 CoreGraphics 方案：先拿到 symbol 的 CGImage 光栅，再用 CGContext
+        // 手工合成到正方形画布上，整个过程不依赖任何当前图形上下文。
+        var proposedRect = NSRect(origin: .zero, size: natural)
+        guard let sourceCGImage = symbol.cgImage(forProposedRect: &proposedRect, context: nil, hints: nil) else {
+            return symbol
+        }
+
+        let pixelScale: CGFloat = 2 // Retina
+        let pixelSide = Int(side * pixelScale)
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(
+                data: nil,
+                width: pixelSide,
+                height: pixelSide,
+                bitsPerComponent: 8,
+                bytesPerRow: 0,
+                space: colorSpace,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              ) else { return symbol }
+
+        context.interpolationQuality = .high
+        let drawRect = CGRect(
+            x: origin.x * pixelScale,
+            y: origin.y * pixelScale,
+            width: drawSize.width * pixelScale,
+            height: drawSize.height * pixelScale
+        )
+        context.draw(sourceCGImage, in: drawRect)
+
+        guard let outputCGImage = context.makeImage() else { return symbol }
+        return NSImage(cgImage: outputCGImage, size: NSSize(width: side, height: side))
+    }
+
+    private func menuSymbolImage(systemName: String) -> NSImage? {
+        guard let symbol = NSImage(systemSymbolName: systemName, accessibilityDescription: nil) else {
+            return nil
+        }
+        symbol.isTemplate = true
+        let image = squaredIconImage(symbol)
+        // 画布同样需要标记为 template，才会跟随菜单文字颜色（包含高亮反白）
+        image.isTemplate = true
+        return image
+    }
+
+    /// 彩色 SF Symbol，用于模板子菜单；不设 isTemplate，以保留颜色渲染
+    private func coloredSymbolImage(systemName: String, color: NSColor) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(paletteColors: [color])
+        guard let symbol = NSImage(systemSymbolName: systemName, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config) else { return nil }
+        return squaredIconImage(symbol)
+    }
+
+    private func menuIcon(systemName: String) -> NSImage? {
+        guard areMenuIconsEnabled else { return nil }
+        return menuSymbolImage(systemName: systemName)
+    }
+
+    private func templateMenuIcon(ext: String) -> NSImage? {
+        guard areMenuIconsEnabled else { return nil }
+        // 对齐设置页 getIcon / getIconColor 的映射，使用彩色渲染
+        let symbolName: String
+        let color: NSColor
+        switch ext.lowercased() {
+        case "txt":
+            symbolName = "doc.text"; color = .secondaryLabelColor
+        case "md":
+            symbolName = "arrow.down.doc"
+            color = NSColor(calibratedRed: 0.18, green: 0.67, blue: 0.73, alpha: 1.0)
+        case "rtf", "docx", "doc":
+            symbolName = "doc.richtext"; color = .systemBlue
+        case "xlsx", "xls", "csv":
+            symbolName = "tablecells"; color = .systemGreen
+        case "pptx", "ppt":
+            symbolName = "play.rectangle"; color = .systemOrange
+        case "json", "yaml", "yml", "toml":
+            symbolName = "curlybraces"; color = .systemPurple
+        case "swift":
+            symbolName = "swift"; color = .systemPurple
+        case "py":
+            symbolName = "chevron.left.forwardslash.chevron.right"; color = .systemPurple
+        // 其余代码类文件 — 单色兜底
+        case "js", "ts", "rb", "go", "rs", "c", "cpp", "h", "java", "kt",
+             "m", "mm", "php", "cs", "scala", "r", "lua", "dart":
+            symbolName = "doc.text"; color = .secondaryLabelColor
+        case "sh", "bash", "zsh", "fish":
+            symbolName = "terminal"; color = .secondaryLabelColor
+        case "html", "htm", "xml", "svg":
+            symbolName = "globe"; color = .secondaryLabelColor
+        case "pdf":
+            symbolName = "doc.fill"; color = .secondaryLabelColor
+        default:
+            symbolName = "doc"; color = .secondaryLabelColor
+        }
+        return coloredSymbolImage(systemName: symbolName, color: color)
+    }
+
+    /// 读取 App Bundle 的真实图标，用于 Open Here 子菜单
+    private func openHereIcon(for app: OpenHereApp) -> NSImage? {
+        guard areMenuIconsEnabled else { return nil }
+        guard let appURL = app.installedApplicationURL() else {
+            return menuIcon(systemName: "terminal")
+        }
+        // App 图标本身是方的，走同一归一化只为与 SF Symbol 图标尺寸对齐
+        return squaredIconImage(NSWorkspace.shared.icon(forFile: appURL.path))
+    }
+
+    private func shortcutMenuIcon(for location: ShortcutLocation) -> NSImage? {
+        guard areMenuIconsEnabled else { return nil }
+        let symbolName: String
+        switch location.kind {
+        case .directory: symbolName = "folder"
+        case .file: symbolName = "doc"
+        case .unknown: symbolName = "questionmark.square"
+        }
+        return menuSymbolImage(systemName: symbolName)
+    }
+
+    private func devToolMenuIcon(for action: DevToolAction) -> NSImage? {
+        guard areMenuIconsEnabled else { return nil }
+        let symbolName: String
+        switch action {
+        case .fullPath: symbolName = "point.bottomleft.forward.to.point.topright.scurvepath.fill"
+        case .fileName: symbolName = "doc.badge.ellipsis"
+        case .fileNameWithoutExtension: symbolName = "doc"
+        case .containingDirectoryPath: symbolName = "folder"
+        case .markdownLink: symbolName = "link"
+        }
+        return menuSymbolImage(systemName: symbolName)
+    }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
         updateHeartbeat()
@@ -309,6 +466,7 @@ class FinderSync: FIFinderSync {
         if !activeTemplates.isEmpty {
             let newFileItem = NSMenuItem(title: L("New File"), action: nil, keyEquivalent: "")
             newFileItem.isEnabled = true
+            newFileItem.image = menuIcon(systemName: "doc.badge.plus")
 
             let submenu = NSMenu(title: L("New File"))
             submenu.autoenablesItems = false
@@ -317,6 +475,7 @@ class FinderSync: FIFinderSync {
                 let item = NSMenuItem(title: template.displayName, action: #selector(createNewFile(_:)), keyEquivalent: "")
                 item.target = self
                 item.isEnabled = true
+                item.image = templateMenuIcon(ext: template.fileExtension)
                 item.tag = nextActionTag()
                 pendingMenuActions[item.tag] = PendingMenuAction(
                     template: template,
@@ -334,6 +493,7 @@ class FinderSync: FIFinderSync {
         if let openHereDirectory, !activeOpenHereApps.isEmpty {
             let openHereItem = NSMenuItem(title: L("Open Here"), action: nil, keyEquivalent: "")
             openHereItem.isEnabled = true
+            openHereItem.image = menuIcon(systemName: "terminal")
 
             let submenu = NSMenu(title: L("Open Here"))
             submenu.autoenablesItems = false
@@ -342,6 +502,7 @@ class FinderSync: FIFinderSync {
                 let item = NSMenuItem(title: app.displayName, action: #selector(openHere(_:)), keyEquivalent: "")
                 item.target = self
                 item.isEnabled = true
+                item.image = openHereIcon(for: app)
                 item.tag = nextActionTag()
                 pendingOpenHereActions[item.tag] = PendingOpenHereAction(
                     app: app,
@@ -359,6 +520,7 @@ class FinderSync: FIFinderSync {
         if !activeShortcutLocations.isEmpty {
             let shortcutItem = NSMenuItem(title: L("Go To"), action: nil, keyEquivalent: "")
             shortcutItem.isEnabled = true
+            shortcutItem.image = menuIcon(systemName: "bookmark")
 
             let submenu = NSMenu(title: L("Go To"))
             submenu.autoenablesItems = false
@@ -367,6 +529,7 @@ class FinderSync: FIFinderSync {
                 let item = NSMenuItem(title: location.resolvedDisplayName, action: #selector(openShortcutLocation(_:)), keyEquivalent: "")
                 item.target = self
                 item.isEnabled = true
+                item.image = shortcutMenuIcon(for: location)
                 item.tag = nextActionTag()
                 pendingShortcutActions[item.tag] = PendingShortcutAction(
                     location: location,
@@ -382,6 +545,7 @@ class FinderSync: FIFinderSync {
         if !activeDevToolActions.isEmpty {
             let devToolsItem = NSMenuItem(title: L("Dev Tools"), action: nil, keyEquivalent: "")
             devToolsItem.isEnabled = true
+            devToolsItem.image = menuIcon(systemName: "hammer")
 
             let submenu = NSMenu(title: L("Dev Tools"))
             submenu.autoenablesItems = false
@@ -390,6 +554,7 @@ class FinderSync: FIFinderSync {
                 let item = NSMenuItem(title: action.menuTitle, action: #selector(copyDevToolValue(_:)), keyEquivalent: "")
                 item.target = self
                 item.isEnabled = true
+                item.image = devToolMenuIcon(for: action)
                 item.tag = nextActionTag()
                 pendingDevToolActions[item.tag] = PendingDevToolAction(
                     action: action,

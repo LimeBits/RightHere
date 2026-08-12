@@ -181,6 +181,7 @@ public struct SharedDefaults {
     public static let openInTerminalEnabledKey = "openInTerminalEnabled"
     public static let shortcutLocationsEnabledKey = "shortcutLocationsEnabled"
     public static let devToolsEnabledKey = "devToolsEnabled"
+    public static let menuIconsEnabledKey = "menuIconsEnabled"
     public static let openHereAppsKey = "openHereApps"
     public static let localOpenHereAppsKey = "localOpenHereApps"
     public static let openHereAppsInitializedKey = "openHereAppsInitialized"
@@ -381,6 +382,24 @@ public struct SharedDefaults {
         notifyLocalSettingsChanged()
     }
 
+    public static func areMenuIconsEnabled() -> Bool {
+        if let sharedSuite, sharedSuite.object(forKey: menuIconsEnabledKey) != nil {
+            return sharedSuite.bool(forKey: menuIconsEnabledKey)
+        }
+        if UserDefaults.standard.object(forKey: menuIconsEnabledKey) != nil {
+            return UserDefaults.standard.bool(forKey: menuIconsEnabledKey)
+        }
+        return true
+    }
+
+    public static func setMenuIconsEnabled(_ isEnabled: Bool) {
+        sharedSuite?.set(isEnabled, forKey: menuIconsEnabledKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(isEnabled, forKey: menuIconsEnabledKey)
+        notifySettingsChanged()
+        notifyLocalSettingsChanged()
+    }
+
     /// Reads from `UserDefaults.standard` first: the extension keeps a local copy
     /// so that `L()` never has to touch the App Group container on a menu lookup.
     public static func getPreferredLanguage() -> RightHereLanguage {
@@ -460,12 +479,39 @@ public struct SharedDefaults {
         from defaults: UserDefaults?,
         key: String
     ) -> [OpenHereAppSetting] {
-        guard let data = defaults?.data(forKey: key),
-              let settings = try? JSONDecoder().decode([OpenHereAppSetting].self, from: data) else {
+        guard let data = defaults?.data(forKey: key) else { return [] }
+
+        if let settings = try? JSONDecoder().decode([OpenHereAppSetting].self, from: data) {
+            return settings
+        }
+
+        // A single unknown app (one dropped from the enum in a later version)
+        // would otherwise fail the whole array and silently wipe every choice.
+        // Decode leniently instead, keeping the entries we still recognise.
+        guard let rows = try? JSONDecoder().decode([LenientOpenHereAppSetting].self, from: data) else {
             return []
         }
 
-        return settings
+        return rows.compactMap(\.setting)
+    }
+
+    /// Tolerates app identifiers this build no longer knows about.
+    private struct LenientOpenHereAppSetting: Decodable {
+        let setting: OpenHereAppSetting?
+
+        private enum CodingKeys: String, CodingKey {
+            case app
+            case isEnabled
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let rawApp = try container.decode(String.self, forKey: .app)
+            let isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
+            setting = OpenHereApp(rawValue: rawApp).map {
+                OpenHereAppSetting(app: $0, isEnabled: isEnabled)
+            }
+        }
     }
 
     private static func saveOpenHereAppSettings(
@@ -1018,6 +1064,8 @@ public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
     case warp
     case vscode
     case cursor
+    case zed
+    case chatgpt
 
     public var id: String { rawValue }
 
@@ -1029,6 +1077,8 @@ public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
         case .warp: return "Warp"
         case .vscode: return "VS Code"
         case .cursor: return "Cursor"
+        case .zed: return "Zed"
+        case .chatgpt: return "ChatGPT"
         }
     }
 
@@ -1039,6 +1089,8 @@ public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
         case .warp: return "dev.warp.Warp-Stable"
         case .vscode: return "com.microsoft.VSCode"
         case .cursor: return "com.todesktop.230313mzl4w4u92"
+        case .zed: return "dev.zed.Zed"
+        case .chatgpt: return "com.openai.codex"
         }
     }
 
@@ -1056,18 +1108,32 @@ public enum OpenHereApp: String, CaseIterable, Identifiable, Codable {
         OpenHereApp.allCases.firstIndex(of: self) ?? 0
     }
 
+    /// Known install path as a fallback when Launch Services doesn't answer inside the sandbox.
+    private var fallbackApplicationPath: String? {
+        switch self {
+        case .terminal:  return "/System/Applications/Utilities/Terminal.app"
+        case .vscode:    return "/Applications/Visual Studio Code.app"
+        case .cursor:    return "/Applications/Cursor.app"
+        case .warp:      return "/Applications/Warp.app"
+        case .iTerm:     return "/Applications/iTerm.app"
+        case .zed:       return "/Applications/Zed.app"
+        case .chatgpt:   return "/Applications/ChatGPT.app"
+        }
+    }
+
     /// Resolves the installed app bundle, or nil when the app is not present.
     public func installedApplicationURL() -> URL? {
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) {
             return url
         }
 
-        // Terminal lives outside /Applications and older systems may not answer
-        // the bundle-identifier lookup for it.
-        if self == .terminal {
-            let fallback = URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app")
-            if FileManager.default.fileExists(atPath: fallback.path) {
-                return fallback
+        // Fallback: check the well-known path directly.
+        // NSWorkspace bundle-ID lookup can silently fail inside the app sandbox
+        // for apps that Launch Services hasn't freshly indexed in this process.
+        if let path = fallbackApplicationPath {
+            let url = URL(fileURLWithPath: path)
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
             }
         }
 

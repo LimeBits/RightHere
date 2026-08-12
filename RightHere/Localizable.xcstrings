@@ -554,6 +554,26 @@
         }
       }
     },
+    "Menu Icons": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单图标"
+          }
+        }
+      }
+    },
+    "Show icons next to items in the Finder context menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Finder 右键菜单的每个菜单项旁边显示图标。"
+          }
+        }
+      }
+    },
     "Last Finder call: %lld hours ago": {
       "localizations": {
         "en": {

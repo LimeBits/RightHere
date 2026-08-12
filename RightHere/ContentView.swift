@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var isOpenInTerminalEnabled = true
     @State private var areShortcutLocationsEnabled = true
     @State private var areDevToolsEnabled = true
+    @State private var areMenuIconsEnabled = true
     @State private var openHereAppSettings: [OpenHereAppSetting] = []
     @State private var shortcutLocations: [ShortcutLocation] = []
     @State private var preferredLanguage: RightHereLanguage = .system
@@ -162,6 +163,39 @@ struct ContentView: View {
                 set: { isEnabled in
                     areDevToolsEnabled = isEnabled
                     SharedDefaults.setDevToolsEnabled(isEnabled)
+                }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+        .cornerRadius(6)
+    }
+
+    private var menuIconsCard: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "sparkles")
+                .foregroundColor(.secondary)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L("Menu Icons"))
+                    .font(.system(size: 12, weight: .semibold))
+                Text(L("Show icons next to items in the Finder context menu."))
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            Toggle("", isOn: Binding(
+                get: { areMenuIconsEnabled },
+                set: { isEnabled in
+                    areMenuIconsEnabled = isEnabled
+                    SharedDefaults.setMenuIconsEnabled(isEnabled)
                 }
             ))
             .toggleStyle(.switch)
@@ -441,64 +475,68 @@ struct ContentView: View {
     }
 
     private var advancedSettingsTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            languageCard
-            finderExtensionStatusView
-            extensionControlView
+        // Six cards no longer fit the window height, so this tab scrolls as a
+        // whole (same reasoning as the Tools tab).
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 12) {
+                languageCard
+                finderExtensionStatusView
+                extensionControlView
+                menuIconsCard
 
-            HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "gearshape")
-                    .foregroundColor(.secondary)
-                    .frame(width: 18)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L("System Extension Settings"))
-                        .font(.system(size: 12, weight: .semibold))
-                    Text(L("Useful for checking whether the Finder extension is enabled. Some macOS versions only open the main System Settings page."))
-                        .font(.system(size: 11))
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "gearshape")
                         .foregroundColor(.secondary)
+                        .frame(width: 18)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L("System Extension Settings"))
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(L("Useful for checking whether the Finder extension is enabled. Some macOS versions only open the main System Settings page."))
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Button(action: openSystemExtensionSettings) {
+                        Label(L("Open Extension Settings"), systemImage: "gearshape")
+                    }
+                    .font(.system(size: 11))
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+                .cornerRadius(6)
 
-                Spacer(minLength: 8)
-
-                Button(action: openSystemExtensionSettings) {
-                    Label(L("Open Extension Settings"), systemImage: "gearshape")
-                }
-                .font(.system(size: 11))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
-            .cornerRadius(6)
-
-            HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "doc.on.clipboard")
-                    .foregroundColor(.secondary)
-                    .frame(width: 18)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L("Diagnostics"))
-                        .font(.system(size: 12, weight: .semibold))
-                    Text(L("Copy the version, templates folder, and recent Finder call status for troubleshooting."))
-                        .font(.system(size: 11))
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "doc.on.clipboard")
                         .foregroundColor(.secondary)
-                }
+                        .frame(width: 18)
 
-                Spacer(minLength: 8)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L("Diagnostics"))
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(L("Copy the version, templates folder, and recent Finder call status for troubleshooting."))
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
 
-                Button(action: copyDiagnostics) {
-                    Label(L("Copy Diagnostics"), systemImage: "doc.on.doc")
+                    Spacer(minLength: 8)
+
+                    Button(action: copyDiagnostics) {
+                        Label(L("Copy Diagnostics"), systemImage: "doc.on.doc")
+                    }
+                    .font(.system(size: 11))
                 }
-                .font(.system(size: 11))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+                .cornerRadius(6)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
-            .cornerRadius(6)
-
-            Spacer(minLength: 0)
+            .padding(.top, 10)
+            .padding(.bottom, 4)
         }
-        .padding(.top, 10)
     }
 
     private func templateRow(_ template: FileTemplate) -> some View {
@@ -885,6 +923,7 @@ struct ContentView: View {
         self.isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         self.areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
         self.areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
+        self.areMenuIconsEnabled = SharedDefaults.areMenuIconsEnabled()
         self.openHereAppSettings = SharedDefaults.getLocalOpenHereAppSettings()
         self.shortcutLocations = SharedDefaults.getLocalShortcutLocations()
         self.preferredLanguage = SharedDefaults.getPreferredLanguage()
