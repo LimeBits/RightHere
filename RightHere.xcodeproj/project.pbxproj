@@ -315,7 +315,7 @@
 				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere;
 				SDKROOT = macosx;
-				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_PUBLIC_ED_KEY = "7Scn9pJUfJ6DGUvc1HuUzejfZK1dNFYRt1/BKu6tU+M=";
 			};
 			name = Release;
 		};
@@ -460,7 +460,7 @@
 				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere;
 				SDKROOT = macosx;
-				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_PUBLIC_ED_KEY = "7Scn9pJUfJ6DGUvc1HuUzejfZK1dNFYRt1/BKu6tU+M=";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 			};
 			name = Debug;

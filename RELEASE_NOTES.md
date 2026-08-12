@@ -1,23 +1,17 @@
-# RightHere 0.4.0
+# RightHere 0.4.1
 
 ## What's New
 
-- **English interface.** RightHere now follows your system language: Chinese systems stay in Chinese, everything else shows English. No in-app switch needed.
-- **New documents are named in your language.** In English, Finder creates `New Text Document.txt` and `New Excel Worksheet.xlsx`. Duplicate names still get a `(2)` suffix.
-- Context menu now reads `New File` / `Open Here` / `Go To` / `Dev Tools`.
-- Built-in Go To entries appear as `Home` / `Downloads` / `Documents` / `Desktop`.
-
-Upgrading keeps your settings. Enabled templates are stored by file extension, so switching languages never loses your selection, and Go To names you already customized are preserved.
+- **Menu icons.** Every menu item now shows an icon. New File submenu displays colorful icons matching document types (Text, Markdown, Word, Excel, PowerPoint, etc.), and Open Here submenu shows actual app icons, making each action instantly recognizable.
+- **Toggle menu icons.** A new Menu Icons switch in Settings → Advanced lets you hide all menu icons and return to a text-only style whenever you prefer.
+- **More editors.** Open Here now supports Zed and ChatGPT (formerly Codex), alongside Terminal, iTerm, Warp, VS Code, and Cursor. Only apps installed on your Mac will appear.
 
 ---
 
-# RightHere 0.4.0（中文）
+# RightHere 0.4.1（中文）
 
 ## 新增
 
-- **支持英文界面。** 界面语言跟随系统语言，中文系统显示中文，其他语言显示英文，无需在 App 内切换。
-- **新建的文档名称跟随语言。** 英文环境下创建 `New Text Document.txt`、`New Excel Worksheet.xlsx`；中文环境保持「新建文本文档.txt」。重名仍然追加 `(2)`。
-- 右键菜单文案对齐 macOS 术语：`New File` / `Open Here` / `Go To` / `Dev Tools`。
-- 「快捷前往」内置默认项在英文环境下显示为 `Home` / `Downloads` / `Documents` / `Desktop`。
-
-升级不影响已有设置。模板启用状态按扩展名存储，切换语言不会丢失勾选；已自定义的「快捷前往」名称原样保留。
+- **右键菜单图标。** 每个菜单选项前面现在都会显示图标，新建文件的子选项会根据文件类型显示对应的彩色图标（文本、Markdown、Word、Excel、PPT 等），「在此处打开」的子选项会显示对应 App 的真实图标，让菜单一眼就能看清楚每个操作是什么。
+- **菜单图标开关。** 在设置页「高级」标签下新增「菜单图标」开关，可以随时关闭菜单图标，让右键菜单回到纯文字样式。
+- **更多编辑器支持。**「在此处打开」新增支持 Zed 和 ChatGPT（原 Codex），与已有的终端、iTerm、Warp、VS Code、Cursor 并列显示，只有本机已安装的 App 才会出现。
