@@ -31,6 +31,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         consumePendingShortcutOpenRequest()
         configureStatusItem()
         observeLanguageChanges()
+        openSettingsOnFirstLaunch()
+    }
+
+    /// 首次启动时自动打开设置窗口，让用户知道 App 已成功运行。
+    /// 之后的每次启动不再自动打开，由用户通过状态栏图标主动触发。
+    private func openSettingsOnFirstLaunch() {
+        let key = "hasLaunchedBefore"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        // 延迟 100ms 确保启动时屏幕上下文已就绪，
+        // center() 会把窗口放在屏幕顶部往下三分之一处（偏上但不置顶）。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.openSettings()
+        }
     }
 
     private func observeLanguageChanges() {
@@ -552,10 +566,18 @@ final class RightHereUpdater {
             userDriverDelegate: nil
         )
 
+        // 首次安装时 Sparkle 没有存过偏好值，显式设为 true 确保自动检查更新默认开启。
+        // 用户在设置页关闭后 Sparkle 会持久化其选择，后续启动不会被这里覆盖。
+        let updatesKey = "SUEnableAutomaticChecks"
+        if UserDefaults.standard.object(forKey: updatesKey) == nil {
+            controller.updater.automaticallyChecksForUpdates = true
+        }
+        
         #if DEBUG
         // Debug builds get an empty SUPublicEDKey (the real key is injected only by
         // Scripts/package-developer-id.sh), and SURequireSignedFeed is on, so any
         // scheduled check fails with "无法启动更新程序". Manual checks still run.
+        // 覆盖上面的默认值，强制关闭自动检查（即使用户之前开过）。
         controller.updater.automaticallyChecksForUpdates = false
         #endif
     }
