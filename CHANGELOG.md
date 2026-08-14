@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.2] - 2026-08-14
+
+### 修复
+- 修复上一版本使用开发签名发布，导致其他 Mac 无法启动的问题。正式安装包现使用 Developer ID 签名、Apple 公证和 stapling，可在 Intel 与 Apple 芯片 Mac 上正常安装。
+
+### 兼容性
+- 最低系统版本调整为 macOS 11。
+- Finder 扩展在 macOS 11 上使用单色 SF Symbol 回退方案，避免调用仅在 macOS 12 可用的调色板图标 API。
+
+---
 ## [0.4.1] - 2026-08-12
 
 ### 新增

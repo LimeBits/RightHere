@@ -292,9 +292,17 @@ class FinderSync: FIFinderSync {
 
     /// 彩色 SF Symbol，用于模板子菜单；不设 isTemplate，以保留颜色渲染
     private func coloredSymbolImage(systemName: String, color: NSColor) -> NSImage? {
-        let config = NSImage.SymbolConfiguration(paletteColors: [color])
-        guard let symbol = NSImage(systemSymbolName: systemName, accessibilityDescription: nil)?
-            .withSymbolConfiguration(config) else { return nil }
+        guard let symbol = NSImage(systemSymbolName: systemName, accessibilityDescription: nil) else {
+            return nil
+        }
+
+        if #available(macOS 12.0, *),
+           let coloredSymbol = symbol.withSymbolConfiguration(
+               NSImage.SymbolConfiguration(paletteColors: [color])
+           ) {
+            return squaredIconImage(coloredSymbol)
+        }
+
         return squaredIconImage(symbol)
     }
 

@@ -94,9 +94,19 @@ if [[ -z "${DERIVED_APP}" ]]; then
 fi
 
 DERIVED_BIN="${DERIVED_APP}/Contents/MacOS/RightHere"
+DERIVED_EXTENSION_BIN="${DERIVED_APP}/Contents/PlugIns/RightHereExtension.appex/Contents/MacOS/RightHereExtension"
 if [[ ! -f "${DERIVED_BIN}" ]]; then
     printf '✗ 主可执行文件不存在: %s\n' "${DERIVED_BIN}" >&2
     exit 1
+fi
+
+if [[ "${UNIVERSAL}" == true ]]; then
+    for binary in "${DERIVED_BIN}" "${DERIVED_EXTENSION_BIN}"; do
+        if [[ ! -f "${binary}" ]] || ! lipo -archs "${binary}" 2>/dev/null | grep -qw arm64 || ! lipo -archs "${binary}" 2>/dev/null | grep -qw x86_64; then
+            printf '✗ Universal build 缺少 arm64 或 x86_64 架构: %s\n' "${binary}" >&2
+            exit 1
+        fi
+    done
 fi
 
 printf '→ 复制 app...\n'

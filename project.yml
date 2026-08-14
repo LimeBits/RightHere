@@ -2,7 +2,7 @@ name: RightHere
 options:
   bundleIdPrefix: com.LimeBits
   deploymentTarget:
-    macOS: "12.0"
+    macOS: "11.0"
   developmentLanguage: en
 settings:
   base:
@@ -24,11 +24,11 @@ targets:
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
         ENABLE_HARDENED_RUNTIME: YES
         DEVELOPMENT_TEAM: ""
-        MACOSX_DEPLOYMENT_TARGET: "12.0"
+        MACOSX_DEPLOYMENT_TARGET: "11.0"
         INFOPLIST_FILE: RightHere/Info.plist
         SPARKLE_PUBLIC_ED_KEY: "7Scn9pJUfJ6DGUvc1HuUzejfZK1dNFYRt1/BKu6tU+M="
-        CURRENT_PROJECT_VERSION: "20"
-        MARKETING_VERSION: "0.4.1"
+        CURRENT_PROJECT_VERSION: "21"
+        MARKETING_VERSION: "0.4.2"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -74,11 +74,11 @@ targets:
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
         ENABLE_HARDENED_RUNTIME: YES
         DEVELOPMENT_TEAM: ""
-        MACOSX_DEPLOYMENT_TARGET: "12.0"
+        MACOSX_DEPLOYMENT_TARGET: "11.0"
         INFOPLIST_FILE: RightHereExtension/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks
-        CURRENT_PROJECT_VERSION: "20"
-        MARKETING_VERSION: "0.4.1"
+        CURRENT_PROJECT_VERSION: "21"
+        MARKETING_VERSION: "0.4.2"
     entitlements:
       path: RightHereExtension/RightHereExtension.entitlements
       properties:
