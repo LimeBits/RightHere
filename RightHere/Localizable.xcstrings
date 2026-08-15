@@ -503,6 +503,26 @@
         }
       }
     },
+    "Drag items to set their Finder menu order.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动项目可调整 Finder“前往”菜单中的显示顺序。"
+          }
+        }
+      }
+    },
+    "Drag to reorder": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动调整顺序"
+          }
+        }
+      }
+    },
     "Help & Feedback": {
       "localizations": {
         "zh-Hans": {

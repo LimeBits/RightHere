@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     private enum SettingsTab: String, CaseIterable, Identifiable {
@@ -33,6 +34,8 @@ struct ContentView: View {
     @State private var areMenuIconsEnabled = true
     @State private var openHereAppSettings: [OpenHereAppSetting] = []
     @State private var shortcutLocations: [ShortcutLocation] = []
+    @State private var draggedShortcutLocationID: UUID?
+    @State private var shortcutDropTargetID: UUID?
     @State private var preferredLanguage: RightHereLanguage = .system
     @State private var now = Date()
     @State private var timer: Timer? = nil
@@ -316,6 +319,9 @@ struct ContentView: View {
                     Text(L("Add frequently used files, folders, or hidden paths to reach them from the Finder context menu."))
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
+                    Text(L("Drag items to set their Finder menu order."))
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
@@ -344,6 +350,16 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     ForEach(shortcutLocations) { location in
                         shortcutLocationRow(location)
+                            .onDrop(
+                                of: [.text],
+                                delegate: ShortcutLocationDropDelegate(
+                                    destination: location,
+                                    locations: $shortcutLocations,
+                                    draggedLocationID: $draggedShortcutLocationID,
+                                    dropTargetID: $shortcutDropTargetID,
+                                    save: saveShortcutLocations
+                                )
+                            )
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -422,6 +438,9 @@ struct ContentView: View {
                     }
                 }
             }
+            .padding(10)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.24))
+            .cornerRadius(6)
             .padding(.top, 10)
             .padding(.bottom, 4)
         }
@@ -574,7 +593,23 @@ struct ContentView: View {
     }
 
     private func shortcutLocationRow(_ location: ShortcutLocation) -> some View {
-        HStack(spacing: 0) {
+        let isDragged = draggedShortcutLocationID == location.id
+        let isDropTarget = shortcutDropTargetID == location.id && !isDragged
+
+        return HStack(spacing: 0) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.secondary)
+                .frame(width: 24, height: 28)
+                .contentShape(Rectangle())
+                .help(L("Drag to reorder"))
+                .accessibilityLabel(L("Drag to reorder"))
+                .onDrag {
+                    draggedShortcutLocationID = location.id
+                    shortcutDropTargetID = nil
+                    return NSItemProvider(object: location.id.uuidString as NSString)
+                }
+
             Toggle("", isOn: Binding(
                 get: { location.isEnabled },
                 set: { isChecked in
@@ -585,14 +620,15 @@ struct ContentView: View {
             ))
             .toggleStyle(.checkbox)
             .labelsHidden()
-            .frame(width: 28, alignment: .leading)
+            .frame(width: 24, alignment: .leading)
+            .padding(.leading, 8)
 
             Image(systemName: shortcutIcon(for: location))
-                .font(.system(size: 15))
+                .font(.system(size: 14))
                 .foregroundColor(location.exists ? .blue : .secondary)
-                .frame(width: 22, height: 22)
-                .padding(.leading, 10)
-                .padding(.trailing, 10)
+                .frame(width: 20, height: 22)
+                .padding(.leading, 6)
+                .padding(.trailing, 8)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(location.resolvedDisplayName)
@@ -618,37 +654,58 @@ struct ContentView: View {
                     .padding(.trailing, 8)
             }
 
-            Button(action: { renameShortcutLocation(location) }) {
-                Image(systemName: "pencil")
-            }
-            .buttonStyle(.plain)
-            .help(L("Rename"))
-            .frame(width: 24, height: 24)
+            HStack(spacing: 4) {
+                Button(action: { renameShortcutLocation(location) }) {
+                    Image(systemName: "pencil.line")
+                        .font(.system(size: 11, weight: .medium))
+                        .frame(width: 26, height: 24)
+                }
+                .buttonStyle(.plain)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
+                .cornerRadius(6)
+                .help(L("Rename"))
 
-            Button(action: { openShortcutLocation(location) }) {
-                Image(systemName: "arrow.up.forward.app")
-            }
-            .buttonStyle(.plain)
-            .help(L("Open"))
-            .frame(width: 24, height: 24)
+                Button(action: { openShortcutLocation(location) }) {
+                    Image(systemName: "arrow.up.forward")
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .help(L("Open"))
 
-            Button(action: { revealShortcutLocation(location) }) {
-                Image(systemName: "magnifyingglass")
-            }
-            .buttonStyle(.plain)
-            .help(L("Show in Finder"))
-            .frame(width: 24, height: 24)
-            .disabled(!location.exists)
+                Button(action: { revealShortcutLocation(location) }) {
+                    Image(systemName: "magnifyingglass")
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .help(L("Show in Finder"))
+                .disabled(!location.exists)
 
-            Button(action: { deleteShortcutLocation(location) }) {
-                Image(systemName: "trash")
+                Button(action: { deleteShortcutLocation(location) }) {
+                    Image(systemName: "trash")
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .help(L("Delete"))
             }
-            .buttonStyle(.plain)
-            .help(L("Delete"))
-            .frame(width: 24, height: 24)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 7)
+        .padding(.horizontal, 4)
+        .background(isDropTarget ? Color.accentColor.opacity(0.10) : Color.clear)
+        .overlay(
+            Group {
+                if isDropTarget {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
+                }
+            },
+            alignment: .top
+        )
+        .opacity(isDragged ? 0.45 : 1)
+        .scaleEffect(isDragged ? 0.98 : 1)
+        .animation(.easeInOut(duration: 0.16), value: isDragged)
+        .animation(.easeInOut(duration: 0.16), value: isDropTarget)
     }
 
     private var emptyTemplatesView: some View {
@@ -1187,6 +1244,54 @@ struct ContentView: View {
         }
 
         return "RightHere \(version)"
+    }
+}
+
+private struct ShortcutLocationDropDelegate: DropDelegate {
+    let destination: ShortcutLocation
+    @Binding var locations: [ShortcutLocation]
+    @Binding var draggedLocationID: UUID?
+    @Binding var dropTargetID: UUID?
+    let save: () -> Void
+
+    func dropEntered(info: DropInfo) {
+        guard let draggedLocationID, draggedLocationID != destination.id else {
+            return
+        }
+
+        guard dropTargetID != destination.id else {
+            return
+        }
+        dropTargetID = destination.id
+
+        guard
+            let sourceIndex = locations.firstIndex(where: { $0.id == draggedLocationID }),
+            let destinationIndex = locations.firstIndex(where: { $0.id == destination.id })
+        else {
+            return
+        }
+
+        withAnimation(.easeInOut(duration: 0.16)) {
+            let item = locations.remove(at: sourceIndex)
+            let insertionIndex = sourceIndex < destinationIndex ? destinationIndex : destinationIndex
+            locations.insert(item, at: min(insertionIndex, locations.count))
+        }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        guard draggedLocationID != nil else { return false }
+        save()
+        draggedLocationID = nil
+        dropTargetID = nil
+        return true
+    }
+
+    func dropExited(info: DropInfo) {
+        // Keep the target marker while moving between rows to avoid flicker.
+    }
+
+    func validateDrop(info: DropInfo) -> Bool {
+        draggedLocationID != nil
     }
 }
 
