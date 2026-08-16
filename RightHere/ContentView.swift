@@ -28,6 +28,7 @@ struct ContentView: View {
     @State private var extensionRegistrationState: FinderExtensionRegistrationState = .checking
     @State private var automaticallyChecksForUpdates = true
     @State private var isFinderMenuDisabled = false
+    @State private var isLaunchAtLoginEnabled = false
     @State private var isOpenInTerminalEnabled = true
     @State private var areShortcutLocationsEnabled = true
     @State private var areDevToolsEnabled = true
@@ -499,34 +500,10 @@ struct ContentView: View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 12) {
                 languageCard
+                launchAtLoginCard
                 finderExtensionStatusView
                 extensionControlView
                 menuIconsCard
-
-                HStack(alignment: .center, spacing: 10) {
-                    Image(systemName: "gearshape")
-                        .foregroundColor(.secondary)
-                        .frame(width: 18)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(L("System Extension Settings"))
-                            .font(.system(size: 12, weight: .semibold))
-                        Text(L("Useful for checking whether the Finder extension is enabled. Some macOS versions only open the main System Settings page."))
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer(minLength: 8)
-
-                    Button(action: openSystemExtensionSettings) {
-                        Label(L("Open Extension Settings"), systemImage: "gearshape")
-                    }
-                    .font(.system(size: 11))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
-                .cornerRadius(6)
 
                 HStack(alignment: .center, spacing: 10) {
                     Image(systemName: "doc.on.clipboard")
@@ -785,11 +762,8 @@ struct ContentView: View {
 
             Spacer(minLength: 8)
 
-            Button(action: {
-                openSystemExtensionSettings()
-                refreshFinderExtensionRegistrationAfterDelay()
-            }) {
-                Label(extensionRegistrationState.settingsButtonTitle, systemImage: "gearshape")
+            Button(action: retryFinderExtensionRegistration) {
+                Label(L("Retry"), systemImage: "arrow.clockwise")
             }
             .font(.system(size: 11))
 
@@ -887,6 +861,51 @@ struct ContentView: View {
         .cornerRadius(6)
     }
 
+    private var launchAtLoginCard: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "power")
+                .foregroundColor(.secondary)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L("Launch at Login"))
+                    .font(.system(size: 12, weight: .semibold))
+                Text(L("Start RightHere automatically when you log in, so Finder actions are ready after restarting your Mac."))
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            Toggle("", isOn: Binding(
+                get: { isLaunchAtLoginEnabled },
+                set: { setLaunchAtLogin($0) }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.32))
+        .cornerRadius(6)
+    }
+
+    private func setLaunchAtLogin(_ isEnabled: Bool) {
+        do {
+            try LaunchAtLoginManager.shared.setEnabled(isEnabled)
+            isLaunchAtLoginEnabled = LaunchAtLoginManager.shared.isEnabled
+        } catch {
+            isLaunchAtLoginEnabled = LaunchAtLoginManager.shared.isEnabled
+            let alert = NSAlert()
+            alert.messageText = L("Could Not Change Launch at Login")
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: L("OK"))
+            alert.runModal()
+        }
+    }
+
     private var languageCard: some View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "globe")
@@ -977,6 +996,7 @@ struct ContentView: View {
         self.availableTemplates = available
         self.enabledTemplates = Set(enabled)
         self.isFinderMenuDisabled = SharedDefaults.isFinderMenuDisabled()
+        self.isLaunchAtLoginEnabled = LaunchAtLoginManager.shared.isEnabled
         self.isOpenInTerminalEnabled = SharedDefaults.isOpenInTerminalEnabled()
         self.areShortcutLocationsEnabled = SharedDefaults.areShortcutLocationsEnabled()
         self.areDevToolsEnabled = SharedDefaults.areDevToolsEnabled()
@@ -1012,6 +1032,7 @@ struct ContentView: View {
         Shortcut locations: \(SharedDefaults.areShortcutLocationsEnabled() ? "enabled" : "disabled") (\(SharedDefaults.getShortcutLocations().filter(\.isEnabled).count) enabled)
         Dev tools: \(SharedDefaults.areDevToolsEnabled() ? "enabled" : "disabled")
         Finder menu: \(SharedDefaults.isFinderMenuDisabled() ? "disabled" : "enabled")
+        Launch at login: \(LaunchAtLoginManager.shared.isEnabled ? "enabled" : "disabled")
         """
 
         NSPasteboard.general.clearContents()
@@ -1157,10 +1178,11 @@ struct ContentView: View {
         completion(value)
     }
     
-    private func openSystemExtensionSettings() {
-        FinderExtensionInspector.openExtensionSettings()
+    private func retryFinderExtensionRegistration() {
+        FinderExtensionBootstrap.ensureRegisteredAndEnabled()
+        refreshFinderExtensionRegistrationAfterDelay()
     }
-    
+
     private func openTemplatesDirectory() {
         TemplateAssets.initializeDefaultTemplates()
         SharedDefaults.refreshTemplateCacheFromDisk()
@@ -1320,11 +1342,11 @@ enum FinderExtensionRegistrationState: Equatable {
     var message: String {
         switch self {
         case .checking:
-            return L("Reading the system extension registration state.")
+            return L("Reading the Finder extension registration state.")
         case .enabled:
             return L("If the context menu still does not appear, open your home folder in Finder and right-click the background.")
         case .disabled:
-            return L("Enable the RightHere Finder extension in System Settings.")
+            return L("RightHere will try to re-enable its Finder extension automatically. If the problem remains, reinstall the signed app.")
         case .notRegistered:
             return L("This build may not be signed correctly, or the system has not registered the embedded extension yet.")
         case .unavailable(let detail):
@@ -1335,7 +1357,7 @@ enum FinderExtensionRegistrationState: Equatable {
     var launchAlertMessage: String {
         switch self {
         case .disabled:
-            return L("RightHere is installed, but its Finder extension is not enabled yet. Enable RightHere in System Settings, then restart Finder.")
+            return L("RightHere is installed, but its Finder extension is not enabled. RightHere will try to re-enable it automatically; if that fails, reinstall the signed app.")
         case .notRegistered:
             return L("RightHere is installed, but the system did not find its Finder extension. This usually means an unsigned or signature-skipped test build was installed. Use a signed installer, or rebuild with your own Apple Developer account.")
         case .unavailable(let detail):
@@ -1363,14 +1385,6 @@ enum FinderExtensionRegistrationState: Equatable {
         }
     }
 
-    var settingsButtonTitle: String {
-        switch self {
-        case .disabled, .notRegistered:
-            return L("Extension Settings")
-        case .checking, .enabled, .unavailable:
-            return L("Open Extensions")
-        }
-    }
 
     var symbolName: String {
         switch self {
@@ -1443,33 +1457,6 @@ enum FinderExtensionInspector {
         return .notRegistered
     }
 
-    static func openExtensionSettings() {
-        let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-
-        if majorVersion < 13 {
-            let paneURL = URL(fileURLWithPath: "/System/Library/PreferencePanes/Extensions.prefPane")
-            if FileManager.default.fileExists(atPath: paneURL.path),
-               NSWorkspace.shared.open(paneURL) {
-                return
-            }
-        }
-
-        let urlStrings = majorVersion >= 13
-            ? [
-                "x-apple.systempreferences:com.apple.LoginItems-Settings.extension",
-                "x-apple.systempreferences:com.apple.ExtensionsPreferences"
-            ]
-            : [
-                "x-apple.systempreferences:com.apple.preferences.extensions?Finder",
-                "x-apple.systempreferences:com.apple.preferences.extensions"
-            ]
-
-        for urlString in urlStrings {
-            if let url = URL(string: urlString), NSWorkspace.shared.open(url) {
-                break
-            }
-        }
-    }
 
     private static func registrationState(
         from result: (exitCode: Int32, output: String)
@@ -1499,7 +1486,7 @@ enum FinderExtensionInspector {
     private static func unavailableMessage(for output: String) -> String {
         let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedOutput.localizedCaseInsensitiveContains("unauthorized discovery flag") {
-            return L("The system is not allowing RightHere to read the Finder extension list right now. This does not mean the extension is unavailable; confirm RightHere under Extensions in System Settings.")
+            return L("The system is not allowing RightHere to read the Finder extension list right now. This does not mean the extension is unavailable; try again later.")
         }
 
         return trimmedOutput.isEmpty ? L("The system did not return a Finder extension status.") : trimmedOutput

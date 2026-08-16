@@ -1,21 +1,23 @@
-# RightHere 0.4.3
+# RightHere 0.4.4
 
 ## What's New
 
-- **Drag-to-reorder Go To shortcuts.** Arrange files and folders in the Finder context menu order you prefer. The order is saved and shared with the Finder extension.
-- **Smoother sorting feedback.** Dragged rows fade slightly, target rows show an insertion marker, and repeated drop events no longer cause visible jitter.
-- **Refined shortcut controls.** Tighter spacing, a rounded rename control, and clearer separate actions for opening, revealing in Finder, and deleting an item.
-- **Consistent settings UI.** The Templates tab now uses the same rounded container treatment as the Tools tab.
-- **macOS 11 compatible.** The updated settings UI continues to support macOS 11 and later.
+- **Launch at login.** RightHere is enabled to start automatically on first setup, so Finder actions are ready after restarting your Mac. You can turn it off at any time in **Advanced**; your choice is respected.
+- **Clear first-run and update feedback.** The settings window now opens once after a fresh install, reinstall, or new build, including when launched from Launchpad. It will not keep opening on normal launches or at login.
+- **Cleaner Finder extension controls.** Removed misleading system-extension settings links. Finder Sync is registered and retried directly, with a clearer retry action.
+- **Simpler Help & Feedback menu.** Removed duplicate or unused extension and GitHub Issues links while keeping updates, issue reporting, diagnostics, and the project homepage.
+- **Safer FinderSync test packaging.** Local test DMGs now require and verify Developer ID signatures for both the app and the embedded Finder Sync extension. This prevents ad-hoc packages that can look enabled but fail to render a Finder context menu.
 
 ---
 
-# RightHere 0.4.3（中文）
+# RightHere 0.4.4（中文）
 
 ## 新增与调整
 
-- **快捷前往支持拖动排序。** 可以按需要调整文件和文件夹在 Finder 右键菜单中的显示顺序，顺序会自动保存并同步到 Finder 扩展。
-- **更顺滑的排序反馈。** 拖动中的项目会降低透明度，目标位置会显示插入线，并减少重复拖放事件造成的跳动。
-- **快捷项控件优化。** 压缩左侧间距，将重命名改为圆角工具按钮，并清晰保留打开、在 Finder 中显示和删除操作。
-- **设置页面统一。** 模板页现在使用与工具页一致的整体圆角背景。
-- **兼容 macOS 11。** 本次设置页调整继续支持 macOS 11 及以上版本。
+- **开机自启动。** 首次设置时默认开启，重启 Mac 登录后 RightHere 会自动运行，Finder 右键功能无需手动开启；可在「高级」页随时关闭，关闭后会尊重用户选择。
+- **首次安装/更新有明确反馈。** 首次安装、重新安装或更新到新构建后的第一次启动，会自动打开设置页；从启动台打开也生效。正常重复启动和登录自启动不会反复弹出。
+- **清理 Finder 扩展入口。** 移除容易造成误解的“系统扩展设置”跳转，Finder Sync 改为直接登记与重试，并提供更清楚的“重新尝试”操作。
+- **精简帮助与反馈菜单。** 移除重复或未使用的扩展设置和 GitHub Issues 链接，保留检查更新、反馈问题、复制诊断信息和项目主页。
+- **FinderSync 测试包更安全。** 本地测试 DMG 现在会强制验证主 App 和内嵌 Finder Sync 扩展均为 Developer ID 签名，避免 ad-hoc 包显示已启用但 Finder 实际没有右键菜单的问题。
+
+---

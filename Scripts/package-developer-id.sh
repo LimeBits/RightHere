@@ -164,10 +164,10 @@ fi
 
 if [[ "${#PACKAGE_DMG_ARGS[@]}" -gt 0 ]]; then
     RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-0}" \
-        "${ROOT_DIR}/Scripts/package-dmg.sh" "${PACKAGE_DMG_ARGS[@]}"
+        "${ROOT_DIR}/Scripts/package-dmg.sh" --use-existing-app "${PACKAGE_DMG_ARGS[@]}"
 else
     RIGHTHERE_DMG_SKIP_FINDER_LAYOUT="${RIGHTHERE_DMG_SKIP_FINDER_LAYOUT:-0}" \
-        "${ROOT_DIR}/Scripts/package-dmg.sh"
+        "${ROOT_DIR}/Scripts/package-dmg.sh" --use-existing-app
 fi
 
 DMG_PATH="$(ls -t "${DIST_DIR}"/RightHere-*.dmg | head -1)"

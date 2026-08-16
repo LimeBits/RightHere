@@ -372,12 +372,12 @@
         }
       }
     },
-    "Enable the RightHere Finder extension in System Settings.": {
+    "RightHere will try to re-enable its Finder extension automatically. If the problem remains, reinstall the signed app.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "请在系统设置中启用 RightHere 的 Finder 扩展。"
+            "value": "RightHere 会尝试自动重新启用 Finder 扩展。如问题仍然存在，请重新安装已签名版本。"
           }
         }
       }
@@ -412,16 +412,7 @@
         }
       }
     },
-    "Extension Settings": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "扩展设置"
-          }
-        }
-      }
-    },
+
     "Feedback: ": {
       "localizations": {
         "zh-Hans": {
@@ -570,6 +561,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "语言"
+          }
+        }
+      }
+    },
+    "Launch at Login": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开机自启动"
+          }
+        }
+      }
+    },
+    "Start RightHere automatically when you log in, so Finder actions are ready after restarting your Mac.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录后自动启动 RightHere，重启 Mac 后无需手动打开即可使用 Finder 功能。"
+          }
+        }
+      }
+    },
+    "Could Not Change Launch at Login": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法更改开机自启动"
           }
         }
       }
@@ -908,36 +929,9 @@
         }
       }
     },
-    "Open Extension Settings": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开扩展设置"
-          }
-        }
-      }
-    },
-    "Open Extensions": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开扩展"
-          }
-        }
-      }
-    },
-    "Open GitHub Issues": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开 GitHub Issues"
-          }
-        }
-      }
-    },
+
+
+
     "Open Here": {
       "localizations": {
         "zh-Hans": {
@@ -1038,12 +1032,12 @@
         }
       }
     },
-    "Reading the system extension registration state.": {
+    "Reading the Finder extension registration state.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在读取系统扩展注册状态。"
+            "value": "正在读取 Finder 扩展注册状态。"
           }
         }
       }
@@ -1054,6 +1048,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "刷新"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新尝试"
           }
         }
       }
@@ -1128,12 +1132,12 @@
         }
       }
     },
-    "RightHere is installed, but its Finder extension is not enabled yet. Enable RightHere in System Settings, then restart Finder.": {
+    "RightHere is installed, but its Finder extension is not enabled. RightHere will try to re-enable it automatically; if that fails, reinstall the signed app.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "RightHere 已安装，但 Finder 扩展还没有启用。请在系统设置中启用 RightHere，然后重启 Finder。"
+            "value": "RightHere 已安装，但 Finder 扩展尚未启用。RightHere 会尝试自动重新启用；如仍失败，请重新安装已签名版本。"
           }
         }
       }
@@ -1178,16 +1182,7 @@
         }
       }
     },
-    "System Extension Settings": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "系统扩展设置"
-          }
-        }
-      }
-    },
+
     "Templates": {
       "localizations": {
         "zh-Hans": {
@@ -1218,12 +1213,12 @@
         }
       }
     },
-    "The system is not allowing RightHere to read the Finder extension list right now. This does not mean the extension is unavailable; confirm RightHere under Extensions in System Settings.": {
+    "The system is not allowing RightHere to read the Finder extension list right now. This does not mean the extension is unavailable; try again later.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "系统暂时不允许 RightHere 读取 Finder 扩展列表。这不代表扩展不可用；请在系统偏好设置的“扩展”中确认 RightHere。"
+            "value": "系统暂时不允许 RightHere 读取 Finder 扩展列表。这不代表扩展不可用；请稍后重试。"
           }
         }
       }
@@ -1298,16 +1293,7 @@
         }
       }
     },
-    "Useful for checking whether the Finder extension is enabled. Some macOS versions only open the main System Settings page.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用于排查 Finder 扩展启用状态；不同 macOS 版本可能只打开系统设置主页。"
-          }
-        }
-      }
-    },
+
     "Word Document (.docx)": {
       "localizations": {
         "zh-Hans": {

@@ -17,11 +17,15 @@ Use this checklist before publishing a GitHub release.
 - Run a Universal Debug build:
   `DEVELOPMENT_TEAM=<TEAMID> ./deploy.sh --build --universal --force`
 - Confirm the app launches from the menu bar.
-- Confirm the FinderSync extension is enabled.
+- Before any FinderSync smoke test, verify both `/Applications/RightHere.app` and its embedded `RightHereExtension.appex` use the expected `Developer ID Application` certificate and have a `TeamIdentifier`.
+- Never use an ad-hoc, unsigned, or Apple Development-signed DMG to validate FinderSync after copying it to `/Applications`. Those packages can appear enabled in `pluginkit` while Finder refuses to load the extension.
+- `pluginkit` is a registration check only; it is not proof that the Finder context menu is working.
 
 ## Smoke Test
 
+- Install the exact DMG intended for testing into `/Applications`, then launch it once.
 - Open RightHere settings.
+- In Finder, actually right-click both a folder background and a file, and confirm RightHere menu items render and execute. Do not replace this step with a `pluginkit` check.
 - Confirm Finder response status changes after opening a Finder context menu.
 - Create a `.txt` file from Finder.
 - Create a `.md` file from Finder.
@@ -42,7 +46,8 @@ Use this checklist before publishing a GitHub release.
 - GitHub Actions will upload an unsigned CI DMG and `.sha256` checksum as release assets.
 - Treat GitHub Actions assets as CI verification until Developer ID secrets/profiles are configured.
 - For a cross-machine installable release, run `./Scripts/package-developer-id.sh`.
-- Download the Developer ID DMG and launch it once on a clean machine or test account.
+- Download the notarized Developer ID DMG and launch it once on a clean machine or test account.
+- Validate the exact uploaded asset: its SHA-256 checksum, Gatekeeper acceptance, FinderSync signing, and the actual Finder right-click menu.
 
 ## Future Signing
 

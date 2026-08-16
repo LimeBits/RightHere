@@ -12,6 +12,7 @@
 		56EFE290D1E5DBE7FBD4C334 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */; };
 		57E3A9A3855880C111039BC8 /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
 		59E25F4FDB2492EBFB187CEA /* TemplateAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */; };
+		7812BC723FB59927FC8E6524 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A310BCF0CDD6B4754F687EE7 /* LaunchAtLoginManager.swift */; };
 		81A63B57B2FD0BD174D15BF7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057037DF9ABFEED4C9C2DB9E /* ContentView.swift */; };
 		84EEB2941987A5D5EE58FAAA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8CAAC7405CE8EDAD0A756DCB /* Assets.xcassets */; };
 		85C18ABB3F52DC6F7D9234A4 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */; };
@@ -55,6 +56,7 @@
 		9468A8F6B7C27ED6975F2708 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		9AEC9CF385B8341BF6E41060 /* RightHere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightHere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CA4755710A1CA19469BFE79 /* TemplateAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateAssets.swift; sourceTree = "<group>"; };
+		A310BCF0CDD6B4754F687EE7 /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
 		D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDefaults.swift; sourceTree = "<group>"; };
 		DC3C5FA6AC0AEC13A6067485 /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
 		E0EF3FD383CAB640DEF54AFA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				8CAAC7405CE8EDAD0A756DCB /* Assets.xcassets */,
 				057037DF9ABFEED4C9C2DB9E /* ContentView.swift */,
 				7B41BA6B88E0AA5802565908 /* Info.plist */,
+				A310BCF0CDD6B4754F687EE7 /* LaunchAtLoginManager.swift */,
 				895A8D53715A63086C6B051A /* Localizable.xcstrings */,
 				67B0B9D6440E658DD8206334 /* RightHere.entitlements */,
 				D10F78388CDC7D57E1DA236F /* SharedDefaults.swift */,
@@ -171,12 +174,12 @@
 					70A90DB811898559D634FA8C = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Sandbox\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 1]]";
 					};
 					EE96DBB36A663DBA7540058E = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Sandbox\": [\"enabled\": 0], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 0]]";
 					};
 				};
 			};
@@ -241,6 +244,7 @@
 			files = (
 				16CEFBB121EF02F55312E90F /* App.swift in Sources */,
 				81A63B57B2FD0BD174D15BF7 /* ContentView.swift in Sources */,
+				7812BC723FB59927FC8E6524 /* LaunchAtLoginManager.swift in Sources */,
 				85C18ABB3F52DC6F7D9234A4 /* SharedDefaults.swift in Sources */,
 				57E3A9A3855880C111039BC8 /* TemplateAssets.swift in Sources */,
 			);
@@ -264,13 +268,13 @@
 				CODE_SIGN_ENTITLEMENTS = RightHereExtension/RightHereExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = RightHereExtension/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.4.3;
+				MARKETING_VERSION = 0.4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere.Extension;
 				SDKROOT = macosx;
 			};
@@ -283,13 +287,13 @@
 				CODE_SIGN_ENTITLEMENTS = RightHereExtension/RightHereExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = RightHereExtension/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.4.3;
+				MARKETING_VERSION = 0.4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere.Extension;
 				SDKROOT = macosx;
 			};
@@ -303,7 +307,7 @@
 				CODE_SIGN_ENTITLEMENTS = RightHere/RightHere.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = RightHere/Info.plist;
@@ -312,7 +316,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.4.3;
+				MARKETING_VERSION = 0.4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere;
 				SDKROOT = macosx;
 				SPARKLE_PUBLIC_ED_KEY = "7Scn9pJUfJ6DGUvc1HuUzejfZK1dNFYRt1/BKu6tU+M=";
@@ -448,7 +452,7 @@
 				CODE_SIGN_ENTITLEMENTS = RightHere/RightHere.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = RightHere/Info.plist;
@@ -457,7 +461,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.4.3;
+				MARKETING_VERSION = 0.4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LimeBits.RightHere;
 				SDKROOT = macosx;
 				SPARKLE_PUBLIC_ED_KEY = "7Scn9pJUfJ6DGUvc1HuUzejfZK1dNFYRt1/BKu6tU+M=";

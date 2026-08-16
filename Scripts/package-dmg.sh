@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 打包 RightHere DMG 分发包
-# 用法：./Scripts/package-dmg.sh [--build] [--universal] [--skip-signing] [--with-installer-script]
+# 用法：./Scripts/package-dmg.sh [--build] [--universal] [--skip-signing] [--with-installer-script] [--use-existing-app]
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -10,7 +10,10 @@ DMG_BACKGROUND="${ROOT_DIR}/Assets/DMG/dmg-background.png"
 VOLUME_NAME="RightHere"
 BUNDLE_ID="com.LimeBits.RightHere"
 INCLUDE_INSTALLER_SCRIPT=false
-BUILD_APP=false
+BUILD_APP=true
+USE_EXISTING_APP=false
+DID_REQUEST_BUILD=false
+SKIP_SIGNING=false
 
 MOUNT_ROOT="${DIST_DIR}/dmg-mount"
 
@@ -19,9 +22,10 @@ usage() {
 Usage: ./Scripts/package-dmg.sh [options]
 
 Options:
-  --build                  Build Release app before creating the DMG.
+  --build                  Build Release app before creating the DMG (default).
   --universal              Build arm64 + x86_64 when used with --build.
   --skip-signing           Build without code signing for CI/internal checks.
+  --use-existing-app       Package ./RightHere.app without rebuilding (Developer ID export only).
   --with-installer-script  Include the optional install helper command.
   -h, --help               Show this help.
 
@@ -31,20 +35,29 @@ Environment:
   RIGHTHERE_DMG_SKIP_FINDER_LAYOUT=1
                            Skip Finder window layout scripting.
 
-Without --build, the script packages an existing ./RightHere.app.
+Without --use-existing-app, the script rebuilds RightHere.app before creating the DMG.
 USAGE
 }
 
 # ── 先打包 app ────────────────────────────────────────────────
-PACKAGE_APP_ARGS=()
+# package-app.sh 只有首个参数为 --build 时才会编译，因此默认先放入它。
+PACKAGE_APP_ARGS=(--build)
 for arg in "$@"; do
     case "${arg}" in
         --build)
+            DID_REQUEST_BUILD=true
             BUILD_APP=true
+            ;;
+        --universal)
             PACKAGE_APP_ARGS+=("${arg}")
             ;;
-        --universal|--skip-signing)
+        --skip-signing)
+            SKIP_SIGNING=true
             PACKAGE_APP_ARGS+=("${arg}")
+            ;;
+        --use-existing-app)
+            BUILD_APP=false
+            USE_EXISTING_APP=true
             ;;
         --with-installer-script)
             INCLUDE_INSTALLER_SCRIPT=true
@@ -61,10 +74,21 @@ for arg in "$@"; do
     esac
 done
 
+if [[ "${USE_EXISTING_APP}" == true && "${DID_REQUEST_BUILD}" == true ]]; then
+    printf '✗ --use-existing-app cannot be combined with --build\n' >&2
+    exit 1
+fi
+
 if [[ "${BUILD_APP}" == true ]]; then
-    "${ROOT_DIR}/Scripts/package-app.sh" ${PACKAGE_APP_ARGS[@]+"${PACKAGE_APP_ARGS[@]}"}
+    # 本地测试也需要真实 Developer ID 签名，否则 Finder Sync 可能登记成功却不加载。
+    # 正式发布仍须使用 package-developer-id.sh 完成 archive、导出与公证。
+    if [[ "${SKIP_SIGNING}" == true ]]; then
+        "${ROOT_DIR}/Scripts/package-app.sh" "${PACKAGE_APP_ARGS[@]}"
+    else
+        RIGHTHERE_USE_LOCAL_CODESIGN=1 "${ROOT_DIR}/Scripts/package-app.sh" "${PACKAGE_APP_ARGS[@]}"
+    fi
 elif [[ -d "${APP_DIR}" ]]; then
-    printf '→ 使用已有 app: %s\n' "${APP_DIR}"
+    printf '→ Using existing app by explicit request: %s\n' "${APP_DIR}"
 else
     printf '✗ 找不到 %s\n' "${APP_DIR}" >&2
     printf '  请先运行: ./Scripts/package-dmg.sh --build --universal\n' >&2
@@ -81,6 +105,44 @@ APP_BIN="${APP_DIR}/Contents/MacOS/RightHere"
 if [[ ! -f "${APP_BIN}" ]]; then
     printf '✗ 主可执行文件不存在: %s\n' "${APP_BIN}" >&2
     exit 1
+fi
+
+# ── 验证 Finder Sync 所需的签名 ───────────────────────────────
+# pluginkit 显示“已注册”不代表 Finder 会加载扩展。对 Finder Sync 的实机测试，
+# 主 App 和嵌入的 .appex 都必须是可用的 Developer ID 签名。
+verify_finder_sync_signing() {
+    local extension_path="${APP_DIR}/Contents/PlugIns/RightHereExtension.appex"
+    local app_signature extension_signature
+
+    if [[ ! -d "${extension_path}" ]]; then
+        printf '✗ 找不到 Finder Sync 扩展: %s\n' "${extension_path}" >&2
+        exit 1
+    fi
+
+    if ! /usr/bin/codesign --verify --deep --strict --verbose=2 "${APP_DIR}"; then
+        printf '✗ App 签名完整性验证失败，未创建 DMG。\n' >&2
+        exit 1
+    fi
+
+    app_signature=$(/usr/bin/codesign -dvvv "${APP_DIR}" 2>&1)
+    extension_signature=$(/usr/bin/codesign -dvvv "${extension_path}" 2>&1)
+    if ! grep -q 'Authority=Developer ID Application:' <<<"${app_signature}" \
+        || ! grep -q 'TeamIdentifier=WV6JA6UHLN' <<<"${app_signature}" \
+        || ! grep -q 'Authority=Developer ID Application:' <<<"${extension_signature}" \
+        || ! grep -q 'TeamIdentifier=WV6JA6UHLN' <<<"${extension_signature}"; then
+        printf '✗ 当前 App 不是可用于 Finder Sync 测试的 Developer ID 签名，未创建 DMG。\n' >&2
+        printf '  请检查 Scripts/dev-identity.sh 中的 RIGHTHERE_CODESIGN_IDENTITY。\n' >&2
+        printf '  不要用 ad-hoc 或 Apple Development 签名的包覆盖 /Applications/RightHere.app。\n' >&2
+        exit 1
+    fi
+
+    printf '✓ 已验证主 App 与 Finder Sync 扩展的 Developer ID 签名。\n'
+}
+
+if [[ "${SKIP_SIGNING}" == true ]]; then
+    printf '⚠️  --skip-signing 仅用于 CI/编译检查：生成的包不可用于 Finder Sync 实机测试，也不要安装覆盖正式 App。\n' >&2
+else
+    verify_finder_sync_signing
 fi
 
 # ── 读取版本号 ────────────────────────────────────────────────
@@ -204,10 +266,7 @@ printf '\n✓ DMG 已生成: %s\n' "${DMG_PATH}"
 APP_SIZE="$(du -sh "${DMG_PATH}" | awk '{print $1}')"
 printf '  大小: %s\n' "${APP_SIZE}"
 printf '  校验: %s.sha256\n' "${DMG_PATH}"
-printf '\n分发方式：\n'
-printf '  将 %s 发给朋友\n' "$(basename "${DMG_PATH}")"
-if [[ "${INCLUDE_INSTALLER_SCRIPT}" == true ]]; then
-    printf '  推荐双击「安装并启用 RightHere.command」，它会安装 App、启用 Finder 扩展并重启 Finder\n'
-else
-    printf '  推荐拖动 RightHere.app 到 Applications\n'
-fi
+printf '\n本地测试：\n'
+printf '  安装 %s 到 Applications 后测试。此包使用本机 Developer ID 签名，但未公证，不要对外发布。\n' "$(basename "${DMG_PATH}")"
+printf '正式发布：\n'
+printf '  使用 ./Scripts/package-developer-id.sh 生成并公证分发包。\n'

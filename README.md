@@ -197,6 +197,29 @@ DEVELOPMENT_TEAM=YOURTEAMID ./deploy.sh --build --universal --force
 
 You can also pick your Team under Signing & Capabilities for both targets. That edits the local project file, so check before committing that your Team ID has not been included.
 
+## FinderSync Test and Signing Rules (Mandatory)
+
+RightHere's context menu is provided by a `com.apple.FinderSync` extension, which has stricter runtime signing requirements than an ordinary menu-bar app. **The following are mandatory rules:**
+
+1. Before testing the Finder context menu, both the main app and its embedded `RightHereExtension.appex` must be signed with the expected **Developer ID Application** certificate and include a valid `TeamIdentifier`.
+2. **Never** install an ad-hoc, unsigned, or Apple Development-signed DMG into `/Applications` to test FinderSync. `pluginkit` may show such an extension as registered even when Finder refuses to load it.
+3. A `+` from `pluginkit -m` proves registration/enabled state only. It never replaces an actual right-click test on a file and a folder background in Finder.
+4. Normal `Scripts/package-dmg.sh` builds validate the Developer ID signature of both bundles and must fail rather than create a FinderSync test DMG when validation fails.
+5. `--skip-signing` is only for CI or compilation checks. It must not be used for FinderSync testing, installed over `/Applications/RightHere.app`, uploaded to GitHub Releases, or included in the Sparkle feed.
+6. Public releases must be made with `./Scripts/package-developer-id.sh`, which also notarizes and staples the package.
+
+A locally testable Universal DMG is built with:
+
+```bash
+RIGHTHERE_DMG_SKIP_FINDER_LAYOUT=1 ./Scripts/package-dmg.sh --universal
+```
+
+The script must report:
+
+```text
+✓ 已验证主 App 与 Finder Sync 扩展的 Developer ID 签名。
+```
+
 ## Distribution
 
 Builds for other people must be Universal DMGs signed with a Developer ID, notarized, and stapled. The DMG produced by GitHub Actions is only useful for verifying the CI and packaging flow — it is not suitable for validating FinderSync on a clean machine.
@@ -223,17 +246,13 @@ RightHere uses Sparkle 2 for in-app updates. Whenever you upload a DMG, generate
 
 ### The Finder context menu did not appear
 
-Make sure RightHere has been opened at least once, then run:
-
-```bash
-./Scripts/doctor.sh
-```
-
-If the extension is registered but the menu is missing, restart Finder:
+**For users:** make sure the app came from GitHub Releases, is in Applications, and has been opened once. Then restart Finder if necessary:
 
 ```bash
 killall Finder
 ```
+
+**For development/testing:** follow the mandatory FinderSync signing rules above first. Do not treat `pluginkit` output as proof of success: actually right-click a file and a folder background. If the installed DMG is ad-hoc or Apple Development-signed, remove it and rebuild a verified test package with `Scripts/package-dmg.sh --universal`.
 
 ### Why does this need a FinderSync extension?
 

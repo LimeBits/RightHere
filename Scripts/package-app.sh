@@ -10,7 +10,7 @@ if [[ -z "${RIGHTHERE_CODESIGN_IDENTITY:-}" && -f "${ROOT_DIR}/Scripts/dev-ident
     # shellcheck disable=SC1091
     source "${ROOT_DIR}/Scripts/dev-identity.sh"
 fi
-CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
+CODESIGN_IDENTITY="${RIGHTHERE_CODESIGN_IDENTITY:-${CODESIGN_IDENTITY:-}}"
 if [[ -z "${CODESIGN_IDENTITY}" && "${RIGHTHERE_USE_LOCAL_CODESIGN:-0}" == "1" ]]; then
     CODESIGN_IDENTITY="${RIGHTHERE_CODESIGN_IDENTITY:-}"
 fi

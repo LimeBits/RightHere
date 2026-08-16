@@ -197,6 +197,41 @@ DEVELOPMENT_TEAM=YOURTEAMID ./deploy.sh --build --universal --force
 
 也可以在 Xcode 的 Signing & Capabilities 中为两个 target 选择自己的 Team。这会修改本地工程文件，提交前请确认没有把个人 Team ID 一起提交。
 
+## FinderSync 测试与签名（硬性规定）
+
+RightHere 的右键菜单依赖 `com.apple.FinderSync` 扩展；它和普通菜单栏 App 不同。**以下规则是强制流程，不是建议：**
+
+1. **测试 Finder 右键前，主 App 与内嵌 `RightHereExtension.appex` 必须都是 Developer ID Application 签名，且 `TeamIdentifier` 为 `WV6JA6UHLN`。**
+2. **禁止**把 ad-hoc、未签名或 Apple Development 签名的 DMG 拖入/复制到 `/Applications` 后用来测试 Finder 右键；它们可能被 `pluginkit` 显示为已登记，但 Finder 不会实际加载扩展。
+3. `pluginkit -m` 中的 `+` **只表示扩展已登记/启用，不表示右键菜单可用**。每次测试包安装后，都必须在 Finder 的文件与文件夹空白处实际右键验证。
+4. `Scripts/package-dmg.sh` 的常规模式会自动验证主 App 和扩展的 Developer ID 签名；签名不合格时必须失败，不能继续生成用于 FinderSync 测试的 DMG。
+5. `--skip-signing` 只允许用于 CI 或编译检查，**绝不能**用于 FinderSync 实机测试、覆盖 `/Applications/RightHere.app`，或上传 GitHub Release / Sparkle 更新源。
+6. 对外发布只能使用 `./Scripts/package-developer-id.sh` 产生、完成公证与 stapling 的包。
+
+本机可测试的 Universal DMG：
+
+```bash
+RIGHTHERE_DMG_SKIP_FINDER_LAYOUT=1 ./Scripts/package-dmg.sh --universal
+```
+
+脚本成功时必须显示：
+
+```text
+✓ 已验证主 App 与 Finder Sync 扩展的 Developer ID 签名。
+```
+
+如需手动核验已安装 App：
+
+```bash
+codesign -dvvv /Applications/RightHere.app 2>&1 | \
+  grep -E 'Authority=|TeamIdentifier='
+codesign -dvvv /Applications/RightHere.app/Contents/PlugIns/RightHereExtension.appex 2>&1 | \
+  grep -E 'Authority=|TeamIdentifier='
+codesign --verify --deep --strict --verbose=2 /Applications/RightHere.app
+```
+
+应看到 `Authority=Developer ID Application: Bruce Tso (WV6JA6UHLN)` 和 `TeamIdentifier=WV6JA6UHLN`。出现 `Signature=adhoc`、`TeamIdentifier=not set` 或 `Apple Development` 时，停止测试并不要安装该包。
+
 ## 正式分发
 
 给别人用的安装包必须是 Developer ID 签名、公证并 staple 过的 Universal DMG。GitHub Actions 产出的 DMG 只适合验证 CI 和打包流程，不适合在干净机器上验证 FinderSync。
@@ -223,17 +258,13 @@ RightHere 使用 Sparkle 2 作为 App 内更新框架。每次上传 DMG 时，�
 
 ### Finder 右键菜单没有出现怎么办？
 
-先确认 RightHere 至少打开过一次，然后运行：
-
-```bash
-./Scripts/doctor.sh
-```
-
-如果扩展已注册但菜单没出现，重启 Finder：
+**普通用户**：确认从 GitHub Releases 下载、把 App 放入「应用程序」并至少打开过一次。若菜单没有立刻出现，退出并重新打开 Finder：
 
 ```bash
 killall Finder
 ```
+
+**开发/测试时**：先按上面的「FinderSync 测试与签名（硬性规定）」确认已安装 App 和内嵌扩展都是 Developer ID 签名。不要仅凭 `pluginkit` 的 `+` 判断成功；必须实际右键文件和文件夹空白处。如果安装的是 ad-hoc 或 Apple Development DMG，删除它并改用 `Scripts/package-dmg.sh --universal` 生成的已验签测试包。
 
 ### 为什么需要 FinderSync extension？
 

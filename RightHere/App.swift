@@ -23,28 +23,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updaterController = RightHereUpdater.shared.controller
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private var hasScheduledSettingsPresentation = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        LaunchAtLoginManager.shared.enableByDefaultIfNeeded()
         FinderExtensionBootstrap.ensureRegisteredAndEnabled()
         observeExtensionActivity()
         observeIncomingURLs()
         consumePendingShortcutOpenRequest()
         configureStatusItem()
         observeLanguageChanges()
-        openSettingsOnFirstLaunch()
+        presentSettingsForNewInstallationOrUpdateIfNeeded()
     }
 
-    /// 首次启动时自动打开设置窗口，让用户知道 App 已成功运行。
-    /// 之后的每次启动不再自动打开，由用户通过状态栏图标主动触发。
-    private func openSettingsOnFirstLaunch() {
-        let key = "hasLaunchedBefore"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
-        // 延迟 100ms 确保启动时屏幕上下文已就绪，
-        // center() 会把窗口放在屏幕顶部往下三分之一处（偏上但不置顶）。
+    /// 展示首次安装或新构建后的设置页。首次运行时必须给出明确反馈，
+    /// 因为菜单栏应用从启动台打开时不一定会先进入活跃状态。
+    /// 同一安装实例记录完成后，后续登录自启动不会重复展示。
+    private func presentSettingsForNewInstallationOrUpdateIfNeeded() {
+        guard !hasScheduledSettingsPresentation else { return }
+
+        let marker = currentInstallationMarker()
+        let markerKey = "lastSettingsPresentationInstallationMarker"
+        guard UserDefaults.standard.string(forKey: markerKey) != marker else { return }
+
+        hasScheduledSettingsPresentation = true
+        UserDefaults.standard.set(marker, forKey: markerKey)
+
+        // 延迟确保启动时屏幕上下文已就绪；center() 会把窗口放在偏上的位置。
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.openSettings()
         }
+    }
+
+    /// 同一版本重新安装到相同路径时，版本号本身不会变化。文件资源标识会在
+    /// App 被替换后变化，因此可同时识别首次安装、重新安装和新构建。
+    private func currentInstallationMarker() -> String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+        let bundleURL = Bundle.main.bundleURL
+        let resourceIdentifier = try? bundleURL.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier
+        return "\(version):\(resourceIdentifier.map { String(describing: $0) } ?? bundleURL.path)"
     }
 
     private func observeLanguageChanges() {
@@ -58,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidBecomeActive(_ notification: Notification) {
         consumePendingShortcutOpenRequest()
+        presentSettingsForNewInstallationOrUpdateIfNeeded()
     }
 
     deinit {
@@ -222,11 +240,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         submenu.addItem(NSMenuItem(title: L("Check for Updates…"), action: #selector(checkForUpdatesFromMenu), keyEquivalent: "u"))
         submenu.addItem(.separator())
         submenu.addItem(NSMenuItem(title: L("Report an Issue…"), action: #selector(openFeedbackIssue), keyEquivalent: ""))
-        submenu.addItem(NSMenuItem(title: L("Open Project Home"), action: #selector(openProjectHome), keyEquivalent: ""))
-        submenu.addItem(NSMenuItem(title: L("Open GitHub Issues"), action: #selector(openGitHubIssues), keyEquivalent: ""))
         submenu.addItem(NSMenuItem(title: L("Copy Diagnostic Info"), action: #selector(copyDiagnosticInfo), keyEquivalent: ""))
         submenu.addItem(.separator())
-        submenu.addItem(NSMenuItem(title: L("Open Extension Settings"), action: #selector(openExtensionSettings), keyEquivalent: ""))
+        submenu.addItem(NSMenuItem(title: L("Open Project Home"), action: #selector(openProjectHome), keyEquivalent: ""))
 
         item.submenu = submenu
         return item
@@ -274,9 +290,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func openExtensionSettings() {
-        FinderExtensionInspector.openExtensionSettings()
-    }
 
     @objc private func quit() {
         NSApp.terminate(nil)
@@ -316,9 +329,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openURL("https://github.com/\(githubOwner)/\(githubRepo)")
     }
 
-    @objc private func openGitHubIssues() {
-        openURL("https://github.com/\(githubOwner)/\(githubRepo)/issues")
-    }
 
     @objc private func copyDiagnosticInfo() {
         NSPasteboard.general.clearContents()

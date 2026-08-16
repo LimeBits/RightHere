@@ -254,6 +254,39 @@ killall Finder
 
 ---
 
+## 坑 15：`pluginkit` 显示启用，但 Finder 实际不加载扩展
+
+**现象**：`pluginkit -m -i com.LimeBits.RightHere.Extension` 显示 `+`，设置页也可能显示已启用，但 Finder 文件或空白区域的右键菜单完全没有 RightHere。
+
+**原因**：`pluginkit` 的 `+` 只代表插件登记数据库中的“允许使用”状态；它不是 Finder 成功加载该扩展的证明。尤其是把 ad-hoc、未签名或 Apple Development 重签的包复制到 `/Applications` 后，Finder 可能因签名信任链不满足而拒绝加载 `.appex`，而 `pluginkit` 仍保留登记记录。
+
+**硬性规则**：
+
+1. FinderSync 实机测试包的主 App 和内嵌 `RightHereExtension.appex` 都必须是 Developer ID Application 签名，并有有效 `TeamIdentifier`。
+2. 不得用 ad-hoc / 未签名 / Apple Development DMG 覆盖 `/Applications/RightHere.app` 来测试右键菜单。
+3. 每次安装测试 DMG 后，必须在 Finder 的文件及文件夹空白处实际右键验证，不能只看 `pluginkit`。
+4. `--skip-signing` 只用于 CI/编译检查，不能用于 FinderSync 测试或发布。
+
+**诊断命令**：
+
+```bash
+codesign -dvvv /Applications/RightHere.app 2>&1 | \
+  grep -E 'Authority=|TeamIdentifier=|Signature='
+codesign -dvvv /Applications/RightHere.app/Contents/PlugIns/RightHereExtension.appex 2>&1 | \
+  grep -E 'Authority=|TeamIdentifier=|Signature='
+codesign --verify --deep --strict --verbose=2 /Applications/RightHere.app
+```
+
+应同时看到 Developer ID Application authority 和正确 Team ID。若出现 `Signature=adhoc`、`TeamIdentifier=not set` 或 `Apple Development`，停止该包的 FinderSync 测试，重新执行：
+
+```bash
+RIGHTHERE_DMG_SKIP_FINDER_LAYOUT=1 ./Scripts/package-dmg.sh --universal
+```
+
+该脚本会在创建 DMG 前自动校验上述要求；验证失败必须终止，而不是生成看似可测的包。
+
+---
+
 ## 分发签名方式对比
 
 | 场景 | 签名方式 | 成本 | 是否适合公开分发 |
