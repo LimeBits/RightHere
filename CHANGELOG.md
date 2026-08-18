@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.5] - 2026-08-18
+
+### 修复
+- 修复暗黑模式下 Finder 右键菜单的单色图标仍显示为黑色、与深色菜单背景对比不足的问题。图标会在生成时写入高对比度颜色：暗黑模式使用近白色，浅色模式使用近黑色。
+- 模板中的单色/灰色图标同步使用该对比色；Word、Excel、PowerPoint、Markdown 等彩色图标保持原有颜色。
+- 图标着色改用 Core Graphics，继续兼容 macOS 11，不依赖 macOS 12 才提供的 SF Symbol 调色板 API。
+
+### 验证
+- 已以 Developer ID 签名的本地 Universal 包安装到 `/Applications`，启用 Finder Sync 并重启 Finder 后，右键菜单与暗黑模式图标均正常。
+
+---
+
 ## [0.4.4] - 2026-08-16
 
 ### 新增

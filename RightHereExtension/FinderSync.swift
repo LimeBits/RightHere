@@ -235,7 +235,7 @@ class FinderSync: FIFinderSync {
     /// 把 symbol 按原比例缩放并居中绘制到正方形画布上。
     /// 外框统一为正方形，菜单就没有非等比拉伸的余地；
     /// glyph 自身保留自然比例（扇形图标依旧是扇的，只是上下多了透明留白）。
-    private func squaredIconImage(_ symbol: NSImage) -> NSImage {
+    private func squaredIconImage(_ symbol: NSImage, tintColor: NSColor? = nil) -> NSImage {
         let side = Self.menuIconSide
         let natural = symbol.size
         guard natural.width > 0, natural.height > 0 else { return symbol }
@@ -273,20 +273,35 @@ class FinderSync: FIFinderSync {
             width: drawSize.width * pixelScale,
             height: drawSize.height * pixelScale
         )
-        context.draw(sourceCGImage, in: drawRect)
+        if let tintColor {
+            context.clip(to: drawRect, mask: sourceCGImage)
+            context.setFillColor(tintColor.cgColor)
+            context.fill(drawRect)
+        } else {
+            context.draw(sourceCGImage, in: drawRect)
+        }
 
         guard let outputCGImage = context.makeImage() else { return symbol }
         return NSImage(cgImage: outputCGImage, size: NSSize(width: side, height: side))
+    }
+
+    /// FinderSync 的 NSMenu 不会稳定地为 template image 做深浅模式反色。
+    /// 因此在生成菜单时直接写入对比色：深色模式近白、浅色模式近黑。
+    private func menuIconForegroundColor() -> NSColor {
+        let appearance = NSApp?.effectiveAppearance ?? NSAppearance.current
+        let isDark = appearance?.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        return isDark
+            ? NSColor(calibratedWhite: 0.92, alpha: 1.0)
+            : NSColor(calibratedWhite: 0.12, alpha: 1.0)
     }
 
     private func menuSymbolImage(systemName: String) -> NSImage? {
         guard let symbol = NSImage(systemSymbolName: systemName, accessibilityDescription: nil) else {
             return nil
         }
-        symbol.isTemplate = true
-        let image = squaredIconImage(symbol)
-        // 画布同样需要标记为 template，才会跟随菜单文字颜色（包含高亮反白）
-        image.isTemplate = true
+        // 使用 Core Graphics 写入颜色，兼容 macOS 11，且不依赖 Finder 对 template image 的反色行为。
+        let image = squaredIconImage(symbol, tintColor: menuIconForegroundColor())
+        image.isTemplate = false
         return image
     }
 
@@ -296,14 +311,7 @@ class FinderSync: FIFinderSync {
             return nil
         }
 
-        if #available(macOS 12.0, *),
-           let coloredSymbol = symbol.withSymbolConfiguration(
-               NSImage.SymbolConfiguration(paletteColors: [color])
-           ) {
-            return squaredIconImage(coloredSymbol)
-        }
-
-        return squaredIconImage(symbol)
+        return squaredIconImage(symbol, tintColor: color)
     }
 
     private func menuIcon(systemName: String) -> NSImage? {
@@ -318,7 +326,7 @@ class FinderSync: FIFinderSync {
         let color: NSColor
         switch ext.lowercased() {
         case "txt":
-            symbolName = "doc.text"; color = .secondaryLabelColor
+            symbolName = "doc.text"; color = menuIconForegroundColor()
         case "md":
             symbolName = "arrow.down.doc"
             color = NSColor(calibratedRed: 0.18, green: 0.67, blue: 0.73, alpha: 1.0)
@@ -337,15 +345,15 @@ class FinderSync: FIFinderSync {
         // 其余代码类文件 — 单色兜底
         case "js", "ts", "rb", "go", "rs", "c", "cpp", "h", "java", "kt",
              "m", "mm", "php", "cs", "scala", "r", "lua", "dart":
-            symbolName = "doc.text"; color = .secondaryLabelColor
+            symbolName = "doc.text"; color = menuIconForegroundColor()
         case "sh", "bash", "zsh", "fish":
-            symbolName = "terminal"; color = .secondaryLabelColor
+            symbolName = "terminal"; color = menuIconForegroundColor()
         case "html", "htm", "xml", "svg":
-            symbolName = "globe"; color = .secondaryLabelColor
+            symbolName = "globe"; color = menuIconForegroundColor()
         case "pdf":
-            symbolName = "doc.fill"; color = .secondaryLabelColor
+            symbolName = "doc.fill"; color = menuIconForegroundColor()
         default:
-            symbolName = "doc"; color = .secondaryLabelColor
+            symbolName = "doc"; color = menuIconForegroundColor()
         }
         return coloredSymbolImage(systemName: symbolName, color: color)
     }
