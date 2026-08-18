@@ -77,6 +77,7 @@ fi
 
 printf '\n%s\n' "-> Stapling ticket to $(basename "${TARGET}")..."
 xcrun stapler staple "${TARGET}"
+xcrun stapler validate "${TARGET}"
 
 printf '\n%s\n' '-> Verifying Gatekeeper acceptance...'
 if [[ "${TARGET}" == *.app ]]; then

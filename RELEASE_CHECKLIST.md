@@ -8,10 +8,11 @@ Use this checklist before publishing a GitHub release.
 - Update `MARKETING_VERSION` in `RightHere.xcodeproj/project.pbxproj` if the project file is committed directly.
 - Add release notes to `CHANGELOG.md`.
 - Update `RELEASE_NOTES.md` with **only the current version's** notes. This entire file is embedded in Sparkle's update window; retain history exclusively in `CHANGELOG.md`.
+- Run `Scripts/release-preflight.sh --tag vX.Y.Z --dmg <exact-DMG> --notes RELEASE_NOTES.md`; do not publish if it fails.
 
 ## Build
 
-- Run `bash -n deploy.sh Scripts/package-app.sh Scripts/package-dmg.sh Scripts/install.sh Scripts/doctor.sh Scripts/check-installed-version.sh monitor.sh`.
+- Run `bash -n deploy.sh Scripts/package-app.sh Scripts/package-dmg.sh Scripts/package-developer-id.sh Scripts/notarize.sh Scripts/generate-appcast.sh Scripts/release-preflight.sh Scripts/install.sh Scripts/doctor.sh Scripts/check-installed-version.sh monitor.sh`.
 - Run a native Debug build:
   `DEVELOPMENT_TEAM=<TEAMID> ./deploy.sh --build --force`
 - Run a Universal Debug build:
@@ -49,6 +50,6 @@ Use this checklist before publishing a GitHub release.
 - Download the notarized Developer ID DMG and launch it once on a clean machine or test account.
 - Validate the exact uploaded asset: its SHA-256 checksum, Gatekeeper acceptance, FinderSync signing, and the actual Finder right-click menu.
 
-## Future Signing
+## Mandatory Release Gates
 
-Before broad public distribution, confirm Developer ID signing, notarization, stapling, and Gatekeeper verification all pass.
+Developer ID signing, notarization, stapling validation, Gatekeeper verification, exact DMG selection, version matching, and release-note validation are mandatory for every public release. A CI or unsigned package must never be uploaded to the public Sparkle feed.

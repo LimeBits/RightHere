@@ -126,10 +126,15 @@ verify_finder_sync_signing() {
 
     app_signature=$(/usr/bin/codesign -dvvv "${APP_DIR}" 2>&1)
     extension_signature=$(/usr/bin/codesign -dvvv "${extension_path}" 2>&1)
+    expected_team="${RIGHTHERE_DEVELOPMENT_TEAM:-${DEVELOPMENT_TEAM:-}}"
+    if [[ -z "${expected_team}" ]]; then
+        printf '✗ 缺少预期 Team ID，无法验证 Finder Sync 签名。\n' >&2
+        exit 1
+    fi
     if ! grep -q 'Authority=Developer ID Application:' <<<"${app_signature}" \
-        || ! grep -q 'TeamIdentifier=WV6JA6UHLN' <<<"${app_signature}" \
+        || ! grep -q "TeamIdentifier=${expected_team}" <<<"${app_signature}" \
         || ! grep -q 'Authority=Developer ID Application:' <<<"${extension_signature}" \
-        || ! grep -q 'TeamIdentifier=WV6JA6UHLN' <<<"${extension_signature}"; then
+        || ! grep -q "TeamIdentifier=${expected_team}" <<<"${extension_signature}"; then
         printf '✗ 当前 App 不是可用于 Finder Sync 测试的 Developer ID 签名，未创建 DMG。\n' >&2
         printf '  请检查 Scripts/dev-identity.sh 中的 RIGHTHERE_CODESIGN_IDENTITY。\n' >&2
         printf '  不要用 ad-hoc 或 Apple Development 签名的包覆盖 /Applications/RightHere.app。\n' >&2

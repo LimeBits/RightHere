@@ -206,7 +206,21 @@ RightHere's context menu is provided by a `com.apple.FinderSync` extension, whic
 3. A `+` from `pluginkit -m` proves registration/enabled state only. It never replaces an actual right-click test on a file and a folder background in Finder.
 4. Normal `Scripts/package-dmg.sh` builds validate the Developer ID signature of both bundles and must fail rather than create a FinderSync test DMG when validation fails.
 5. `--skip-signing` is only for CI or compilation checks. It must not be used for FinderSync testing, installed over `/Applications/RightHere.app`, uploaded to GitHub Releases, or included in the Sparkle feed.
-6. Public releases must be made with `./Scripts/package-developer-id.sh`, which also notarizes and staples the package.
+6. Public releases must be made with `./Scripts/package-developer-id.sh`, which also notarizes and staples the package. Before uploading, run the release preflight against the **exact DMG** and use explicit arguments to generate the appcast:
+
+```bash
+./Scripts/release-preflight.sh \
+  --tag vX.Y.Z \
+  --dmg dist/RightHere-X.Y.Z-buildN-YYYYMMDD-HHMM.dmg \
+  --notes RELEASE_NOTES.md
+
+./Scripts/generate-appcast.sh \
+  --dmg dist/RightHere-X.Y.Z-buildN-YYYYMMDD-HHMM.dmg \
+  --tag vX.Y.Z \
+  --notes RELEASE_NOTES.md
+```
+
+Both commands reject version mismatches and release notes containing older versions.
 
 A locally testable Universal DMG is built with:
 
@@ -240,7 +254,7 @@ xcrun notarytool store-credentials "righthere-notary" \
   --password "app-specific-password"
 ```
 
-RightHere uses Sparkle 2 for in-app updates. Whenever you upload a DMG, generate `appcast.xml` with `Scripts/generate-appcast.sh` and upload it to the same GitHub Release.
+RightHere uses Sparkle 2 for in-app updates. Generate `appcast.xml` only with the explicit-DMG command shown above, then upload the exact DMG, its checksum, and `appcast.xml` to the same GitHub Release.
 
 ## FAQ
 

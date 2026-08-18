@@ -206,7 +206,21 @@ RightHere 的右键菜单依赖 `com.apple.FinderSync` 扩展；它和普通菜�
 3. `pluginkit -m` 中的 `+` **只表示扩展已登记/启用，不表示右键菜单可用**。每次测试包安装后，都必须在 Finder 的文件与文件夹空白处实际右键验证。
 4. `Scripts/package-dmg.sh` 的常规模式会自动验证主 App 和扩展的 Developer ID 签名；签名不合格时必须失败，不能继续生成用于 FinderSync 测试的 DMG。
 5. `--skip-signing` 只允许用于 CI 或编译检查，**绝不能**用于 FinderSync 实机测试、覆盖 `/Applications/RightHere.app`，或上传 GitHub Release / Sparkle 更新源。
-6. 对外发布只能使用 `./Scripts/package-developer-id.sh` 产生、完成公证与 stapling 的包。
+6. 对外发布只能使用 `./Scripts/package-developer-id.sh` 产生、完成公证与 stapling 的包。上传前必须针对**指定的 DMG**运行发布预检，并显式传参生成 appcast：
+
+```bash
+./Scripts/release-preflight.sh \
+  --tag vX.Y.Z \
+  --dmg dist/RightHere-X.Y.Z-buildN-YYYYMMDD-HHMM.dmg \
+  --notes RELEASE_NOTES.md
+
+./Scripts/generate-appcast.sh \
+  --dmg dist/RightHere-X.Y.Z-buildN-YYYYMMDD-HHMM.dmg \
+  --tag vX.Y.Z \
+  --notes RELEASE_NOTES.md
+```
+
+两个命令都会拒绝版本不一致、或混入历史版本的更新说明。
 
 本机可测试的 Universal DMG：
 
@@ -252,7 +266,7 @@ xcrun notarytool store-credentials "righthere-notary" \
   --password "app-specific-password"
 ```
 
-RightHere 使用 Sparkle 2 作为 App 内更新框架。每次上传 DMG 时，用 `Scripts/generate-appcast.sh` 生成 `appcast.xml` 并上传到同一个 GitHub Release。
+RightHere 使用 Sparkle 2 作为 App 内更新框架。只能使用上面“显式指定 DMG”的命令生成 `appcast.xml`，并将该 DMG、它的校验文件和 `appcast.xml` 一起上传到同一个 GitHub Release。
 
 ## 常见问题
 
