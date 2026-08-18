@@ -7,7 +7,7 @@ Use this checklist before publishing a GitHub release.
 - Update `MARKETING_VERSION` in `project.yml`.
 - Update `MARKETING_VERSION` in `RightHere.xcodeproj/project.pbxproj` if the project file is committed directly.
 - Add release notes to `CHANGELOG.md`.
-- Update `RELEASE_NOTES.md` for the current release.
+- Update `RELEASE_NOTES.md` with **only the current version's** notes. This entire file is embedded in Sparkle's update window; retain history exclusively in `CHANGELOG.md`.
 
 ## Build
 
