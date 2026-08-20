@@ -739,6 +739,36 @@
         }
       }
     },
+    "Move Selected Items": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移动所选项目"
+          }
+        }
+      }
+    },
+    "Move %d Items Here": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移动 %d 个项目到此处"
+          }
+        }
+      }
+    },
+    "Cancel Pending Move": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消待移动项目"
+          }
+        }
+      }
+    },
     "New %@ File": {
       "localizations": {
         "zh-Hans": {

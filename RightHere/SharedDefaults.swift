@@ -166,6 +166,8 @@ public struct SharedDefaults {
     public static let extensionDiagnosticSnapshotRequestName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshotRequest")
     public static let extensionDiagnosticSnapshotNotificationName = Notification.Name("com.LimeBits.RightHere.ExtensionDiagnosticSnapshot")
     public static let shortcutOpenRequestNotificationName = Notification.Name("com.LimeBits.RightHere.ShortcutOpenRequest")
+    public static let moveRequestNotificationName = Notification.Name("com.LimeBits.RightHere.MoveRequest")
+    public static let pendingMoveDidChangeNotificationName = Notification.Name("com.LimeBits.RightHere.PendingMoveDidChange")
     /// In-process only: tells the main app to rebuild UI that was built once and
     /// therefore still holds strings in the previous language.
     public static let preferredLanguageDidChangeNotificationName = Notification.Name("com.LimeBits.RightHere.PreferredLanguageDidChange")
@@ -192,6 +194,8 @@ public struct SharedDefaults {
     private static let extensionDiagnosticRecordsUserInfoKey = "records"
     private static let shortcutOpenRequestUserInfoKey = "request"
     private static let pendingShortcutOpenRequestKey = "pendingShortcutOpenRequest"
+    private static let pendingMoveKey = "pendingMove"
+    private static let moveRequestKey = "moveRequest"
     private static let maximumDiagnosticRecordCount = 100
     private static let diagnosticLock = NSLock()
     
@@ -643,6 +647,84 @@ public struct SharedDefaults {
             userInfo: [shortcutOpenRequestUserInfoKey: data],
             deliverImmediately: true
         )
+    }
+
+    public static func requestMoveToHere(_ destination: URL) {
+        guard let pending = getPendingMove() else { return }
+        let request = MoveRequest(sourceURLs: pending.sourceURLs, destinationURL: destination)
+        guard let data = try? JSONEncoder().encode(request) else { return }
+
+        sharedSuite?.set(data, forKey: moveRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(data, forKey: moveRequestKey)
+        DistributedNotificationCenter.default().postNotificationName(
+            moveRequestNotificationName,
+            object: nil,
+            userInfo: ["request": data],
+            deliverImmediately: true
+        )
+    }
+
+    public static func setPendingMove(_ sourceURLs: [URL]) {
+        let pending = PendingMove(sourceURLs: sourceURLs)
+        guard let data = try? JSONEncoder().encode(pending) else { return }
+        sharedSuite?.set(data, forKey: pendingMoveKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.set(data, forKey: pendingMoveKey)
+        DistributedNotificationCenter.default().postNotificationName(
+            pendingMoveDidChangeNotificationName,
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+    }
+
+    public static func getPendingMove() -> PendingMove? {
+        let data = sharedSuite?.data(forKey: pendingMoveKey)
+            ?? UserDefaults.standard.data(forKey: pendingMoveKey)
+        guard let data else { return nil }
+        return try? JSONDecoder().decode(PendingMove.self, from: data)
+    }
+
+    public static func clearPendingMove() {
+        sharedSuite?.removeObject(forKey: pendingMoveKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.removeObject(forKey: pendingMoveKey)
+        sharedSuite?.removeObject(forKey: moveRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.removeObject(forKey: moveRequestKey)
+        DistributedNotificationCenter.default().postNotificationName(
+            pendingMoveDidChangeNotificationName,
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+    }
+
+    public static func moveRequest(from notification: Notification) -> MoveRequest? {
+        guard let data = notification.userInfo?["request"] as? Data else { return nil }
+        return try? JSONDecoder().decode(MoveRequest.self, from: data)
+    }
+
+    public static func consumePendingMoveRequest() -> MoveRequest? {
+        let data = sharedSuite?.data(forKey: moveRequestKey)
+            ?? UserDefaults.standard.data(forKey: moveRequestKey)
+        sharedSuite?.removeObject(forKey: moveRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.removeObject(forKey: moveRequestKey)
+        guard let data else { return nil }
+        return try? JSONDecoder().decode(MoveRequest.self, from: data)
+    }
+
+    public static func clearPendingMoveRequest(id: UUID) {
+        let data = sharedSuite?.data(forKey: moveRequestKey)
+            ?? UserDefaults.standard.data(forKey: moveRequestKey)
+        guard let data,
+              let existing = try? JSONDecoder().decode(MoveRequest.self, from: data),
+              existing.id == id else { return }
+        sharedSuite?.removeObject(forKey: moveRequestKey)
+        sharedSuite?.synchronize()
+        UserDefaults.standard.removeObject(forKey: moveRequestKey)
     }
 
     public static func shortcutOpenRequest(from notification: Notification) -> ShortcutOpenRequest? {
@@ -1262,6 +1344,30 @@ public enum DevToolAction: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+public struct PendingMove: Codable, Hashable {
+    public let sourceURLs: [URL]
+    public let createdAt: Date
+
+    public init(sourceURLs: [URL], createdAt: Date = Date()) {
+        self.sourceURLs = sourceURLs.map { $0.standardizedFileURL }
+        self.createdAt = createdAt
+    }
+}
+
+public struct MoveRequest: Codable, Hashable, Identifiable {
+    public let id: UUID
+    public let sourceURLs: [URL]
+    public let destinationURL: URL
+    public let requestedAt: Date
+
+    public init(id: UUID = UUID(), sourceURLs: [URL], destinationURL: URL, requestedAt: Date = Date()) {
+        self.id = id
+        self.sourceURLs = sourceURLs.map { $0.standardizedFileURL }
+        self.destinationURL = destinationURL.standardizedFileURL
+        self.requestedAt = requestedAt
+    }
+}
+
 public struct ShortcutOpenRequest: Codable, Hashable, Identifiable {
     public let id: UUID
     public let location: ShortcutLocation
@@ -1273,6 +1379,7 @@ public struct ShortcutOpenRequest: Codable, Hashable, Identifiable {
         self.requestedAt = requestedAt
     }
 }
+
 
 public struct ExtensionDiagnosticRecord: Codable, Hashable, Identifiable {
     public let id: UUID

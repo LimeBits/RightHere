@@ -29,6 +29,13 @@ class FinderSync: FIFinderSync {
         let createdAt: Date
     }
 
+    private struct PendingMoveAction {
+        let sourceURLs: [URL]
+        let destinationURL: URL?
+        let allowsNonFinderFrontmost: Bool
+        let createdAt: Date
+    }
+
     private var enabledTemplates: [FileTemplate] = SharedDefaults.getEnabledFileTemplates()
     private var templateRecordsByExtension: [String: TemplateRecord] = Dictionary(
         uniqueKeysWithValues: SharedDefaults.getAvailableFileTemplates().compactMap { template in
@@ -46,6 +53,7 @@ class FinderSync: FIFinderSync {
     private var pendingOpenHereActions: [Int: PendingOpenHereAction] = [:]
     private var pendingShortcutActions: [Int: PendingShortcutAction] = [:]
     private var pendingDevToolActions: [Int: PendingDevToolAction] = [:]
+    private var pendingMoveActions: [Int: PendingMoveAction] = [:]
     private var nextMenuActionTag = 1
 
     override init() {
@@ -224,6 +232,7 @@ class FinderSync: FIFinderSync {
         pendingOpenHereActions = pendingOpenHereActions.filter { $0.value.createdAt >= expirationDate }
         pendingShortcutActions = pendingShortcutActions.filter { $0.value.createdAt >= expirationDate }
         pendingDevToolActions = pendingDevToolActions.filter { $0.value.createdAt >= expirationDate }
+        pendingMoveActions = pendingMoveActions.filter { $0.value.createdAt >= expirationDate }
     }
 
     // MARK: - Finder Sync Menu
@@ -466,6 +475,8 @@ class FinderSync: FIFinderSync {
             )
             : []
         let activeDevToolActions = DevToolAction.allCases.filter { $0.isApplicable(to: devToolTargets) }
+        let pendingMove = SharedDefaults.getPendingMove()
+        let pendingMoveCount = pendingMove?.sourceURLs.count ?? 0
 
         let mode = isDesktopException ? "desktop-exception" : "finder-frontmost"
         recordDiagnostic(
@@ -585,12 +596,75 @@ class FinderSync: FIFinderSync {
             mainMenu.addItem(devToolsItem)
         }
 
+        if menuKind == .contextualMenuForItems, let selectedURLs, !selectedURLs.isEmpty {
+            let moveItem = NSMenuItem(title: L("Move Selected Items"), action: #selector(prepareMove(_:)), keyEquivalent: "")
+            moveItem.target = self
+            moveItem.isEnabled = true
+            moveItem.image = menuIcon(systemName: "arrow.right.doc.on.clipboard")
+            moveItem.tag = nextActionTag()
+            pendingMoveActions[moveItem.tag] = PendingMoveAction(
+                sourceURLs: selectedURLs,
+                destinationURL: nil,
+                allowsNonFinderFrontmost: isDesktopException,
+                createdAt: Date()
+            )
+            mainMenu.addItem(moveItem)
+        }
+
+        if menuKind == .contextualMenuForContainer {
+            if pendingMoveCount > 0 {
+                let moveHereItem = NSMenuItem(title: L("Move %d Items Here", pendingMoveCount), action: #selector(movePendingItemsHere(_:)), keyEquivalent: "")
+                moveHereItem.target = self
+                moveHereItem.isEnabled = true
+                moveHereItem.image = menuIcon(systemName: "arrow.down.doc")
+                moveHereItem.tag = nextActionTag()
+                pendingMoveActions[moveHereItem.tag] = PendingMoveAction(
+                    sourceURLs: pendingMove?.sourceURLs ?? [],
+                    destinationURL: targetDir,
+                    allowsNonFinderFrontmost: isDesktopException,
+                    createdAt: Date()
+                )
+                mainMenu.addItem(moveHereItem)
+            }
+        }
+
         guard mainMenu.items.isEmpty == false else {
             recordDiagnostic("menu rejected kind=\(kindDescription) reason=no-enabled-actions")
             return nil
         }
 
         return mainMenu
+    }
+
+    @objc func prepareMove(_ sender: NSMenuItem) {
+        guard let action = pendingMoveActions.removeValue(forKey: sender.tag), !action.sourceURLs.isEmpty else { return }
+        let validSources = action.sourceURLs.filter { FileManager.default.fileExists(atPath: $0.path) }
+        guard !validSources.isEmpty else {
+            recordDiagnostic("move-prepare failed reason=sources-unavailable")
+            return
+        }
+        SharedDefaults.setPendingMove(validSources)
+        recordDiagnostic("move-prepare succeeded count=\(validSources.count)")
+    }
+
+    @objc func movePendingItemsHere(_ sender: NSMenuItem) {
+        guard let action = pendingMoveActions.removeValue(forKey: sender.tag),
+              let destinationURL = action.destinationURL,
+              !action.sourceURLs.isEmpty else { return }
+        guard frontmostApplicationIdentifier == "com.apple.finder" || action.allowsNonFinderFrontmost else { return }
+        guard isAllowedMenuDirectory(destinationURL), isDirectoryURL(destinationURL) else {
+            recordDiagnostic("move-here rejected reason=invalid-destination target=\(diagnosticPath(destinationURL))")
+            return
+        }
+        SharedDefaults.requestMoveToHere(destinationURL)
+        launchContainingAppForMoveRequest()
+        recordDiagnostic("move-here requested count=\(action.sourceURLs.count) target=\(diagnosticPath(destinationURL))")
+    }
+
+    @objc func cancelPendingMove(_ sender: NSMenuItem) {
+        guard pendingMoveActions.removeValue(forKey: sender.tag) != nil else { return }
+        SharedDefaults.clearPendingMove()
+        recordDiagnostic("move-cancelled")
     }
 
     @objc func openHere(_ sender: NSMenuItem) {
@@ -870,6 +944,28 @@ class FinderSync: FIFinderSync {
         ]
 
         return !sensitiveHomePaths.contains { path == $0 || path.hasPrefix("\($0)/") }
+    }
+
+    private func launchContainingAppForMoveRequest() {
+        // The distributed notification handles an already-running app. If the
+        // app is not running, launch it without activating it; application
+        // startup consumes the request from the App Group. Do not open the
+        // custom URL here: activating the app can bring the Settings window
+        // to the front during an otherwise invisible file move.
+        guard let appURL = containingAppURL() else {
+            recordDiagnostic("move app-launch failed reason=missing-containing-app")
+            return
+        }
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { [weak self] _, error in
+            if let error {
+                self?.recordDiagnostic("move app-launch failed error=\(error.localizedDescription)")
+            } else {
+                self?.recordDiagnostic("move app-launch requested app=\(appURL.path)")
+            }
+        }
     }
 
     private func launchContainingAppForShortcutRequest() {

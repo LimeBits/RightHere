@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeExtensionActivity()
         observeIncomingURLs()
         consumePendingShortcutOpenRequest()
+        consumePendingMoveRequest()
         configureStatusItem()
         observeLanguageChanges()
         presentSettingsForNewInstallationOrUpdateIfNeeded()
@@ -111,6 +112,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: SharedDefaults.shortcutOpenRequestNotificationName,
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(moveRequestReceived(_:)),
+            name: SharedDefaults.moveRequestNotificationName,
+            object: nil
+        )
+
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(pendingMoveDidChange(_:)),
+            name: SharedDefaults.pendingMoveDidChangeNotificationName,
+            object: nil
+        )
 
         SharedDefaults.requestExtensionDiagnosticSnapshot()
     }
@@ -136,6 +150,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         handleIncomingURL(url)
     }
 
+    @objc private func pendingMoveDidChange(_ notification: Notification) {
+        statusItem?.menu = buildStatusMenu()
+    }
+
     @objc private func extensionDidBecomeActive(_ notification: Notification) {
         SharedDefaults.recordExtensionActiveLocally()
     }
@@ -151,6 +169,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
+    @objc private func moveRequestReceived(_ notification: Notification) {
+        // The distributed notification wakes the app; the App Group is the
+        // single source of truth and consuming it makes notification and URL
+        // delivery mutually exclusive.
+        consumePendingMoveRequest()
+    }
+
+    private func consumePendingMoveRequest() {
+        guard let request = SharedDefaults.consumePendingMoveRequest() else { return }
+        executeMove(request)
+    }
+
+    private func executeMove(_ request: MoveRequest) {
+        let fileManager = FileManager.default
+        let destination = request.destinationURL.standardizedFileURL
+        guard fileManager.fileExists(atPath: destination.path) else {
+            SharedDefaults.recordExtensionDiagnostic("move failed reason=destination-missing path=\(destination.path)")
+            return
+        }
+        guard (try? destination.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
+            SharedDefaults.recordExtensionDiagnostic("move failed reason=destination-not-directory path=\(destination.path)")
+            return
+        }
+
+        let sources = request.sourceURLs.map { $0.standardizedFileURL }
+        guard !sources.isEmpty,
+              sources.allSatisfy({ fileManager.fileExists(atPath: $0.path) }) else {
+            SharedDefaults.recordExtensionDiagnostic("move failed reason=source-missing")
+            return
+        }
+        guard sources.allSatisfy({ $0.deletingLastPathComponent() != destination }) else {
+            SharedDefaults.recordExtensionDiagnostic("move failed reason=already-in-destination")
+            return
+        }
+        guard !sources.contains(where: { destination.path == $0.path || destination.path.hasPrefix($0.path + "/") }) else {
+            SharedDefaults.recordExtensionDiagnostic("move failed reason=destination-inside-source")
+            return
+        }
+        guard sources.allSatisfy({ !fileManager.fileExists(atPath: destination.appendingPathComponent($0.lastPathComponent).path) }) else {
+            SharedDefaults.recordExtensionDiagnostic("move failed reason=name-conflict")
+            return
+        }
+
+        do {
+            for source in sources {
+                try fileManager.moveItem(at: source, to: destination.appendingPathComponent(source.lastPathComponent))
+            }
+            SharedDefaults.clearPendingMove()
+            statusItem?.menu = buildStatusMenu()
+            SharedDefaults.recordExtensionDiagnostic("move succeeded count=\(sources.count) destination=\(destination.path)")
+        } catch {
+            SharedDefaults.recordExtensionDiagnostic("move failed error=\(error.localizedDescription)")
+        }
+    }
+
     @objc private func shortcutOpenRequested(_ notification: Notification) {
         guard let request = SharedDefaults.shortcutOpenRequest(from: notification) else { return }
         openShortcutLocation(from: request)
@@ -163,6 +236,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch url.host {
         case "open-shortcut":
             consumePendingShortcutOpenRequest()
+        case "move-pending-items":
+            consumePendingMoveRequest()
         default:
             break
         }

@@ -1,15 +1,17 @@
-# RightHere 0.4.5
+# RightHere 0.4.6
 
 ## What's New
 
-- **Dark mode Finder icons.** Right-click menu icons now use an explicit high-contrast foreground color in dark and light appearances, so monochrome icons remain visible in Finder's dark mode.
-- **macOS 11 compatibility retained.** Icon tinting uses Core Graphics and does not depend on newer SF Symbol palette APIs.
+- **Safe two-step moving.** Select files or folders with `Move Selected Items`, then open a destination folder and choose `Move N Items Here`.
+- **No Finder clipboard takeover.** The feature does not alter Finder's native copy operation or the system clipboard.
+- **Safer failure handling.** Existing destination names are never overwritten, and invalid destinations are rejected before moving.
 
 ---
 
-# RightHere 0.4.5（中文）
+# RightHere 0.4.6（中文）
 
-## 修复
+## 新功能与改进
 
-- **修复暗黑模式右键图标发黑。** Finder 右键菜单中的单色图标现在会根据系统外观使用明确的高对比度颜色，暗黑模式下不再因为图标发黑而看不清。
-- **保持 macOS 11 兼容。** 图标着色使用 Core Graphics，不依赖较新版本的 SF Symbol 调色板 API。
+- **安全的两步移动。** 选中文件或文件夹后选择“移动所选项目”，进入目标文件夹后选择“移动 N 个项目到此处”。
+- **不接管 Finder 剪贴板。** 该功能不会影响 Finder 原生的拷贝操作或系统剪贴板。
+- **更安全的失败处理。** 目标位置存在同名项目时不会覆盖，非法目标目录会在移动前被拒绝。
